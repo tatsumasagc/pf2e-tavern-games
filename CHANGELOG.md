@@ -2,6 +2,12 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.0 — 25 August 2026
+
+This release adds **Poppy’s Prize — Your Hand**, a player-facing panel opened from the Token-controls anchor. A participating player with Owner permission on their assigned PC or NPC actor can view their own private hand, the public board, and phase-appropriate controls for common-card selection, betting, Plunder, choosing a matching card to surrender, and carry-over choices.
+
+The GM remains authoritative. Player actions are submitted through the actor they own, then processed only by the active GM after ownership and rules validation. The public board omits every face-down common-card identity, while each private hand and legal-action view is written only to that actor’s owned data. Resetting the table now clears both public and player-view data.
+
 ## 1.3.0 — 25 August 2026
 
 This revision replaces the setup dialogue’s multi-select actor list with four **Character** selectors, all defaulting to **- Dummy**. A GM may assign any two to four distinct PF2E PC or NPC actors, leaving the other seats as dummy common-card providers.

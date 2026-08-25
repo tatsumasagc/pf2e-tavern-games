@@ -1,6 +1,6 @@
 # Poppy’s Prize
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.3.0 embeds the supplied 55-card visual deck, permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, and provides four explicit setup seats that can be left as dummies.
+**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.4.0 embeds the supplied 55-card visual deck, permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
 
 The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
@@ -20,7 +20,7 @@ Restart Foundry, open **Manage Modules** for a PF2E world, and enable **Poppy’
 game.modules.get("poppys-prize")?.api.open();
 ```
 
-The GM should create or import every actor who will join the game before opening the table. The setup dialogue provides **four Character selectors**, each defaulting to **- Dummy**. Choose a PF2E PC or NPC actor in any two to four of those selectors; every seat left as a dummy supplies only the missing face-down common card.
+The GM should create or import every actor who will join the game before opening the table. The setup dialogue provides **four Character selectors**, each defaulting to **- Dummy**. Choose a PF2E PC or NPC actor in any two to four of those selectors; every seat left as a dummy supplies only the missing face-down common card. For a player to use the interactive panel, their Foundry User must have **Owner** permission on their assigned actor; setting that actor as the User’s default character is recommended.
 
 ## Macro compendium
 
@@ -28,20 +28,24 @@ The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-onl
 
 | Module setting | Default | Effect |
 |---|---:|---|
-| **Table state** | Hidden and GM-restricted | Stores the active game, including private hands, in a GM-restricted world setting. |
+| **Table state** | Hidden and GM-restricted | Stores the authoritative active game, including every private hand. |
+| **Public board** | Visible | Stores only public information: revealed common cards, contributions, pot, phase, and turn. |
+| **Player view** | Actor-owner only | Stores an individual participant’s hand and legal choices on that participant’s actor. |
 
 ## Table workflow
 
-The GM records choices from the table interface. This deliberate GM-led workflow means that player hands remain private and that the table still works for an in-person or hybrid session without requiring a separate player-side application. The game state and table controls are GM-restricted, so players cannot inspect another player’s face-down hand through Foundry data.
+The GM retains the authoritative table and can record every choice directly, which remains useful for an in-person or hybrid session. Players can also select the **anchor** in the Token controls to open **Poppy’s Prize — Your Hand**. Their panel shows only their actor-owned hand, the public board, and controls that are legal at the current phase.
+
+A player action is written as an actor-owned request and is processed only by the active GM. The GM validates both that the requester owns the participating actor and that the requested move is legal under the rules engine before changing the game state or transferring currency. The public board deliberately masks every face-down common card, and another participant’s hand is never written to a player-visible document.
 
 | Stage | Module behaviour |
 |---|---|
 | **Deal and ante** | Deals five cards to each real player, sets one Pirate aside for the first game, records all antes, and creates dummy common cards if needed. The table renders the supplied suit, rank, Pirate, and card-back artwork. |
-| **Common cards** | Lets each player choose a private hand card; the module reveals common cards clockwise from Poppy and opens a betting round after each reveal. |
-| **Betting** | Enforces pass, call, raise, and fold availability, computes the amount still due, tracks each player’s contribution, and ends the betting round only when every active player has acted without a further raise. |
-| **Plunder** | Prompts each Pirate holder in dealer-to-clockwise order. A Pirate may request a suit, a value, or both; the target chooses among matching cards; the spent Pirate is removed from the game. Pirate holders are protected from Plunder. |
+| **Common cards** | Each player can choose a private hand card from their own panel; the module reveals common cards clockwise from Poppy and opens a betting round after each reveal. |
+| **Betting** | The player whose turn it is can pass, call, raise, or fold from their panel. The GM validates the move, computes the amount due, and applies optional currency transfers. |
+| **Plunder** | A Pirate holder can choose a target and demand from their panel. A Plundered player selects one highlighted matching card from their own hand. Pirate holders are protected from Plunder. |
 | **Final betting and showdown** | Runs the last betting phase after Plunder, evaluates the strongest five-card poker hand from each active player’s hand plus the common pool, awards or splits the pot, and carries any indivisible copper remainder forward. |
-| **Carry-over** | Awards the set-aside Pirate after the first game to the highest common card, then lets every player keep one private card while allowing the round winner to keep a common card. The next game tops each player back up to five cards. |
+| **Carry-over** | Every player can choose their own carry-over card or keep nothing. A round winner can also choose from the common pool. The next game tops each player back up to five cards. |
 
 ## Currency safety
 
@@ -49,7 +53,7 @@ Automatic transfers are intentionally **opt-in**. The **Start Poppy’s Prize** 
 
 With automatic transfers enabled, the module checks that every participating PC or NPC actor can afford an ante before a new game starts. Individual calls and raises are checked before they are committed. If a payment cannot be completed, the game state is not advanced. Payouts use the PF2E system’s inventory currency API, which permits value-based conversion between denominations when a player pays a precise copper amount.
 
-The **Reset table** control clears only the stored card-table state. It never refunds or otherwise changes character currency. This avoids an accidental second transfer after a manual correction.
+The **Reset table** control clears the stored table, public board, and actor-owned player views. It never refunds or otherwise changes character currency. This avoids an accidental second transfer after a manual correction.
 
 ## Included card artwork
 
@@ -57,7 +61,7 @@ The package contains web-optimised copies of the deck supplied with this module 
 
 ## Known boundaries
 
-This first release implements the base Poppy’s Prize game. It does not presently automate the **Gourmet Course**, **Lone Captain**, or **Dragon and the Rum** variants. The table also does not try to adjudicate a player falsely claiming not to hold a matching card; the GM can simply select the matching card that is surrendered.
+This release implements the base Poppy’s Prize game. It does not presently automate the **Gourmet Course**, **Lone Captain**, or **Dragon and the Rum** variants.
 
 The result of a split-pot game is supported. If the source rules leave the next dealer unspecified after a split pot, the module uses the first tied winner in seating order. The Pirate award tiebreak uses the higher showdown hand, then clockwise order from Poppy’s left, matching the described hierarchy.
 

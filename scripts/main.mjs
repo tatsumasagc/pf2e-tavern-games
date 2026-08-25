@@ -18,7 +18,12 @@ import {
 
 const MODULE_ID = "poppys-prize";
 const STATE_SETTING = "tableState";
+const PUBLIC_STATE_SETTING = "publicBoard";
+const PLAYER_VIEW_FLAG = "playerView";
+const PLAYER_REQUEST_FLAG = "playerRequest";
+const PLAYER_STATUS_FLAG = "playerStatus";
 let tableApp = null;
+let playerApp = null;
 let actionQueue = Promise.resolve();
 
 function i18n(key, data = {}) {
@@ -64,6 +69,110 @@ function hasAutoCurrency(state = currentState()) {
   return state?.autoCurrency === true;
 }
 
+function isPrimaryGM() {
+  return isGM() && game.users.activeGM?.id === game.user.id;
+}
+
+function getPlayerForActor(state, actorId) {
+  return state?.players?.find((player) => player.actorId === actorId) ?? null;
+}
+
+function publicCard(entry) {
+  return entry?.revealed ? entry.card : null;
+}
+
+function buildPublicBoard(state) {
+  if (!state) return null;
+  return {
+    version: 1,
+    gameNumber: state.gameNumber,
+    phase: state.phase,
+    round: state.round,
+    potCp: state.potCp,
+    anteCp: state.anteCp,
+    dealerSeat: state.dealerSeat,
+    currentActorId: getCurrentActor(state),
+    autoCurrency: hasAutoCurrency(state),
+    common: state.common.map((entry) => ({ seat: entry.seat, playerId: entry.playerId, name: entry.name, dummy: entry.dummy, revealed: entry.revealed, card: publicCard(entry) })),
+    players: state.players.map((player) => ({ id: player.id, actorId: player.actorId, name: player.name, seat: player.seat, folded: player.folded, contributionCp: player.contributionCp, commonSelected: state.common.some((entry) => entry.playerId === player.id) })),
+    betting: state.betting ? { currentBet: state.betting.currentBet, minRaise: state.betting.minRaise, turnSeat: state.betting.turnSeat, stage: state.betting.stage, roundBets: state.betting.roundBets } : null,
+    plunder: state.plunder ? { queue: state.plunder.queue.map((entry) => entry.playerId), index: state.plunder.index } : null,
+    pendingPlunder: state.pendingPlunder ? { fromId: state.pendingPlunder.fromId, targetId: state.pendingPlunder.targetId, suit: state.pendingPlunder.suit, rank: state.pendingPlunder.rank } : null,
+    winners: state.winners ?? [],
+    payouts: (state.payouts ?? []).map((payout) => ({ playerId: payout.playerId, copper: payout.copper, paid: payout.paid === true })),
+    lastShowdown: state.lastShowdown ? {
+      winners: [...state.lastShowdown.winners],
+      scores: Object.fromEntries(Object.entries(state.lastShowdown.scores ?? {}).map(([playerId, score]) => [playerId, { name: score.name }])),
+    } : null,
+  };
+}
+
+function buildPlayerView(state, player) {
+  const currentId = getCurrentActor(state);
+  const canSelectCommon = state.phase === PHASES.SELECT_COMMON && !state.common.some((entry) => entry.playerId === player.id);
+  const canBet = state.phase === PHASES.BETTING && currentId === player.id;
+  const canPlunder = state.phase === PHASES.PLUNDER && currentId === player.id;
+  const canTransfer = state.phase === PHASES.TRANSFER && state.pendingPlunder?.targetId === player.id;
+  const canKeep = state.phase === PHASES.KEEP && state.keepers && state.keepers[player.id] !== undefined;
+  const protectedPlayerIds = state.plunder?.queue?.map((entry) => entry.playerId) ?? [];
+  return {
+    version: 1,
+    actorId: player.actorId,
+    board: buildPublicBoard(state),
+    player: {
+      id: player.id,
+      name: player.name,
+      seat: player.seat,
+      folded: player.folded,
+      contributionCp: player.contributionCp,
+      hand: player.hand,
+      forcedCarry: player.forcedCarry ?? [],
+      selectedKeep: state.keepers?.[player.id] ?? false,
+      isWinner: (state.winners ?? []).includes(player.id),
+      showdown: state.lastShowdown?.scores?.[player.id] ?? null,
+    },
+    choices: {
+      canSelectCommon,
+      canBet,
+      canPlunder,
+      canTransfer,
+      canKeep,
+      keepCommon: canKeep && (state.winners ?? []).includes(player.id),
+      transferMatches: canTransfer ? state.pendingPlunder.matches : [],
+      plunderTargets: canPlunder ? state.players.filter((entry) => entry.id !== player.id && !protectedPlayerIds.includes(entry.id)).map((entry) => ({ id: entry.id, name: entry.name })) : [],
+    },
+  };
+}
+
+async function syncPlayerViews(state) {
+  await game.settings.set(MODULE_ID, PUBLIC_STATE_SETTING, buildPublicBoard(state));
+  for (const player of state.players) {
+    const actor = getActor(player.actorId);
+    if (actor?.setFlag) await actor.setFlag(MODULE_ID, PLAYER_VIEW_FLAG, buildPlayerView(state, player));
+  }
+}
+
+async function clearPlayerViews(state) {
+  await game.settings.set(MODULE_ID, PUBLIC_STATE_SETTING, null);
+  for (const player of state?.players ?? []) {
+    const actor = getActor(player.actorId);
+    if (!actor?.unsetFlag) continue;
+    await actor.unsetFlag(MODULE_ID, PLAYER_VIEW_FLAG);
+    await actor.unsetFlag(MODULE_ID, PLAYER_REQUEST_FLAG);
+    await actor.unsetFlag(MODULE_ID, PLAYER_STATUS_FLAG);
+  }
+}
+
+function getPlayerActorForCurrentUser() {
+  const defaultActor = game.user?.character;
+  if (defaultActor?.isOwner && defaultActor.getFlag(MODULE_ID, PLAYER_VIEW_FLAG)) return defaultActor;
+  return game.actors.find((actor) => actor.isOwner && actor.getFlag(MODULE_ID, PLAYER_VIEW_FLAG)) ?? null;
+}
+
+function currentPlayerView() {
+  return getPlayerActorForCurrentUser()?.getFlag(MODULE_ID, PLAYER_VIEW_FLAG) ?? null;
+}
+
 function actorCopper(actor) {
   return Number(actor?.inventory?.currency?.copperValue ?? 0);
 }
@@ -104,7 +213,9 @@ async function settlePayouts(state) {
 async function saveState(state) {
   await game.settings.set(MODULE_ID, STATE_SETTING, state);
   await settlePayouts(state);
+  await syncPlayerViews(state);
   tableApp?.render({ force: true });
+  playerApp?.render({ force: true });
 }
 
 function enqueue(action) {
@@ -259,6 +370,77 @@ function renderTable(state) {
   </div>`;
 }
 
+function renderPlayerCommon(board) {
+  return board.common.slice().sort((left, right) => left.seat - right.seat).map((entry) => `<section class="pp-common-entry ${entry.revealed ? "revealed" : ""}">
+    <header>${escapeHTML(entry.name)}${entry.dummy ? " <span class=\"pp-muted\">(dummy)</span>" : ""}</header>
+    ${cardMarkup(entry.card, { faceDown: !entry.revealed })}
+  </section>`).join("");
+}
+
+function renderPlayerHand(view) {
+  const { board, player, choices } = view;
+  const transferMatches = new Set(choices.transferMatches);
+  const selectedKeep = player.selectedKeep || "";
+  const cards = player.hand.map((card) => {
+    if (choices.canSelectCommon) return cardMarkup(card, { selectable: true, action: "player-select-common", dataset: { card: card.id } });
+    if (choices.canTransfer) return cardMarkup(card, { selectable: transferMatches.has(card.id), action: "player-transfer", dataset: { card: card.id }, disabled: !transferMatches.has(card.id) });
+    if (choices.canKeep) return cardMarkup(card, { selectable: true, action: "player-keep", dataset: { card: card.id }, selected: selectedKeep === card.id });
+    return cardMarkup(card);
+  });
+  const forced = player.forcedCarry.map((card) => cardMarkup(card, { selected: true }));
+  const common = choices.keepCommon ? board.common.filter((entry) => entry.card).map((entry) => cardMarkup(entry.card, { selectable: true, action: "player-keep", dataset: { card: entry.card.id }, selected: selectedKeep === entry.card.id })) : [];
+  return `<div class="pp-hand">${[...forced, ...cards, ...common].join("")}</div>`;
+}
+
+function renderPlayerActions(view) {
+  const { board, player, choices } = view;
+  if (choices.canSelectCommon) return `<section class="pp-control-panel"><h3>Choose your common card</h3><p>Select one card from your hand. It remains face-down until the reveal.</p></section>`;
+  if (choices.canBet && board.betting) {
+    const currentBet = board.betting.currentBet;
+    const paid = board.betting.roundBets[player.id] ?? 0;
+    const callCost = Math.max(0, currentBet - paid);
+    const minimumRaise = currentBet === 0 ? board.anteCp : currentBet + board.betting.minRaise;
+    return `<section class="pp-control-panel"><h3>Your betting turn</h3>
+      <div class="pp-action-row">
+        ${currentBet === 0 ? actionButton({ action: "player-bet", label: "Pass", dataset: { type: "pass" } }) : actionButton({ action: "player-bet", label: `Call ${formatCopper(callCost)}`, dataset: { type: "call" } })}
+        ${actionButton({ action: "player-bet", label: "Fold", css: "danger", dataset: { type: "fold" } })}
+      </div>
+      <div class="pp-raise-row"><label>Raise to <input id="pp-player-raise-cp" type="number" min="${minimumRaise}" step="1" value="${minimumRaise}"> <span>cp</span></label>${actionButton({ action: "player-raise", label: "Raise" })}</div>
+      <p class="pp-help">Current bet: <strong>${formatCopper(currentBet)}</strong>. A new bet must be at least ${formatCopper(minimumRaise)}.</p>
+    </section>`;
+  }
+  if (choices.canPlunder) return `<section class="pp-control-panel"><h3>Use your Pirate card</h3>
+    <div class="pp-plunder-fields">
+      <label>Target <select id="pp-player-plunder-target">${choices.plunderTargets.map((target) => `<option value="${escapeHTML(target.id)}">${escapeHTML(target.name)}</option>`).join("")}</select></label>
+      <label>Suit <select id="pp-player-plunder-suit"><option value="">Any suit</option>${RULE_DATA.suits.map((suit) => `<option value="${suit.id}">${suit.label}</option>`).join("")}</select></label>
+      <label>Value <select id="pp-player-plunder-rank"><option value="">Any value</option>${RULE_DATA.ranks.map((rank) => `<option value="${rank.rank}">${rank.label}</option>`).join("")}</select></label>
+    </div>
+    <div class="pp-action-row">${actionButton({ action: "player-plunder", label: "Plunder" })}${actionButton({ action: "player-skip-plunder", label: "Do not Plunder", css: "muted" })}</div>
+  </section>`;
+  if (choices.canTransfer) return `<section class="pp-control-panel"><h3>Choose a card to surrender</h3><p>Select one highlighted matching card from your hand.</p></section>`;
+  if (choices.canKeep) return `<section class="pp-control-panel"><h3>Choose your carry-over card</h3><p>Select one card to keep for the next game, or keep nothing. A round winner may also select a common card.</p>${actionButton({ action: "player-keep-none", label: "Keep nothing", css: "muted" })}</section>`;
+  if (board.phase === PHASES.COMPLETE) return `<section class="pp-control-panel"><h3>Round complete</h3><p>Await the GM to begin the next game.</p></section>`;
+  return `<section class="pp-control-panel"><h3>Waiting for another player</h3><p>Your choices will appear here when it is your turn.</p></section>`;
+}
+
+function renderPlayerPanel(view) {
+  if (!view) return `<section class="pp-empty"><h2>Poppy’s Prize</h2><p>You are not assigned to an active Poppy’s Prize table. Ask the GM to select an actor you own when starting the game.</p></section>`;
+  const { board, player } = view;
+  const status = getPlayerActorForCurrentUser()?.getFlag(MODULE_ID, PLAYER_STATUS_FLAG);
+  const currentPlayer = board.players.find((entry) => entry.id === board.currentActorId);
+  const actionText = currentPlayer ? `${currentPlayer.name} is acting` : board.phase === PHASES.COMPLETE ? "Round complete" : "Awaiting selections";
+  const payout = board.payouts.find((entry) => entry.playerId === player.id && entry.copper > 0);
+  return `<div class="pp-table pp-player-table">
+    <header class="pp-banner"><div><h2>Poppy’s Prize</h2><p>Game ${board.gameNumber} · ${escapeHTML(actionText)}</p></div><div class="pp-pot"><span>Pot</span><strong>${escapeHTML(formatCopper(board.potCp))}</strong><small>Ante: ${escapeHTML(formatCopper(board.anteCp))}</small></div></header>
+    <section class="pp-common"><h3>Common pool</h3><div class="pp-common-cards">${renderPlayerCommon(board)}</div></section>
+    ${payout ? `<p class="pp-payout">Your payout: ${escapeHTML(formatCopper(payout.copper))}${board.autoCurrency && payout.paid ? " (paid)" : ""}</p>` : ""}
+    ${status?.message ? `<p class="pp-player-message ${escapeHTML(status.kind ?? "")}">${escapeHTML(status.message)}</p>` : ""}
+    <section class="pp-player active"><header><div><strong>${escapeHTML(player.name)}</strong>${player.seat === board.dealerSeat ? " <span class=\"pp-dealer\">Poppy</span>" : ""}</div><div class="pp-player-status">${player.folded ? "Folded" : board.currentActorId === player.id ? "Your turn" : "In game"}</div></header><div class="pp-player-meta"><span>Contributed: ${escapeHTML(formatCopper(player.contributionCp))}</span>${player.showdown ? `<span>Showdown: ${escapeHTML(player.showdown.name)}</span>` : ""}</div>${renderPlayerHand(view)}</section>
+    ${renderPlayerActions(view)}
+    <footer class="pp-footer"><span>Phase: ${escapeHTML(board.phase.replaceAll("-", " "))}</span><span>Your hand is private.</span></footer>
+  </div>`;
+}
+
 class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
   static DEFAULT_OPTIONS = {
     id: "poppys-prize-table",
@@ -314,6 +496,103 @@ class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
     if (action === "keep-none") return enact((state) => chooseKeep(state, button.dataset.player, null));
     if (action === "next-game") return nextGame();
   }
+}
+
+class PoppysPrizePlayerApplication extends foundry.applications.api.ApplicationV2 {
+  static DEFAULT_OPTIONS = {
+    id: "poppys-prize-player",
+    classes: ["poppys-prize", "application", "poppys-prize-player"],
+    position: { width: 760, height: "auto" },
+    window: { title: "Poppy’s Prize — Your Hand", icon: "fa-solid fa-anchor", resizable: true },
+  };
+
+  async _renderHTML() {
+    const element = document.createElement("div");
+    element.innerHTML = renderPlayerPanel(currentPlayerView());
+    return element;
+  }
+
+  _replaceHTML(result, content) {
+    content.replaceChildren(result);
+  }
+
+  _onRender(context, options) {
+    super._onRender(context, options);
+    this.element.querySelectorAll("[data-action]").forEach((element) => {
+      element.addEventListener("click", (event) => this.#onAction(event));
+    });
+  }
+
+  #onAction(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    const action = button.dataset.action;
+    if (action === "player-select-common") return submitPlayerRequest("select-common", { cardId: button.dataset.card });
+    if (action === "player-transfer") return submitPlayerRequest("transfer", { cardId: button.dataset.card });
+    if (action === "player-keep") return submitPlayerRequest("keep", { cardId: button.dataset.card });
+    if (action === "player-keep-none") return submitPlayerRequest("keep-none");
+    if (action === "player-bet") return submitPlayerRequest("bet", { type: button.dataset.type });
+    if (action === "player-raise") return submitPlayerRequest("raise", { amountCp: Number(this.element.querySelector("#pp-player-raise-cp")?.value) });
+    if (action === "player-plunder") return submitPlayerRequest("plunder", {
+      targetId: this.element.querySelector("#pp-player-plunder-target")?.value,
+      suit: this.element.querySelector("#pp-player-plunder-suit")?.value || null,
+      rank: this.element.querySelector("#pp-player-plunder-rank")?.value || null,
+    });
+    if (action === "player-skip-plunder") return submitPlayerRequest("skip-plunder");
+    return null;
+  }
+}
+
+function openPlayerPanel() {
+  if (isGM()) return openTable();
+  playerApp ??= new PoppysPrizePlayerApplication();
+  return playerApp.render({ force: true });
+}
+
+async function submitPlayerRequest(action, payload = {}) {
+  const actor = getPlayerActorForCurrentUser();
+  const view = actor?.getFlag(MODULE_ID, PLAYER_VIEW_FLAG);
+  if (!actor || !view) return notify("warn", "You are not assigned to an active Poppy’s Prize table.");
+  await actor.setFlag(MODULE_ID, PLAYER_STATUS_FLAG, { kind: "pending", message: "Action sent to the GM for validation." });
+  await actor.setFlag(MODULE_ID, PLAYER_REQUEST_FLAG, { id: foundry.utils.randomID(), action, payload, requestedAt: Date.now() });
+  playerApp?.render({ force: true });
+}
+
+async function processPlayerRequest(actor, request, userId) {
+  if (!isPrimaryGM() || !request?.id || !request?.action) return;
+  const user = game.users.get(userId);
+  if (!user || user.isGM || !actor.testUserPermission(user, "OWNER")) return;
+  return enqueue(async () => {
+    const state = currentState();
+    const player = getPlayerForActor(state, actor.id);
+    const reject = async (message) => actor.setFlag(MODULE_ID, PLAYER_STATUS_FLAG, { kind: "error", message });
+    if (!state || !player) return reject("You are not assigned to the active Poppy’s Prize table.");
+    try {
+      let next;
+      if (request.action === "select-common") next = selectCommon(state, player.id, request.payload?.cardId);
+      else if (request.action === "bet") {
+        const result = bettingAction(state, player.id, request.payload?.type);
+        await debitActor(result.debitPlayerId, result.debitCp, "this bet", hasAutoCurrency(state));
+        next = result.state;
+      } else if (request.action === "raise") {
+        const result = bettingAction(state, player.id, "raise", Number(request.payload?.amountCp));
+        await debitActor(result.debitPlayerId, result.debitCp, "this raise", hasAutoCurrency(state));
+        next = result.state;
+      } else if (request.action === "plunder") next = plunder(state, player.id, request.payload ?? {});
+      else if (request.action === "skip-plunder") next = declinePlunder(state, player.id);
+      else if (request.action === "transfer") next = choosePlunderTransfer(state, player.id, request.payload?.cardId);
+      else if (request.action === "keep") next = chooseKeep(state, player.id, request.payload?.cardId);
+      else if (request.action === "keep-none") next = chooseKeep(state, player.id, null);
+      else throw new Error("Unknown player action.");
+      await actor.unsetFlag(MODULE_ID, PLAYER_REQUEST_FLAG);
+      await actor.setFlag(MODULE_ID, PLAYER_STATUS_FLAG, { kind: "success", message: "Action recorded." });
+      await saveState(next);
+    } catch (error) {
+      console.warn(`${MODULE_ID} | rejected player request`, error);
+      await actor.unsetFlag(MODULE_ID, PLAYER_REQUEST_FLAG);
+      await reject(error.message ?? "The action could not be recorded.");
+    }
+  });
 }
 
 function openTable() {
@@ -407,11 +686,17 @@ function clearGame() {
   if (!isGM()) return;
   return foundry.applications.api.DialogV2.confirm({
     window: { title: "Reset Poppy’s Prize table" },
-    content: "<p>Close the current table? This only clears the module’s game state; it does not refund or change any character currency.</p>",
+    content: "<p>Close the current table? This clears the stored game and player-view data; it does not refund or change any character currency.</p>",
     yes: { label: "Close table", icon: "fa-solid fa-trash" },
     no: { label: "Keep playing" },
   }).then((confirmed) => {
-    if (confirmed) return enqueue(async () => game.settings.set(MODULE_ID, STATE_SETTING, null));
+    if (confirmed) return enqueue(async () => {
+      const state = currentState();
+      await clearPlayerViews(state);
+      await game.settings.set(MODULE_ID, STATE_SETTING, null);
+      tableApp?.render({ force: true });
+      playerApp?.render({ force: true });
+    });
     return null;
   });
 }
@@ -426,25 +711,41 @@ Hooks.once("init", () => {
     type: Object,
     default: null,
   });
+  game.settings.register(MODULE_ID, PUBLIC_STATE_SETTING, {
+    name: "Poppy’s Prize public board",
+    hint: "Public game data with no private hands or face-down card identities.",
+    scope: "world",
+    config: false,
+    restricted: false,
+    type: Object,
+    default: null,
+  });
 });
 
 Hooks.once("ready", () => {
   const module = game.modules.get(MODULE_ID);
-  if (module) module.api = Object.freeze({ open: openTable, start: promptStartGame, clear: clearGame });
+  if (module) module.api = Object.freeze({ open: openTable, openPlayer: openPlayerPanel, start: promptStartGame, clear: clearGame });
   Hooks.on("getSceneControlButtons", (controls) => {
     const tokenControls = controls.find((control) => control.name === "token");
     if (!tokenControls || tokenControls.tools.some((tool) => tool.name === "poppys-prize")) return;
     tokenControls.tools.push({
       name: "poppys-prize",
-      title: "Poppy’s Prize",
+      title: isGM() ? "Poppy’s Prize table" : "Poppy’s Prize — Your Hand",
       icon: "fa-solid fa-anchor",
       button: true,
-      visible: isGM(),
-      onClick: () => openTable(),
+      visible: true,
+      onClick: () => (isGM() ? openTable() : openPlayerPanel()),
     });
   });
   Hooks.on("updateSetting", (setting) => {
     if (setting.key === `${MODULE_ID}.${STATE_SETTING}` && tableApp?.rendered) tableApp.render({ force: true });
+    if (setting.key === `${MODULE_ID}.${PUBLIC_STATE_SETTING}` && playerApp?.rendered) playerApp.render({ force: true });
+  });
+  Hooks.on("updateActor", (actor, changed, _options, userId) => {
+    const changedFlags = changed.flags?.[MODULE_ID] ?? {};
+    const request = changedFlags[PLAYER_REQUEST_FLAG];
+    if (request) processPlayerRequest(actor, request, userId);
+    if (playerApp?.rendered && actor.id === getPlayerActorForCurrentUser()?.id && (changedFlags[PLAYER_VIEW_FLAG] !== undefined || changedFlags[PLAYER_STATUS_FLAG] !== undefined)) playerApp.render({ force: true });
   });
   if (game.system.id !== "pf2e") console.warn(`${MODULE_ID} | This module requires the PF2E system.`);
 });

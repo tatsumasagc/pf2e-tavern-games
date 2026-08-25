@@ -347,6 +347,35 @@ button.pp-card:hover:not(:disabled),
   color: #204d57;
 }
 
+.pp-player-table {
+  min-width: 0;
+}
+
+.pp-player-message {
+  margin: 0.8rem 1.2rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.pp-player-message.pending {
+  color: #705416;
+  background: #f3e6bd;
+  border: 1px solid #c8a960;
+}
+
+.pp-player-message.success {
+  color: #22563d;
+  background: #dceddf;
+  border: 1px solid #70a186;
+}
+
+.pp-player-message.error {
+  color: #7f2521;
+  background: #f5d8d5;
+  border: 1px solid #bd746e;
+}
+
 .pp-start-form {
   display: grid;
   gap: 0.85rem;
