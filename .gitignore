@@ -1,0 +1,11 @@
+# Local Foundry and development files
+.DS_Store
+Thumbs.db
+*.log
+
+# Release artefacts are attached to GitHub Releases rather than committed.
+*.zip
+
+# Python cache created only when locally rebuilding supplied card assets.
+__pycache__/
+*.py[cod]

@@ -1,0 +1,10 @@
+{
+  "poppys-prize": {
+    "Settings": {
+      "AutomaticCurrency": {
+        "Name": "Automatically transfer PF2E currency",
+        "Hint": "When enabled, character actors pay antes and bets automatically and receive automatic payouts. Keep this disabled for a narrative game or if you are using non-standard wealth tracking."
+      }
+    }
+  }
+}

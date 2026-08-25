@@ -1,0 +1,379 @@
+.poppys-prize .window-content {
+  background: #f4ead1;
+  color: #231b16;
+  padding: 0;
+}
+
+.pp-table {
+  min-width: 680px;
+  font-family: "Signika", "Palatino Linotype", Georgia, serif;
+  background: linear-gradient(145deg, #f6edda 0%, #dfcfad 100%);
+}
+
+.pp-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.2rem 1.4rem;
+  color: #f9edcf;
+  background: linear-gradient(110deg, #173c47, #21616a 60%, #a76a34);
+  border-bottom: 5px solid #c59655;
+}
+
+.pp-banner h2,
+.pp-banner p,
+.pp-common h3,
+.pp-control-panel h3 {
+  margin: 0;
+}
+
+.pp-banner h2 {
+  letter-spacing: 0.04em;
+  font-size: 1.65rem;
+}
+
+.pp-banner p {
+  margin-top: 0.25rem;
+  opacity: 0.9;
+}
+
+.pp-pot {
+  min-width: 136px;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+  background: rgba(14, 29, 29, 0.45);
+  border: 1px solid rgba(255, 234, 193, 0.7);
+  border-radius: 0.5rem;
+}
+
+.pp-pot span,
+.pp-pot small {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.pp-pot strong {
+  display: block;
+  margin: 0.1rem 0;
+  font-size: 1.25rem;
+  color: #ffe2a2;
+}
+
+.pp-common {
+  padding: 1rem 1.3rem;
+  background: #ebddb9;
+  border-bottom: 1px solid #ba9d67;
+}
+
+.pp-common h3 {
+  color: #3c4a31;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pp-common-cards,
+.pp-hand {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.65rem;
+}
+
+.pp-common-entry {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  min-width: 92px;
+  padding: 0.35rem;
+  color: #614a2d;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.pp-common-entry header {
+  overflow: hidden;
+  max-width: 92px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 93px;
+  padding: 0;
+  overflow: hidden;
+  color: #211914;
+  font-family: Georgia, serif;
+  text-align: center;
+  background: #fffdf7;
+  border: 1px solid #806f5a;
+  border-radius: 5px;
+  box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.25);
+}
+
+.pp-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+}
+
+button.pp-card {
+  cursor: pointer;
+}
+
+button.pp-card:hover:not(:disabled),
+.pp-card.selected {
+  outline: 3px solid #d08732;
+  outline-offset: 2px;
+  transform: translateY(-3px);
+}
+
+.pp-card:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.pp-card-rank {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.pp-card-suit {
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
+.suit-trees,
+.suit-ships {
+  color: #1d2d29;
+}
+
+.suit-gems,
+.suit-parrots {
+  color: #a42727;
+}
+
+.pp-card.back {
+  border: 3px double #f2c477;
+}
+
+.pp-card.pirate {
+  border-color: #b77835;
+}
+
+.pp-players {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 1rem 1.3rem;
+}
+
+.pp-player {
+  padding: 0.75rem;
+  background: rgba(255, 252, 243, 0.66);
+  border: 1px solid #c5ad7d;
+  border-left: 5px solid #638e82;
+  border-radius: 0.4rem;
+}
+
+.pp-player.active {
+  border-left-color: #cb8238;
+  box-shadow: 0 0 0 2px rgba(203, 130, 56, 0.23);
+}
+
+.pp-player.folded {
+  opacity: 0.6;
+  border-left-color: #8c6d5a;
+}
+
+.pp-player header,
+.pp-player-meta,
+.pp-action-row,
+.pp-raise-row,
+.pp-plunder-fields,
+.pp-footer {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.pp-player header {
+  justify-content: space-between;
+}
+
+.pp-dealer {
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  color: #fff0cb;
+  font-size: 0.72rem;
+  font-style: normal;
+  background: #1e505c;
+  border-radius: 999px;
+}
+
+.pp-player-status,
+.pp-player-meta,
+.pp-private-note,
+.pp-help,
+.pp-viewer-note,
+.pp-muted {
+  color: #6d5b48;
+  font-size: 0.82rem;
+}
+
+.pp-player-status {
+  font-weight: bold;
+}
+
+.pp-player-meta {
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.pp-private-note {
+  padding: 0.5rem 0;
+  font-style: italic;
+}
+
+.pp-control-panel {
+  margin: 0 1.3rem 1rem;
+  padding: 0.85rem 1rem;
+  background: #e3d2a9;
+  border: 1px solid #b69760;
+  border-radius: 0.45rem;
+}
+
+.pp-control-panel h3 {
+  margin-bottom: 0.4rem;
+  color: #254951;
+}
+
+.pp-action-row {
+  margin-top: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.pp-button {
+  min-width: max-content;
+  color: #fff7e6;
+  font-weight: bold;
+  background: #26616a;
+  border: 1px solid #16434a;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.pp-button:hover:not(:disabled) {
+  background: #173f46;
+}
+
+.pp-button.danger {
+  background: #8a3930;
+  border-color: #65261f;
+}
+
+.pp-button.muted,
+.pp-button.text {
+  color: #493e31;
+  background: #c9b78c;
+  border-color: #a79265;
+}
+
+.pp-footer .pp-button.text {
+  margin-left: auto;
+  font-size: 0.75rem;
+}
+
+.pp-raise-row,
+.pp-plunder-fields {
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.pp-raise-row label,
+.pp-plunder-fields label,
+.pp-start-form label {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  color: #4e4335;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.pp-raise-row input {
+  width: 8rem;
+}
+
+.pp-plunder-fields select {
+  max-width: 145px;
+}
+
+.pp-payout {
+  margin: 0 1.3rem;
+  padding: 0.5rem 0.75rem;
+  color: #23573a;
+  background: #dbe8c7;
+  border: 1px solid #92ad72;
+  border-radius: 0.3rem;
+  font-size: 0.88rem;
+}
+
+.pp-footer {
+  padding: 0.65rem 1.3rem;
+  color: #6b5438;
+  font-size: 0.8rem;
+  border-top: 1px solid #c5ad7d;
+}
+
+.pp-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+.pp-empty h2 {
+  color: #204d57;
+}
+
+.pp-start-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.pp-start-form select[name="actors"] {
+  min-width: 100%;
+}
+
+.pp-start-form .notes {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .pp-table { min-width: 0; }
+  .pp-players { grid-template-columns: 1fr; }
+  .pp-banner { align-items: flex-start; flex-direction: column; }
+}
