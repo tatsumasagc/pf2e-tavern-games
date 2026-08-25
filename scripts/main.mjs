@@ -18,7 +18,6 @@ import {
 
 const MODULE_ID = "poppys-prize";
 const STATE_SETTING = "tableState";
-const AUTO_CURRENCY_SETTING = "automaticCurrency";
 let tableApp = null;
 let actionQueue = Promise.resolve();
 
@@ -61,16 +60,16 @@ function playerName(state, id) {
   return getPlayer(state, id)?.name ?? "Unknown player";
 }
 
-function hasAutoCurrency() {
-  return game.settings.get(MODULE_ID, AUTO_CURRENCY_SETTING);
+function hasAutoCurrency(state = currentState()) {
+  return state?.autoCurrency === true;
 }
 
 function actorCopper(actor) {
   return Number(actor?.inventory?.currency?.copperValue ?? 0);
 }
 
-async function debitActor(actorId, copper, reason) {
-  if (!hasAutoCurrency() || copper <= 0) return;
+async function debitActor(actorId, copper, reason, autoCurrency = hasAutoCurrency()) {
+  if (!autoCurrency || copper <= 0) return;
   const actor = getActor(actorId);
   if (!actor?.inventory?.removeCurrency) throw new Error(`${reason}: the linked actor is unavailable or cannot hold PF2E currency.`);
   if (actorCopper(actor) < copper) throw new Error(`${actor.name} lacks the ${formatCopper(copper)} required for ${reason.toLowerCase()}.`);
@@ -79,17 +78,17 @@ async function debitActor(actorId, copper, reason) {
 }
 
 async function debitAntes(state, reason) {
-  if (!hasAutoCurrency() || state.anteCp <= 0) return;
+  if (!hasAutoCurrency(state) || state.anteCp <= 0) return;
   for (const player of state.players) {
     const actor = getActor(player.actorId);
     if (!actor?.inventory?.removeCurrency) throw new Error(`${player.name} is not linked to an available PF2E PC or NPC actor.`);
     if (actorCopper(actor) < state.anteCp) throw new Error(`${player.name} lacks the ${formatCopper(state.anteCp)} required for ${reason.toLowerCase()}.`);
   }
-  for (const player of state.players) await debitActor(player.actorId, state.anteCp, reason);
+  for (const player of state.players) await debitActor(player.actorId, state.anteCp, reason, hasAutoCurrency(state));
 }
 
 async function settlePayouts(state) {
-  if (!hasAutoCurrency()) return state;
+  if (!hasAutoCurrency(state)) return state;
   const unpaid = (state.payouts ?? []).filter((payout) => payout.copper > 0 && !payout.paid);
   for (const payout of unpaid) {
     const player = getPlayer(state, payout.playerId);
@@ -233,7 +232,7 @@ function renderPlunderControls(state) {
 }
 
 function renderStartState() {
-  return `<section class="pp-empty"><h2>Poppy’s Prize table</h2><p>No game is currently open. The GM can start a game with two to four PF2E character actors.</p>${actionButton({ action: "new-game", label: "Start a game", icon: "fa-solid fa-anchor" })}</section>`;
+  return `<section class="pp-empty"><h2>Poppy’s Prize table</h2><p>No game is currently open. The GM can assign up to four PF2E PC or NPC actors, with any unused seat set to - Dummy.</p>${actionButton({ action: "new-game", label: "Start a game", icon: "fa-solid fa-anchor" })}</section>`;
 }
 
 function renderControls(state) {
@@ -249,7 +248,7 @@ function renderTable(state) {
   if (!state) return renderStartState();
   const current = getCurrentActor(state);
   const actorText = current ? `${playerName(state, current)} to act` : state.phase === PHASES.COMPLETE ? "Ready for the next game" : "Awaiting selections";
-  const payoutText = (state.payouts ?? []).filter((payout) => payout.copper > 0).map((payout) => `${escapeHTML(playerName(state, payout.playerId))}: ${escapeHTML(formatCopper(payout.copper))}${hasAutoCurrency() && payout.paid ? " (paid)" : ""}`).join(" · ");
+  const payoutText = (state.payouts ?? []).filter((payout) => payout.copper > 0).map((payout) => `${escapeHTML(playerName(state, payout.playerId))}: ${escapeHTML(formatCopper(payout.copper))}${hasAutoCurrency(state) && payout.paid ? " (paid)" : ""}`).join(" · ");
   return `<div class="pp-table">
     <header class="pp-banner"><div><h2>Poppy’s Prize</h2><p>Game ${state.gameNumber} · ${escapeHTML(actorText)}</p></div><div class="pp-pot"><span>Pot</span><strong>${escapeHTML(formatCopper(state.potCp))}</strong><small>Ante: ${escapeHTML(formatCopper(state.anteCp))}</small></div></header>
     <section class="pp-common"><h3>Common pool</h3><div class="pp-common-cards">${renderCommon(state)}</div></section>
@@ -295,13 +294,13 @@ class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
     if (action === "select-common") return enact((state) => selectCommon(state, button.dataset.player, button.dataset.card));
     if (action === "bet") return enact(async (state) => {
       const result = bettingAction(state, button.dataset.player, button.dataset.type);
-      await debitActor(result.debitPlayerId, result.debitCp, "this bet");
+      await debitActor(result.debitPlayerId, result.debitCp, "this bet", hasAutoCurrency(state));
       return result.state;
     });
     if (action === "raise") return enact(async (state) => {
       const amount = Number(this.element.querySelector("#pp-raise-cp")?.value);
       const result = bettingAction(state, button.dataset.player, "raise", amount);
-      await debitActor(result.debitPlayerId, result.debitCp, "this raise");
+      await debitActor(result.debitPlayerId, result.debitCp, "this raise", hasAutoCurrency(state));
       return result.state;
     });
     if (action === "plunder") return enact((state) => plunder(state, button.dataset.player, {
@@ -348,12 +347,17 @@ async function nextGame() {
 function promptStartGame() {
   const actors = getParticipantActors();
   if (actors.length < 2) return notify("warn", "Create or import at least two PF2E PC or NPC actors before starting Poppy’s Prize.");
+  const actorOptions = `<option value="" selected>- Dummy</option>${actors.map((actor) => `<option value="${escapeHTML(actor.id)}">${escapeHTML(actor.name)}</option>`).join("")}`;
+  const seats = Array.from({ length: 4 }, (_entry, index) => `<label>Character ${index + 1}<select name="seat-${index + 1}" data-seat>${actorOptions}</select></label>`).join("");
   const content = `<form class="pp-start-form">
-    <p>Select two to four PF2E PC or NPC actors. Dummy seats automatically supply common cards if fewer than four players join.</p>
-    <label>Players <select name="actors" multiple size="${Math.min(8, actors.length)}">${actors.map((actor) => `<option value="${escapeHTML(actor.id)}">${escapeHTML(actor.name)}</option>`).join("")}</select></label>
-    <label>Ante <input name="ante" type="number" min="0" step="0.01" value="5"></label>
-    <label>Denomination <select name="denomination"><option value="gp">gp</option><option value="sp">sp</option><option value="cp">cp</option><option value="pp">pp</option></select></label>
-    <p class="notes">Automatic PF2E coin transfers are currently <strong>${hasAutoCurrency() ? "enabled" : "disabled"}</strong>.</p>
+    <p>Choose an actor for each of the four seats. Any seat left as <strong>- Dummy</strong> supplies only a common card.</p>
+    <div class="pp-seat-selectors">${seats}</div>
+    <div class="pp-start-stakes">
+      <label>Ante <input name="ante" type="number" min="0" step="0.01" value="5"></label>
+      <label>Denomination <select name="denomination"><option value="gp">gp</option><option value="sp">sp</option><option value="cp">cp</option><option value="pp">pp</option></select></label>
+    </div>
+    <label class="pp-currency-choice"><input name="automaticCurrency" type="checkbox"> Automatically transfer PF2E currency</label>
+    <p class="notes">When selected, the chosen actors pay antes and bets automatically and receive automatic payouts for this game. Leave it unchecked for narrative or manual wealth tracking.</p>
   </form>`;
   new foundry.applications.api.DialogV2({
     window: { title: "Start Poppy’s Prize" },
@@ -366,9 +370,10 @@ function promptStartGame() {
       callback: (_event, button) => {
         const form = button.form;
         return {
-          actorIds: [...form.querySelectorAll("select[name='actors'] option:checked")].map((option) => option.value),
+          actorIds: [...form.querySelectorAll("select[data-seat]")].map((select) => select.value).filter(Boolean),
           ante: Number(form.elements.ante.value),
           denomination: form.elements.denomination.value,
+          autoCurrency: form.elements.automaticCurrency.checked,
         };
       },
     }],
@@ -380,7 +385,8 @@ async function startGame(result) {
   return enqueue(async () => {
     if (!result) return;
     if (!Number.isFinite(result.ante) || result.ante < 0) throw new Error("Enter a non-negative ante.");
-    if (result.actorIds.length < 2 || result.actorIds.length > 4) throw new Error("Select between two and four character actors.");
+    if (result.actorIds.length < 2 || result.actorIds.length > 4) throw new Error("Select between two and four PC or NPC actors.");
+    if (new Set(result.actorIds).size !== result.actorIds.length) throw new Error("Choose each PC or NPC actor only once.");
     const multipliers = { cp: 1, sp: 10, gp: 100, pp: 1000 };
     const anteCp = Math.round(result.ante * (multipliers[result.denomination] ?? 1));
     if (!Number.isSafeInteger(anteCp)) throw new Error("The ante is too large.");
@@ -390,6 +396,7 @@ async function startGame(result) {
       return { id: actor.id, actorId: actor.id, name: actor.name };
     });
     const state = createGame({ participants, anteCp });
+    state.autoCurrency = result.autoCurrency === true;
     await debitAntes(state, "the opening ante");
     await saveState(state);
     openTable();
@@ -418,15 +425,6 @@ Hooks.once("init", () => {
     restricted: true,
     type: Object,
     default: null,
-  });
-  game.settings.register(MODULE_ID, AUTO_CURRENCY_SETTING, {
-    name: "Automatically transfer PF2E currency",
-    hint: "When enabled, character actors pay antes and bets automatically and receive automatic payouts. Keep this disabled for a narrative game or if you are using non-standard wealth tracking.",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: false,
-    restricted: true,
   });
 });
 

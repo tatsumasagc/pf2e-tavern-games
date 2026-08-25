@@ -1,6 +1,6 @@
 # Poppy’s Prize
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.2.0 embeds the supplied 55-card visual deck, permits both PF2E PC and NPC actors as players, and includes a launch macro in its own compendium folder.
+**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.3.0 embeds the supplied 55-card visual deck, permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, and provides four explicit setup seats that can be left as dummies.
 
 The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
@@ -20,7 +20,7 @@ Restart Foundry, open **Manage Modules** for a PF2E world, and enable **Poppy’
 game.modules.get("poppys-prize")?.api.open();
 ```
 
-The GM should create or import every actor who will join the game before opening the table. The setup dialogue accepts **two to four PF2E PC or NPC actors**. Where fewer than four players take part, the module adds dummy seats solely to provide the missing face-down common cards.
+The GM should create or import every actor who will join the game before opening the table. The setup dialogue provides **four Character selectors**, each defaulting to **- Dummy**. Choose a PF2E PC or NPC actor in any two to four of those selectors; every seat left as a dummy supplies only the missing face-down common card.
 
 ## Macro compendium
 
@@ -28,7 +28,6 @@ The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-onl
 
 | Module setting | Default | Effect |
 |---|---:|---|
-| **Automatically transfer PF2E currency** | Off | When enabled, the module deducts antes and betting commitments from the linked PC or NPC actors, and adds payouts to them using PF2E’s inventory currency methods. |
 | **Table state** | Hidden and GM-restricted | Stores the active game, including private hands, in a GM-restricted world setting. |
 
 ## Table workflow
@@ -46,7 +45,7 @@ The GM records choices from the table interface. This deliberate GM-led workflow
 
 ## Currency safety
 
-Automatic transfers are intentionally **opt-in**. With the setting disabled, the table still tracks every contribution and payout but does not alter actor wealth. This is recommended when you use party funds, custom denominations, treasure awards, or handwaved tavern stakes.
+Automatic transfers are intentionally **opt-in**. The **Start Poppy’s Prize** dialogue contains an **Automatically transfer PF2E currency** checkbox, which is clear by default. The selected choice applies to that table and its later hands. With the checkbox clear, the table still tracks every contribution and payout but does not alter actor wealth. This is recommended when you use party funds, custom denominations, treasure awards, or handwaved tavern stakes.
 
 With automatic transfers enabled, the module checks that every participating PC or NPC actor can afford an ante before a new game starts. Individual calls and raises are checked before they are committed. If a payment cannot be completed, the game state is not advanced. Payouts use the PF2E system’s inventory currency API, which permits value-based conversion between denominations when a player pays a precise copper amount.
 

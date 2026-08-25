@@ -11,8 +11,14 @@ const macroSource = new URL("src/packs/poppys-prize-macros/Macro_Open_Poppys_Pri
 const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 
-assert.equal(manifest.version, "1.2.0", "The release version should be 1.2.0");
+assert.equal(manifest.version, "1.3.0", "The release version should be 1.3.0");
 assert.match(mainSource, /\["character", "npc"\]\.includes\(actor\.type\)/, "The player selector should admit PC and NPC actors");
+assert.match(mainSource, /Array\.from\(\{ length: 4 \}/, "The setup dialogue should render four character selectors");
+assert.match(mainSource, />- Dummy<\//, "Each selector should default to the Dummy option");
+assert.match(mainSource, /select\[data-seat\]/, "The setup dialogue should read all four seat selectors");
+assert.match(mainSource, /name=\"automaticCurrency\" type=\"checkbox\"/, "Automatic currency should be configured in the setup dialogue");
+assert.match(mainSource, /state\.autoCurrency = result\.autoCurrency === true/, "The setup choice should persist with the active game");
+assert.doesNotMatch(mainSource, /AUTO_CURRENCY_SETTING/, "The former world-level currency setting should be removed");
 assert.match(mainSource, /assets\/cards\/card_back\.webp/, "The supplied card back should render for concealed cards");
 assert.match(mainSource, /cardAssetPath\(card\)/, "The supplied card faces should render from module assets");
 assert.equal(cards.length, 55, "The module should include 52 suit cards, two Pirates, and a card back");
@@ -31,4 +37,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.2.0 revision validation passed.");
+console.log("Poppy’s Prize 1.3.0 revision validation passed.");

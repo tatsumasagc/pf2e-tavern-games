@@ -352,8 +352,41 @@ button.pp-card:hover:not(:disabled),
   gap: 0.85rem;
 }
 
-.pp-start-form select[name="actors"] {
-  min-width: 100%;
+.pp-seat-selectors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.pp-seat-selectors label,
+.pp-start-stakes label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.pp-seat-selectors select {
+  min-width: 0;
+}
+
+.pp-start-stakes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.pp-currency-choice {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem !important;
+  padding: 0.65rem 0.75rem;
+  color: #254951 !important;
+  background: #e8dfc6;
+  border: 1px solid #b69760;
+  border-radius: 0.35rem;
+}
+
+.pp-currency-choice input {
+  margin: 0;
 }
 
 .pp-start-form .notes {
@@ -376,4 +409,6 @@ button.pp-card:hover:not(:disabled),
   .pp-table { min-width: 0; }
   .pp-players { grid-template-columns: 1fr; }
   .pp-banner { align-items: flex-start; flex-direction: column; }
+  .pp-seat-selectors,
+  .pp-start-stakes { grid-template-columns: 1fr; }
 }
