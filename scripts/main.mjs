@@ -164,6 +164,8 @@ async function clearPlayerViews(state) {
 }
 
 function getPlayerActorForCurrentUser() {
+  const openedActor = playerApp?.actorId ? getActor(playerApp.actorId) : null;
+  if (openedActor?.isOwner && openedActor.getFlag(MODULE_ID, PLAYER_VIEW_FLAG)) return openedActor;
   const defaultActor = game.user?.character;
   if (defaultActor?.isOwner && defaultActor.getFlag(MODULE_ID, PLAYER_VIEW_FLAG)) return defaultActor;
   return game.actors.find((actor) => actor.isOwner && actor.getFlag(MODULE_ID, PLAYER_VIEW_FLAG)) ?? null;
@@ -171,6 +173,29 @@ function getPlayerActorForCurrentUser() {
 
 function currentPlayerView() {
   return getPlayerActorForCurrentUser()?.getFlag(MODULE_ID, PLAYER_VIEW_FLAG) ?? null;
+}
+
+function isSupportedPrizeActor(actor) {
+  return ["character", "npc"].includes(actor?.type);
+}
+
+function canShowPlayerPanelForActor(actor) {
+  return isSupportedPrizeActor(actor) && (isGM() || actor.isOwner);
+}
+
+function canOpenPlayerPanelForActor(actor) {
+  return canShowPlayerPanelForActor(actor) && (isGM() || Boolean(actor.getFlag(MODULE_ID, PLAYER_VIEW_FLAG)));
+}
+
+function addActorSheetPrizeButton(sheet, buttons) {
+  const actor = sheet?.actor;
+  if (!canShowPlayerPanelForActor(actor) || buttons.some((button) => button.class === "poppys-prize-sheet")) return;
+  buttons.unshift({
+    label: "Poppy’s Prize",
+    class: "poppys-prize-sheet",
+    icon: "fa-solid fa-anchor",
+    onclick: () => (isGM() ? openTable() : openPlayerPanel(actor)),
+  });
 }
 
 function actorCopper(actor) {
@@ -543,9 +568,12 @@ class PoppysPrizePlayerApplication extends foundry.applications.api.ApplicationV
   }
 }
 
-function openPlayerPanel() {
+function openPlayerPanel(actor = null) {
   if (isGM()) return openTable();
+  const target = actor ?? getPlayerActorForCurrentUser();
+  if (!target || !canOpenPlayerPanelForActor(target)) return notify("warn", "This actor is not assigned to an active Poppy’s Prize table. Ask the GM to select an actor you own when starting the game.");
   playerApp ??= new PoppysPrizePlayerApplication();
+  playerApp.actorId = target.id;
   return playerApp.render({ force: true });
 }
 
@@ -725,6 +753,10 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
   const module = game.modules.get(MODULE_ID);
   if (module) module.api = Object.freeze({ open: openTable, openPlayer: openPlayerPanel, start: promptStartGame, clear: clearGame });
+  Hooks.on("getActorSheetHeaderButtons", addActorSheetPrizeButton);
+  Hooks.on("getCharacterSheetPF2eHeaderButtons", addActorSheetPrizeButton);
+  Hooks.on("getNPCSheetPF2eHeaderButtons", addActorSheetPrizeButton);
+  Hooks.on("getApplicationHeaderButtons", addActorSheetPrizeButton);
   Hooks.on("getSceneControlButtons", (controls) => {
     const tokenControls = controls.find((control) => control.name === "token");
     if (!tokenControls || tokenControls.tools.some((tool) => tool.name === "poppys-prize")) return;

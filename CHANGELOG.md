@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.3 — 25 August 2026
+
+This patch adds a **Poppy’s Prize** anchor button to eligible PF2E character and NPC sheet headers. The GM can open the table from the button. An actor owner can open that actor’s private panel directly from their assigned sheet, while an unassigned actor receives a clear explanatory notice. The control is registered through Foundry and PF2E sheet-header hooks and protected against duplicate insertion.
+
 ## 1.4.2 — 25 August 2026
 
 This patch repairs the **Poppy’s Prize Macros** compendium pack. The Macro source now includes the required compendium key, so the compiled LevelDB pack contains **Open Poppy’s Prize** and it appears in the Poppy’s Prize compendium folder. The build test now extracts the completed pack and verifies the Macro’s name, type, command, and icon.

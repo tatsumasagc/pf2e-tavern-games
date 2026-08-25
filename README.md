@@ -1,6 +1,6 @@
 # Poppy’s Prize
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.4.2 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
+**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.4.3 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
 
 The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
@@ -22,6 +22,8 @@ game.modules.get("poppys-prize")?.api.open();
 
 The GM should create or import every actor who will join the game before opening the table. The setup dialogue provides **four Character selectors**, each defaulting to **- Dummy**. Choose a PF2E PC or NPC actor in any two to four of those selectors; every seat left as a dummy supplies only the missing face-down common card. For a player to use the interactive panel, their Foundry User must have **Owner** permission on their assigned actor; setting that actor as the User’s default character is recommended.
 
+Every eligible PF2E character and NPC sheet now has a **Poppy’s Prize** anchor button in its header. A GM can use it to open the table. An actor owner can use it to open that actor’s private hand when the actor is assigned to an active game. The control remains visible to an actor owner before a game begins, but it explains when that actor has not yet been selected for the table.
+
 ## Macro compendium
 
 The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-only **Poppy’s Prize Macros** pack. The pack now contains a compiled **Open Poppy’s Prize** script Macro, which launches the table and shows a clear warning if the module has not been enabled. The macro uses the included square nautical card-and-anchor icon. To use it frequently, open the pack as a GM and drag the macro to the Foundry macro bar.
@@ -34,7 +36,7 @@ The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-onl
 
 ## Table workflow
 
-The GM retains the authoritative table and can record every choice directly, which remains useful for an in-person or hybrid session. Players can also select the **anchor** in the Token controls to open **Poppy’s Prize — Your Hand**. Their panel shows only their actor-owned hand, the public board, and controls that are legal at the current phase.
+The GM retains the authoritative table and can record every choice directly, which remains useful for an in-person or hybrid session. Players can select the **Poppy’s Prize** anchor in their assigned PC or NPC sheet header, or the anchor in the Token controls, to open **Poppy’s Prize — Your Hand**. Their panel shows only their actor-owned hand, the public board, and controls that are legal at the current phase.
 
 A player action is written as an actor-owned request and is processed only by the active GM. The GM validates both that the requester owns the participating actor and that the requested move is legal under the rules engine before changing the game state or transferring currency. The public board deliberately masks every face-down common card, and another participant’s hand is never written to a player-visible document.
 

@@ -12,7 +12,7 @@ const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.4.2", "The release version should be 1.4.2");
+assert.equal(manifest.version, "1.4.3", "The release version should be 1.4.3");
 assert.match(mainSource, /\["character", "npc"\]\.includes\(actor\.type\)/, "The player selector should admit PC and NPC actors");
 assert.match(mainSource, /Array\.from\(\{ length: 4 \}/, "The setup dialogue should render four character selectors");
 assert.match(mainSource, />- Dummy<\//, "Each selector should default to the Dummy option");
@@ -22,6 +22,10 @@ assert.match(mainSource, /state\.autoCurrency = result\.autoCurrency === true/, 
 assert.doesNotMatch(mainSource, /AUTO_CURRENCY_SETTING/, "The former world-level currency setting should be removed");
 assert.match(mainSource, /class PoppysPrizePlayerApplication/, "The module should provide a player-facing application");
 assert.match(mainSource, /openPlayerPanel/, "Players should be able to open their own panel");
+assert.match(mainSource, /getCharacterSheetPF2eHeaderButtons/, "PF2E character sheets should receive the Poppy’s Prize header control");
+assert.match(mainSource, /getNPCSheetPF2eHeaderButtons/, "PF2E NPC sheets should receive the Poppy’s Prize header control");
+assert.match(mainSource, /poppys-prize-sheet/, "The actor-sheet header button should have a stable class for duplicate prevention");
+assert.match(mainSource, /canShowPlayerPanelForActor/, "The sheet control should be available to an actor owner even before a game begins");
 assert.match(mainSource, /PLAYER_VIEW_FLAG/, "Private player views should be stored on actor-owned data");
 assert.match(mainSource, /hand: player\.hand/, "Only the receiving player view should include that player’s hand");
 assert.match(mainSource, /card: publicCard\(entry\)/, "The public board should mask face-down common-card identities");
@@ -48,4 +52,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.4.2 revision validation passed.");
+console.log("Poppy’s Prize 1.4.3 revision validation passed.");
