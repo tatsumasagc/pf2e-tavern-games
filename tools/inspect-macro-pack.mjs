@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import { readdir, readFile, rm } from "node:fs/promises";
+import { extractPack } from "@foundryvtt/foundryvtt-cli";
+
+const source = "./packs/poppys-prize-macros";
+const destination = "./build/inspected-poppys-prize-macros";
+
+await rm(destination, { recursive: true, force: true });
+await extractPack(source, destination, { yaml: false, recursive: true, clean: true });
+const files = (await readdir(destination)).filter((name) => name.endsWith(".json"));
+assert.equal(files.length, 1, "The compiled Macro pack should contain exactly one document.");
+const macro = JSON.parse(await readFile(`${destination}/${files[0]}`, "utf8"));
+assert.equal(macro._key, "!macros!PPPrizeLaunch001", "The compiled document should retain its Macro compendium key.");
+assert.equal(macro.name, "Open Poppy’s Prize", "The compiled Macro pack should contain the Poppy’s Prize launch macro.");
+assert.equal(macro.type, "script", "The compiled compendium document should be a script Macro.");
+assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The compiled macro should use the supplied icon.");
+assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The compiled macro should launch the Poppy’s Prize module.");
+console.log("Poppy’s Prize Macro compendium pack validation passed.");

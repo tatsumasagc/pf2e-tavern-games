@@ -12,7 +12,7 @@ const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.4.1", "The release version should be 1.4.1");
+assert.equal(manifest.version, "1.4.2", "The release version should be 1.4.2");
 assert.match(mainSource, /\["character", "npc"\]\.includes\(actor\.type\)/, "The player selector should admit PC and NPC actors");
 assert.match(mainSource, /Array\.from\(\{ length: 4 \}/, "The setup dialogue should render four character selectors");
 assert.match(mainSource, />- Dummy<\//, "Each selector should default to the Dummy option");
@@ -43,8 +43,9 @@ assert.ok(existsSync(icon), "The macro icon should be included");
 assert.ok(existsSync(macroSource), "The tracked macro source should be included");
 assert.ok(readdirSync(macroPack).some((name) => name.startsWith("MANIFEST-")), "The compiled LevelDB Macro pack should be included");
 const macro = JSON.parse(readFileSync(macroSource, "utf8"));
+assert.equal(macro._key, "!macros!PPPrizeLaunch001", "The Macro source requires a compendium key so it is included in the compiled pack");
 assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide the launch macro");
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.4.1 revision validation passed.");
+console.log("Poppy’s Prize 1.4.2 revision validation passed.");

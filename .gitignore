@@ -1,7 +1,9 @@
 # Local Foundry and development files
+build/
 .DS_Store
 Thumbs.db
 *.log
+packs/**/LOG.old
 
 # Release artefacts are attached to GitHub Releases rather than committed.
 *.zip

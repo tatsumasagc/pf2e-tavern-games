@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.2 — 25 August 2026
+
+This patch repairs the **Poppy’s Prize Macros** compendium pack. The Macro source now includes the required compendium key, so the compiled LevelDB pack contains **Open Poppy’s Prize** and it appears in the Poppy’s Prize compendium folder. The build test now extracts the completed pack and verifies the Macro’s name, type, command, and icon.
+
 ## 1.4.1 — 25 August 2026
 
 This patch corrects deck-count wording and validation. The playable Poppy’s Prize deck has **54 cards**: 52 suited cards and two Pirates. The separately supplied card-back image is artwork for concealed cards and is not part of the playable deck.
