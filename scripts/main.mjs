@@ -51,10 +51,22 @@ function getActor(actorId) {
   return actorId ? game.actors.get(actorId) ?? null : null;
 }
 
+function sortActorsByName(actors) {
+  return [...actors].sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang));
+}
+
+function getParticipantActorGroups() {
+  const eligible = game.actors.filter((actor) => ["character", "npc"].includes(actor.type));
+  const partyMemberIds = new Set((game.actors.party?.members ?? []).map((member) => member.id));
+  return {
+    partyMembers: sortActorsByName(eligible.filter((actor) => partyMemberIds.has(actor.id))),
+    otherActors: sortActorsByName(eligible.filter((actor) => !partyMemberIds.has(actor.id))),
+  };
+}
+
 function getParticipantActors() {
-  return game.actors
-    .filter((actor) => ["character", "npc"].includes(actor.type))
-    .sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang));
+  const { partyMembers, otherActors } = getParticipantActorGroups();
+  return [...partyMembers, ...otherActors];
 }
 
 function getPlayer(state, id) {
@@ -654,7 +666,9 @@ async function nextGame() {
 function promptStartGame() {
   const actors = getParticipantActors();
   if (actors.length < 2) return notify("warn", "Create or import at least two PF2E PC or NPC actors before starting Poppy’s Prize.");
-  const actorOptions = `<option value="" selected>- Dummy</option>${actors.map((actor) => `<option value="${escapeHTML(actor.id)}">${escapeHTML(actor.name)}</option>`).join("")}`;
+  const { partyMembers, otherActors } = getParticipantActorGroups();
+  const optionsFor = (entries) => entries.map((actor) => `<option value="${escapeHTML(actor.id)}">${escapeHTML(actor.name)}</option>`).join("");
+  const actorOptions = `<option value="" selected>- Dummy</option>${partyMembers.length ? `<optgroup label="Party Members">${optionsFor(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${optionsFor(otherActors)}</optgroup>` : ""}`;
   const seats = Array.from({ length: 4 }, (_entry, index) => `<label>Character ${index + 1}<select name="seat-${index + 1}" data-seat>${actorOptions}</select></label>`).join("");
   const content = `<form class="pp-start-form">
     <p>Choose an actor for each of the four seats. Any seat left as <strong>- Dummy</strong> supplies only a common card.</p>

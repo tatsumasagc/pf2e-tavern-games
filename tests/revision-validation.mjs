@@ -12,10 +12,15 @@ const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.4.3", "The release version should be 1.4.3");
+assert.equal(manifest.version, "1.4.4", "The release version should be 1.4.4");
 assert.match(mainSource, /\["character", "npc"\]\.includes\(actor\.type\)/, "The player selector should admit PC and NPC actors");
 assert.match(mainSource, /Array\.from\(\{ length: 4 \}/, "The setup dialogue should render four character selectors");
 assert.match(mainSource, />- Dummy<\//, "Each selector should default to the Dummy option");
+assert.match(mainSource, /getParticipantActorGroups/, "The selector should derive Party and other-actor groups separately");
+assert.match(mainSource, /game\.actors\.party\?\.members/, "The selector should identify PF2E Party members through the active Party actor");
+assert.match(mainSource, /<optgroup label="Party Members">/, "Party members should follow Dummy in their own selector group");
+assert.match(mainSource, /<optgroup label="Other Actors">/, "Remaining eligible actors should follow the Party group");
+assert.match(mainSource, /localeCompare\(right\.name, game\.i18n\.lang\)/, "Actor names should be sorted alphabetically within each group");
 assert.match(mainSource, /select\[data-seat\]/, "The setup dialogue should read all four seat selectors");
 assert.match(mainSource, /name=\"automaticCurrency\" type=\"checkbox\"/, "Automatic currency should be configured in the setup dialogue");
 assert.match(mainSource, /state\.autoCurrency = result\.autoCurrency === true/, "The setup choice should persist with the active game");
@@ -52,4 +57,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.4.3 revision validation passed.");
+console.log("Poppy’s Prize 1.4.4 revision validation passed.");

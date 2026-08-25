@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.4 — 25 August 2026
+
+This patch orders all four setup selectors for faster table preparation. Each list begins with **- Dummy**, then shows active PF2E **Party Members** alphabetically, followed by every other eligible character and NPC actor alphabetically. Party membership comes from the PF2E Party actor rather than an actor name or manual tag.
+
 ## 1.4.3 — 25 August 2026
 
 This patch adds a **Poppy’s Prize** anchor button to eligible PF2E character and NPC sheet headers. The GM can open the table from the button. An actor owner can open that actor’s private panel directly from their assigned sheet, while an unassigned actor receives a clear explanatory notice. The control is registered through Foundry and PF2E sheet-header hooks and protected against duplicate insertion.
