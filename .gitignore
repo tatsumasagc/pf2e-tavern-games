@@ -6,6 +6,9 @@ Thumbs.db
 # Release artefacts are attached to GitHub Releases rather than committed.
 *.zip
 
+# Node dependencies are installed locally from the committed lockfile.
+node_modules/
+
 # Python cache created only when locally rebuilding supplied card assets.
 __pycache__/
 *.py[cod]

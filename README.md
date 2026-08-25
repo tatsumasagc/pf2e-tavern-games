@@ -1,6 +1,6 @@
 # Poppy’s Prize
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.1.0 embeds the supplied 55-card visual deck and permits both PF2E PC and NPC actors as players.
+**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.2.0 embeds the supplied 55-card visual deck, permits both PF2E PC and NPC actors as players, and includes a launch macro in its own compendium folder.
 
 The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
@@ -21,6 +21,10 @@ game.modules.get("poppys-prize")?.api.open();
 ```
 
 The GM should create or import every actor who will join the game before opening the table. The setup dialogue accepts **two to four PF2E PC or NPC actors**. Where fewer than four players take part, the module adds dummy seats solely to provide the missing face-down common cards.
+
+## Macro compendium
+
+The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-only **Poppy’s Prize Macros** pack. Inside it, **Open Poppy’s Prize** launches the table and shows a clear warning if the module has not been enabled. The macro uses the included square nautical card-and-anchor icon. To use it frequently, open the pack as a GM and drag the macro to the Foundry macro bar.
 
 | Module setting | Default | Effect |
 |---|---:|---|

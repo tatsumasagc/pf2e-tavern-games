@@ -1,0 +1,15 @@
+{
+  "_id": "PPPrizeLaunch001",
+  "name": "Open Poppy’s Prize",
+  "type": "script",
+  "author": null,
+  "img": "modules/poppys-prize/assets/icons/poppys-prize-macro.webp",
+  "scope": "global",
+  "command": "const module = game.modules.get(\"poppys-prize\");\nif (!module?.active) {\n  ui.notifications.warn(\"Enable the Poppy’s Prize module before using this macro.\");\n} else {\n  module.api?.open();\n}",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {}
+}
