@@ -1,6 +1,6 @@
 # Poppy’s Prize
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.4.0 embeds the supplied 55-card visual deck, permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
+**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.4.1 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
 
 The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
@@ -57,7 +57,7 @@ The **Reset table** control clears the stored table, public board, and actor-own
 
 ## Included card artwork
 
-The package contains web-optimised copies of the deck supplied with this module update: the four suit families, Ace through King, both Pirates, and the card back. The logical Ace maps to the supplied `01` artwork, and the two Pirate cards are retained as distinct cards. Face-down common cards use the supplied card back; card faces are displayed directly from the module files, so no separate Foundry Cards deck setup is required.
+The module’s playable deck contains **54 cards**: the four suit families from Ace through King (52 cards) plus two distinct Pirates. The supplied `card_back.webp` file is **not** a playable card; it is artwork used whenever a private hand or common card is face-down. The logical Ace maps to the supplied `01` artwork. Card faces and the card back are displayed directly from the module files, so no separate Foundry Cards deck setup is required.
 
 ## Known boundaries
 

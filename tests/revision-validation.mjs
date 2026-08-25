@@ -10,8 +10,9 @@ const icon = new URL("assets/icons/poppys-prize-macro.webp", moduleRoot);
 const macroSource = new URL("src/packs/poppys-prize-macros/Macro_Open_Poppys_Prize_PPPrizeLaunch001.json", moduleRoot);
 const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
+const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.4.0", "The release version should be 1.4.0");
+assert.equal(manifest.version, "1.4.1", "The release version should be 1.4.1");
 assert.match(mainSource, /\["character", "npc"\]\.includes\(actor\.type\)/, "The player selector should admit PC and NPC actors");
 assert.match(mainSource, /Array\.from\(\{ length: 4 \}/, "The setup dialogue should render four character selectors");
 assert.match(mainSource, />- Dummy<\//, "Each selector should default to the Dummy option");
@@ -29,7 +30,8 @@ assert.match(mainSource, /Hooks\.on\("updateActor"/, "The GM should receive play
 assert.match(mainSource, /processPlayerRequest/, "Player requests should be processed through the GM authority path");
 assert.match(mainSource, /assets\/cards\/card_back\.webp/, "The supplied card back should render for concealed cards");
 assert.match(mainSource, /cardAssetPath\(card\)/, "The supplied card faces should render from module assets");
-assert.equal(cards.length, 55, "The module should include 52 suit cards, two Pirates, and a card back");
+assert.equal(playableCards.length, 54, "The playable deck should include 52 suited cards and two Pirates");
+assert.equal(cards.length, 55, "The module should include the 54 playable card faces plus one separate card back image");
 for (const name of ["card_back.webp", "ships_01.webp", "gems_king.webp", "parrots_queen.webp", "trees_jack.webp", "pirate_1.webp", "pirate_2.webp"]) {
   assert.ok(existsSync(new URL(name, cardDirectory)), `Missing required deck asset: ${name}`);
 }
@@ -45,4 +47,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.4.0 revision validation passed.");
+console.log("Poppy’s Prize 1.4.1 revision validation passed.");

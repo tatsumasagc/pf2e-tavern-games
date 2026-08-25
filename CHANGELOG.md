@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.1 — 25 August 2026
+
+This patch corrects deck-count wording and validation. The playable Poppy’s Prize deck has **54 cards**: 52 suited cards and two Pirates. The separately supplied card-back image is artwork for concealed cards and is not part of the playable deck.
+
 ## 1.4.0 — 25 August 2026
 
 This release adds **Poppy’s Prize — Your Hand**, a player-facing panel opened from the Token-controls anchor. A participating player with Owner permission on their assigned PC or NPC actor can view their own private hand, the public board, and phase-appropriate controls for common-card selection, betting, Plunder, choosing a matching card to surrender, and carry-over choices.
@@ -22,4 +26,4 @@ This release adds a GM-only **Poppy’s Prize** compendium folder containing the
 
 This initial GitHub release provides a GM-led Foundry VTT table for the base Poppy’s Prize card game. It automates card dealing, common cards, betting, folding, Pirate Plunder, final betting, poker-hand scoring, split pots, carry-over cards, and dummy seats.
 
-The release supports Foundry VTT 14.367 with PF2E 8.4.1. It accepts both PF2E PC and NPC actors and offers optional automatic currency transfers through PF2E inventory methods. It also embeds the supplied 55-card visual deck: 52 suit cards, two Pirates, and a card back.
+The release supports Foundry VTT 14.367 with PF2E 8.4.1. It accepts both PF2E PC and NPC actors and offers optional automatic currency transfers through PF2E inventory methods. It also bundles 55 visual assets: the 54-card playable deck (52 suit cards and two Pirates) plus a separate card-back image.
