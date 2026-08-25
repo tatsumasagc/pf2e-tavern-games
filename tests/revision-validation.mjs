@@ -12,7 +12,7 @@ const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.4.5", "The release version should be 1.4.5");
+assert.equal(manifest.version, "1.4.6", "The release version should be 1.4.6");
 assert.match(mainSource, /\["character", "npc"\]\.includes\(actor\.type\)/, "The player selector should admit PC and NPC actors");
 assert.match(mainSource, /Array\.from\(\{ length: 4 \}/, "The setup dialogue should render four character selectors");
 assert.match(mainSource, />- Dummy<\//, "Each selector should default to the Dummy option");
@@ -44,6 +44,12 @@ for (const phase of ["SELECT_COMMON", "BETTING", "PLUNDER", "TRANSFER", "KEEP"])
 assert.match(mainSource, /renderPhaseGuide\(state\)/, "The GM table should render phase guidance");
 assert.match(mainSource, /renderPhaseGuide\(board, \{ playerId: player\.id \}\)/, "The player panel should render actor-specific phase guidance");
 assert.match(mainSource, /action === "open-rules"/, "Both interfaces should activate the journal-rule link");
+assert.match(mainSource, /position: \{ width: 1120, height: 820 \}/, "The GM table should open at a compact, bounded 1120×820 size");
+assert.match(mainSource, /poppys-prize-gm/, "The GM table should have a dedicated layout class");
+assert.match(cssSource, /#poppys-prize-table \.window-content/, "The GM window content should have a dedicated overflow boundary");
+assert.match(cssSource, /overflow-y: auto !important/, "The GM window content should scroll vertically when needed");
+assert.match(cssSource, /max-height: calc\(100vh - 48px\)/, "The GM table should not exceed the viewport height");
+assert.match(cssSource, /#poppys-prize-table \.pp-card \{\s+width: 48px;\s+height: 72px;/, "The GM table should use compact cards to reduce vertical height");
 assert.match(mainSource, /assets\/cards\/card_back\.webp/, "The supplied card back should render for concealed cards");
 assert.match(mainSource, /cardAssetPath\(card\)/, "The supplied card faces should render from module assets");
 assert.equal(playableCards.length, 54, "The playable deck should include 52 suited cards and two Pirates");
@@ -64,4 +70,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.4.5 revision validation passed.");
+console.log("Poppy’s Prize 1.4.6 revision validation passed.");

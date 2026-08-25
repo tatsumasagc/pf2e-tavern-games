@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.6 — 25 August 2026
+
+This patch repairs the GM table’s behaviour on a 1920×1080 display. The table now opens at a compact 1120 × 820 size, uses smaller GM-only cards and tighter section spacing, caps its height to the viewport, and provides a dedicated vertical scroll area whenever its contents still overflow. The player panel keeps its existing card size and layout.
+
 ## 1.4.5 — 25 August 2026
 
 This release adds phase-aware guidance to the GM table and player panel. It explains the current common-card, betting, Pirate Plunder, matching-card surrender, carry-over, or completion step, with wording tailored to the viewer’s role and current turn. Each guide includes a **Poppy's Prize Rules** link that opens `@UUID[JournalEntry.pJeEYJAnY1JQi44e]{Poppy's Prize}`.

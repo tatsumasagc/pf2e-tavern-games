@@ -395,6 +395,115 @@ button.pp-card:hover:not(:disabled),
   color: #204d57;
 }
 
+/* Keep the GM board usable on a 1920×1080 display while allowing all overflow to scroll inside the Foundry window. */
+#poppys-prize-table {
+  max-height: calc(100vh - 48px);
+}
+
+#poppys-prize-table .window-content {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+#poppys-prize-table .pp-table {
+  min-height: 100%;
+}
+
+#poppys-prize-table .pp-banner {
+  padding: 0.7rem 1rem;
+  border-bottom-width: 3px;
+}
+
+#poppys-prize-table .pp-banner h2 {
+  font-size: 1.35rem;
+}
+
+#poppys-prize-table .pp-pot {
+  min-width: 112px;
+  padding: 0.35rem 0.55rem;
+}
+
+#poppys-prize-table .pp-pot strong {
+  font-size: 1.05rem;
+}
+
+#poppys-prize-table .pp-phase-guide {
+  margin: 0.55rem 1rem 0;
+  padding: 0.5rem 0.7rem;
+}
+
+#poppys-prize-table .pp-phase-guide h3 {
+  margin-bottom: 0.15rem;
+  font-size: 0.9rem;
+}
+
+#poppys-prize-table .pp-phase-guide p,
+#poppys-prize-table .pp-rules-link {
+  font-size: 0.78rem;
+}
+
+#poppys-prize-table .pp-rules-link {
+  padding: 0.35rem 0.45rem;
+}
+
+#poppys-prize-table .pp-common {
+  padding: 0.65rem 1rem;
+}
+
+#poppys-prize-table .pp-common-cards,
+#poppys-prize-table .pp-hand {
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+
+#poppys-prize-table .pp-common-entry {
+  min-width: 70px;
+  padding: 0.2rem;
+  font-size: 0.72rem;
+}
+
+#poppys-prize-table .pp-common-entry header {
+  max-width: 70px;
+}
+
+#poppys-prize-table .pp-card {
+  width: 48px;
+  height: 72px;
+  border-radius: 4px;
+}
+
+#poppys-prize-table .pp-players {
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+}
+
+#poppys-prize-table .pp-player {
+  padding: 0.5rem;
+}
+
+#poppys-prize-table .pp-player-meta,
+#poppys-prize-table .pp-player-status,
+#poppys-prize-table .pp-private-note {
+  font-size: 0.74rem;
+}
+
+#poppys-prize-table .pp-control-panel {
+  margin: 0 1rem 0.65rem;
+  padding: 0.6rem 0.75rem;
+}
+
+#poppys-prize-table .pp-control-panel h3 {
+  margin-bottom: 0.2rem;
+  font-size: 0.95rem;
+}
+
+#poppys-prize-table .pp-footer {
+  padding: 0.45rem 1rem;
+}
+
 .pp-player-table {
   min-width: 0;
 }
@@ -484,6 +593,7 @@ button.pp-card:hover:not(:disabled),
 
 @media (max-width: 720px) {
   .pp-table { min-width: 0; }
+  #poppys-prize-table .pp-card { width: 44px; height: 66px; }
   .pp-players { grid-template-columns: 1fr; }
   .pp-banner { align-items: flex-start; flex-direction: column; }
   .pp-phase-guide { align-items: stretch; flex-direction: column; }

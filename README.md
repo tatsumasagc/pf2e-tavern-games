@@ -1,6 +1,6 @@
 # Poppy’s Prize
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.4.5 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
+**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.4.6 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
 
 The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
@@ -36,7 +36,7 @@ The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-onl
 
 ## Table workflow
 
-The GM retains the authoritative table and can record every choice directly, which remains useful for an in-person or hybrid session. Players can select the **Poppy’s Prize** anchor in their assigned PC or NPC sheet header, or the anchor in the Token controls, to open **Poppy’s Prize — Your Hand**. Their panel shows only their actor-owned hand, the public board, and controls that are legal at the current phase.
+The GM retains the authoritative table and can record every choice directly, which remains useful for an in-person or hybrid session. The GM window opens at a compact **1120 × 820** size, uses condensed card and panel spacing, respects the available screen height, and scrolls vertically within its own content area whenever an expanded table still exceeds the viewport. Players can select the **Poppy’s Prize** anchor in their assigned PC or NPC sheet header, or the anchor in the Token controls, to open **Poppy’s Prize — Your Hand**. Their panel shows only their actor-owned hand, the public board, and controls that are legal at the current phase.
 
 Both panels include a phase guide that explains the current step, identifies whether a player is acting or waiting, and links to the world’s **Poppy’s Prize Rules** journal entry (`@UUID[JournalEntry.pJeEYJAnY1JQi44e]{Poppy's Prize}`). The GM guide focuses on the action to record; the player guide focuses on that participant’s available choice.
 

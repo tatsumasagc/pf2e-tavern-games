@@ -558,8 +558,8 @@ function renderPlayerPanel(view) {
 class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
   static DEFAULT_OPTIONS = {
     id: "poppys-prize-table",
-    classes: ["poppys-prize", "application"],
-    position: { width: 980, height: "auto" },
+    classes: ["poppys-prize", "application", "poppys-prize-gm"],
+    position: { width: 1120, height: 820 },
     window: { title: "Poppy’s Prize", icon: "fa-solid fa-anchor", resizable: true },
   };
 
