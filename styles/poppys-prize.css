@@ -61,8 +61,56 @@
   color: #ffe2a2;
 }
 
+.pp-phase-guide {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin: 1rem 1.3rem 0;
+  padding: 0.8rem 1rem;
+  color: #1e434d;
+  background: #e1efd9;
+  border: 1px solid #7aa082;
+  border-left: 5px solid #2e6b5a;
+  border-radius: 0.35rem;
+}
+
+.pp-phase-guide h3,
+.pp-phase-guide p {
+  margin: 0;
+}
+
+.pp-phase-guide h3 {
+  margin-bottom: 0.3rem;
+  font-size: 1rem;
+}
+
+.pp-phase-guide p {
+  max-width: 660px;
+  line-height: 1.35;
+}
+
+.pp-rules-link {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.6rem;
+  color: #f9edcf;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  background: #245563;
+  border: 1px solid #173c47;
+  border-radius: 0.3rem;
+}
+
+.pp-rules-link:hover {
+  color: #fff5dc;
+  background: #173c47;
+  text-decoration: none;
+}
+
 .pp-common {
-  padding: 1rem 1.3rem;
+  padding: 1.1rem 1.3rem;
   background: #ebddb9;
   border-bottom: 1px solid #ba9d67;
 }
@@ -438,6 +486,8 @@ button.pp-card:hover:not(:disabled),
   .pp-table { min-width: 0; }
   .pp-players { grid-template-columns: 1fr; }
   .pp-banner { align-items: flex-start; flex-direction: column; }
+  .pp-phase-guide { align-items: stretch; flex-direction: column; }
+  .pp-rules-link { text-align: center; }
   .pp-seat-selectors,
   .pp-start-stakes { grid-template-columns: 1fr; }
 }

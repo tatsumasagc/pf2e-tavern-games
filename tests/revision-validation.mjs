@@ -12,7 +12,7 @@ const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.4.4", "The release version should be 1.4.4");
+assert.equal(manifest.version, "1.4.5", "The release version should be 1.4.5");
 assert.match(mainSource, /\["character", "npc"\]\.includes\(actor\.type\)/, "The player selector should admit PC and NPC actors");
 assert.match(mainSource, /Array\.from\(\{ length: 4 \}/, "The setup dialogue should render four character selectors");
 assert.match(mainSource, />- Dummy<\//, "Each selector should default to the Dummy option");
@@ -37,6 +37,13 @@ assert.match(mainSource, /card: publicCard\(entry\)/, "The public board should m
 assert.match(mainSource, /actor\.testUserPermission\(user, "OWNER"\)/, "The GM should validate that the requester owns the participating actor");
 assert.match(mainSource, /Hooks\.on\("updateActor"/, "The GM should receive player requests through actor updates");
 assert.match(mainSource, /processPlayerRequest/, "Player requests should be processed through the GM authority path");
+assert.match(mainSource, /RULES_JOURNAL_UUID = "JournalEntry\.pJeEYJAnY1JQi44e"/, "The supplied Poppy’s Prize rules journal UUID should be included");
+assert.match(mainSource, /@UUID\[JournalEntry\.pJeEYJAnY1JQi44e\]\{Poppy's Prize\}/, "The supplied Poppy’s Prize journal reference should be retained");
+assert.match(mainSource, /phaseGuideData/, "The module should provide phase-aware game guidance");
+for (const phase of ["SELECT_COMMON", "BETTING", "PLUNDER", "TRANSFER", "KEEP"]) assert.match(mainSource, new RegExp(`PHASES\\.${phase}`), `Phase guidance should cover ${phase}`);
+assert.match(mainSource, /renderPhaseGuide\(state\)/, "The GM table should render phase guidance");
+assert.match(mainSource, /renderPhaseGuide\(board, \{ playerId: player\.id \}\)/, "The player panel should render actor-specific phase guidance");
+assert.match(mainSource, /action === "open-rules"/, "Both interfaces should activate the journal-rule link");
 assert.match(mainSource, /assets\/cards\/card_back\.webp/, "The supplied card back should render for concealed cards");
 assert.match(mainSource, /cardAssetPath\(card\)/, "The supplied card faces should render from module assets");
 assert.equal(playableCards.length, 54, "The playable deck should include 52 suited cards and two Pirates");
@@ -57,4 +64,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.4.4 revision validation passed.");
+console.log("Poppy’s Prize 1.4.5 revision validation passed.");

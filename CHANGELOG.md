@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.5 — 25 August 2026
+
+This release adds phase-aware guidance to the GM table and player panel. It explains the current common-card, betting, Pirate Plunder, matching-card surrender, carry-over, or completion step, with wording tailored to the viewer’s role and current turn. Each guide includes a **Poppy's Prize Rules** link that opens `@UUID[JournalEntry.pJeEYJAnY1JQi44e]{Poppy's Prize}`.
+
 ## 1.4.4 — 25 August 2026
 
 This patch orders all four setup selectors for faster table preparation. Each list begins with **- Dummy**, then shows active PF2E **Party Members** alphabetically, followed by every other eligible character and NPC actor alphabetically. Party membership comes from the PF2E Party actor rather than an actor name or manual tag.

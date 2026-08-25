@@ -22,6 +22,8 @@ const PUBLIC_STATE_SETTING = "publicBoard";
 const PLAYER_VIEW_FLAG = "playerView";
 const PLAYER_REQUEST_FLAG = "playerRequest";
 const PLAYER_STATUS_FLAG = "playerStatus";
+const RULES_JOURNAL_UUID = "JournalEntry.pJeEYJAnY1JQi44e";
+const RULES_JOURNAL_REFERENCE = "@UUID[JournalEntry.pJeEYJAnY1JQi44e]{Poppy's Prize}";
 let tableApp = null;
 let playerApp = null;
 let actionQueue = Promise.resolve();
@@ -37,6 +39,79 @@ function notify(level, message) {
 function escapeHTML(value) {
   const string = String(value ?? "");
   return string.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" })[character]);
+}
+
+function rulesLinkMarkup() {
+  return `<a class="pp-rules-link content-link" data-action="open-rules" data-uuid="${RULES_JOURNAL_UUID}" data-reference="${RULES_JOURNAL_REFERENCE}" title="Open Poppy's Prize rules"><i class="fa-solid fa-book-open"></i> Poppy's Prize Rules</a>`;
+}
+
+async function openRulesJournal() {
+  try {
+    const journal = await fromUuid(RULES_JOURNAL_UUID);
+    if (!journal) throw new Error("The Poppy's Prize journal entry was not found in this world.");
+    journal.sheet?.render({ force: true });
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Could not open Poppy's Prize rules`, error);
+    notify("warn", "The Poppy's Prize rules journal entry is unavailable in this world.");
+  }
+}
+
+function phaseGuideData(state, playerId = null) {
+  const activeId = state.currentActorId ?? getCurrentActor(state);
+  const activeName = activeId ? playerName(state, activeId) : null;
+  const isOwnTurn = playerId && activeId === playerId;
+  const isPlayer = Boolean(playerId);
+  if (state.phase === PHASES.SELECT_COMMON) {
+    const selected = playerId && state.common?.some((entry) => entry.playerId === playerId);
+    return {
+      title: "Choose common cards",
+      text: isPlayer
+        ? (selected ? "Your common card is locked in face-down. Wait for the other players to choose." : "Choose one card from your hand to contribute face-down to the common pool.")
+        : "Each active player chooses one private hand card. When everyone has chosen, reveal the dealer's common card and begin betting.",
+    };
+  }
+  if (state.phase === PHASES.BETTING) {
+    const final = state.betting?.stage === "final";
+    return {
+      title: final ? "Final betting" : `Betting round ${state.round}`,
+      text: isPlayer
+        ? (isOwnTurn ? "It is your turn: pass when no bet is open, otherwise call, raise, or fold." : `${activeName ?? "Another player"} is acting. Wait for your turn.`)
+        : `${activeName ?? "The next player"} must act. Record a pass or call, a valid raise, or a fold; betting ends when every active player has answered the latest wager.`,
+    };
+  }
+  if (state.phase === PHASES.PLUNDER) {
+    return {
+      title: "Pirate Plunder",
+      text: isPlayer
+        ? (isOwnTurn ? "You may use your Pirate to name a target and a suit, value, or both—or decline to Plunder." : `${activeName ?? "A Pirate holder"} is deciding whether to Plunder. Pirate holders cannot be targeted.`)
+        : `${activeName ?? "The next Pirate holder"} may name an eligible target and demand a suit, a value, or both; Pirate holders cannot be targeted and may decline.`,
+    };
+  }
+  if (state.phase === PHASES.TRANSFER) {
+    return {
+      title: "Surrender a matching card",
+      text: isPlayer
+        ? (isOwnTurn ? "Select one highlighted card matching the Pirate's demand to surrender it." : `${activeName ?? "The targeted player"} must choose a matching card to surrender.`)
+        : `${activeName ?? "The targeted player"} chooses one matching card to surrender. Then discard the used Pirate and continue Plunder.`,
+    };
+  }
+  if (state.phase === PHASES.KEEP) {
+    return {
+      title: "Carry a card forward",
+      text: isPlayer
+        ? "Choose one private card to keep for the next game, or choose nothing. The round winner may also choose a common card."
+        : "Each player chooses one card to carry into the next game, or chooses nothing. The round winner may also select a common card.",
+    };
+  }
+  return {
+    title: "Round complete",
+    text: isPlayer ? "All carry-over choices are complete. Wait for the GM to deal the next game." : "All carry-over choices are complete. Deal the next game or close the table.",
+  };
+}
+
+function renderPhaseGuide(state, { playerId = null } = {}) {
+  const guide = phaseGuideData(state, playerId);
+  return `<section class="pp-phase-guide"><div><h3>${escapeHTML(guide.title)}</h3><p>${escapeHTML(guide.text)}</p></div>${rulesLinkMarkup()}</section>`;
 }
 
 function currentState() {
@@ -380,7 +455,7 @@ function renderPlunderControls(state) {
 }
 
 function renderStartState() {
-  return `<section class="pp-empty"><h2>Poppy’s Prize table</h2><p>No game is currently open. The GM can assign up to four PF2E PC or NPC actors, with any unused seat set to - Dummy.</p>${actionButton({ action: "new-game", label: "Start a game", icon: "fa-solid fa-anchor" })}</section>`;
+  return `<section class="pp-empty"><h2>Poppy’s Prize table</h2><p>No game is currently open. The GM can assign up to four PF2E PC or NPC actors, with any unused seat set to - Dummy.</p><p>${rulesLinkMarkup()}</p>${actionButton({ action: "new-game", label: "Start a game", icon: "fa-solid fa-anchor" })}</section>`;
 }
 
 function renderControls(state) {
@@ -399,6 +474,7 @@ function renderTable(state) {
   const payoutText = (state.payouts ?? []).filter((payout) => payout.copper > 0).map((payout) => `${escapeHTML(playerName(state, payout.playerId))}: ${escapeHTML(formatCopper(payout.copper))}${hasAutoCurrency(state) && payout.paid ? " (paid)" : ""}`).join(" · ");
   return `<div class="pp-table">
     <header class="pp-banner"><div><h2>Poppy’s Prize</h2><p>Game ${state.gameNumber} · ${escapeHTML(actorText)}</p></div><div class="pp-pot"><span>Pot</span><strong>${escapeHTML(formatCopper(state.potCp))}</strong><small>Ante: ${escapeHTML(formatCopper(state.anteCp))}</small></div></header>
+    ${renderPhaseGuide(state)}
     <section class="pp-common"><h3>Common pool</h3><div class="pp-common-cards">${renderCommon(state)}</div></section>
     ${payoutText ? `<p class="pp-payout">Payout: ${payoutText}</p>` : ""}
     <section class="pp-players">${state.players.map((player) => renderPlayer(state, player, isGM())).join("")}</section>
@@ -469,6 +545,7 @@ function renderPlayerPanel(view) {
   const payout = board.payouts.find((entry) => entry.playerId === player.id && entry.copper > 0);
   return `<div class="pp-table pp-player-table">
     <header class="pp-banner"><div><h2>Poppy’s Prize</h2><p>Game ${board.gameNumber} · ${escapeHTML(actionText)}</p></div><div class="pp-pot"><span>Pot</span><strong>${escapeHTML(formatCopper(board.potCp))}</strong><small>Ante: ${escapeHTML(formatCopper(board.anteCp))}</small></div></header>
+    ${renderPhaseGuide(board, { playerId: player.id })}
     <section class="pp-common"><h3>Common pool</h3><div class="pp-common-cards">${renderPlayerCommon(board)}</div></section>
     ${payout ? `<p class="pp-payout">Your payout: ${escapeHTML(formatCopper(payout.copper))}${board.autoCurrency && payout.paid ? " (paid)" : ""}</p>` : ""}
     ${status?.message ? `<p class="pp-player-message ${escapeHTML(status.kind ?? "")}">${escapeHTML(status.message)}</p>` : ""}
@@ -507,6 +584,7 @@ class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
     event.preventDefault();
     const button = event.currentTarget;
     const action = button.dataset.action;
+    if (action === "open-rules") return openRulesJournal();
     if (!isGM() && action !== "") return notify("warn", "Poppy’s Prize is GM-led. Ask the GM to record this action.");
     if (action === "new-game") return promptStartGame();
     if (action === "clear-game") return clearGame();
@@ -564,6 +642,7 @@ class PoppysPrizePlayerApplication extends foundry.applications.api.ApplicationV
     event.preventDefault();
     const button = event.currentTarget;
     const action = button.dataset.action;
+    if (action === "open-rules") return openRulesJournal();
     if (action === "player-select-common") return submitPlayerRequest("select-common", { cardId: button.dataset.card });
     if (action === "player-transfer") return submitPlayerRequest("transfer", { cardId: button.dataset.card });
     if (action === "player-keep") return submitPlayerRequest("keep", { cardId: button.dataset.card });
