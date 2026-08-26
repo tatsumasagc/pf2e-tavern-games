@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.4.7 — 25 August 2026
+
+This patch removes the unsupported top-level `system` key from `module.json`, eliminating Foundry VTT v14’s unknown-key warning. PF2E support remains declared through the supported `relationships.systems` entry, including the verified PF2E 8.4.1 compatibility range.
+
 ## 1.4.6 — 25 August 2026
 
 This patch repairs the GM table’s behaviour on a 1920×1080 display. The table now opens at a compact 1120 × 820 size, uses smaller GM-only cards and tighter section spacing, caps its height to the viewport, and provides a dedicated vertical scroll area whenever its contents still overflow. The player panel keeps its existing card size and layout.
