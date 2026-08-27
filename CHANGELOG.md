@@ -2,6 +2,14 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.5.0 — 27 August 2026
+
+This feature release adds a GM **Open player panel** control for each participant, an independently scrollable player window, high-contrast phase-guide titles, and prominent in-client turn alerts that open the active participant’s panel. Completed rounds now announce the winner or split winners, every payout, the winning hand, and its five scoring cards to the shared chat.
+
+The setup dialogue now asks the GM to designate a participating deck owner as the first Poppy/Dealer and accepts all antes in separate whole-number **pp**, **gp**, **sp**, and **cp** fields. The table is prepared before cards or antes are dealt; Poppy must use **Deal cards** to begin the game, and the same staged action applies to later games.
+
+On the first game, an actor with an inventory item slugged `marked-playing-cards` may use marked cards to choose two opening-hand cards. The module makes a secret PF2E `action: "palm-an-object"` Thievery check against the other participants’ Perception DCs for every first deal. A failed cheating attempt whispers suspicion to the other participant owners; a fair deal never receives a mechanical benefit or warning.
+
 ## 1.4.7 — 25 August 2026
 
 This patch removes the unsupported top-level `system` key from `module.json`, eliminating Foundry VTT v14’s unknown-key warning. PF2E support remains declared through the supported `relationships.systems` entry, including the verified PF2E 8.4.1 compatibility range.

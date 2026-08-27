@@ -12,7 +12,7 @@ const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.4.7", "The release version should be 1.4.7");
+assert.equal(manifest.version, "1.5.0", "The release version should be 1.5.0");
 assert.ok(!Object.hasOwn(manifest, "system"), "Foundry v14 manifests must not include the unsupported top-level system key");
 assert.equal(manifest.relationships?.systems?.[0]?.id, "pf2e", "The supported PF2E relationship should be retained");
 assert.equal(manifest.relationships?.systems?.[0]?.type, "system", "The PF2E relationship should identify a system package");
@@ -44,10 +44,30 @@ assert.match(mainSource, /processPlayerRequest/, "Player requests should be proc
 assert.match(mainSource, /RULES_JOURNAL_UUID = "JournalEntry\.pJeEYJAnY1JQi44e"/, "The supplied Poppy’s Prize rules journal UUID should be included");
 assert.match(mainSource, /@UUID\[JournalEntry\.pJeEYJAnY1JQi44e\]\{Poppy's Prize\}/, "The supplied Poppy’s Prize journal reference should be retained");
 assert.match(mainSource, /phaseGuideData/, "The module should provide phase-aware game guidance");
-for (const phase of ["SELECT_COMMON", "BETTING", "PLUNDER", "TRANSFER", "KEEP"]) assert.match(mainSource, new RegExp(`PHASES\\.${phase}`), `Phase guidance should cover ${phase}`);
+for (const phase of ["DEAL", "SELECT_COMMON", "BETTING", "PLUNDER", "TRANSFER", "KEEP"]) assert.match(mainSource, new RegExp(`PHASES\\.${phase}`), `Phase guidance should cover ${phase}`);
 assert.match(mainSource, /renderPhaseGuide\(state\)/, "The GM table should render phase guidance");
 assert.match(mainSource, /renderPhaseGuide\(board, \{ playerId: player\.id \}\)/, "The player panel should render actor-specific phase guidance");
 assert.match(mainSource, /action === "open-rules"/, "Both interfaces should activate the journal-rule link");
+assert.match(mainSource, /requestPlayerPanelOpen/, "The GM should be able to request that a player panel open");
+assert.match(mainSource, /type: "open-player-panel"/, "The GM panel prompt should use the module socket");
+assert.match(mainSource, /type === "open-player-panel"/, "Actor owners should receive GM player-panel prompts");
+assert.match(mainSource, /type: "turn-alert"/, "The active player should receive a turn-alert socket event");
+assert.match(mainSource, /pp-turn-alert/, "The player interface should render a prominent turn alert");
+assert.match(mainSource, /position: \{ width: 760, height: 760 \}/, "The player window should use a bounded default height");
+assert.match(cssSource, /#poppys-prize-player \.window-content/, "The player window should have its own scrollable content area");
+assert.match(cssSource, /\.pp-phase-guide h3 \{\s+color: #14373f !important/, "The phase title should use an explicit high-contrast colour");
+assert.match(mainSource, /ChatMessage\.create\(\{/, "The game should announce completed round outcomes in chat");
+assert.match(mainSource, /winner-announcement/, "Winner messages should be marked to prevent duplicate announcements");
+assert.match(mainSource, /dealPreparedGame/, "The game should use a dealer-controlled deal transition");
+assert.match(mainSource, /Deck owner and first Poppy/, "Setup should select a participating deck owner as the first Poppy");
+assert.match(mainSource, /marked-playing-cards/, "Marked-playing-card eligibility should be checked by slug");
+assert.match(mainSource, /action: "palm-an-object"/, "Cheating should use the Palm an Object action context");
+assert.match(mainSource, /messageMode: "blindroll"/, "Palm an Object checks should be secret");
+assert.match(mainSource, /You think <strong>\$\{escapeHTML\(dealer\.name\)\}<\/strong> is cheating\./, "Failed cheating checks should whisper suspicion to observers");
+assert.match(mainSource, /coinFieldMarkup\("pp-ante"/, "The ante should use separate denomination fields");
+assert.match(mainSource, /coinFieldMarkup\("pp-raise"/, "GM raises should use separate denomination fields");
+assert.match(mainSource, /coinFieldMarkup\("pp-player-raise"/, "Player raises should use separate denomination fields");
+assert.match(mainSource, /\["pp", "gp", "sp", "cp"\]/, "Coin inputs should present pp, gp, sp, and cp in that order");
 assert.match(mainSource, /position: \{ width: 1120, height: 820 \}/, "The GM table should open at a compact, bounded 1120×820 size");
 assert.match(mainSource, /poppys-prize-gm/, "The GM table should have a dedicated layout class");
 assert.match(cssSource, /#poppys-prize-table \.window-content/, "The GM window content should have a dedicated overflow boundary");
@@ -74,4 +94,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.4.7 revision validation passed.");
+console.log("Poppy’s Prize 1.5.0 revision validation passed.");

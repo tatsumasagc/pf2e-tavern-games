@@ -4,9 +4,11 @@ import {
   bestPokerHand,
   bettingAction,
   chooseKeep,
+  coinsToCopper,
   createDeck,
   createGame,
   dealNextGame,
+  dealPreparedGame,
   declinePlunder,
   getCurrentActor,
   selectCommon,
@@ -24,6 +26,7 @@ assert.equal(bestPokerHand([by("A", "ships"), by("K", "ships"), by("Q", "ships")
 assert.equal(bestPokerHand([by("A", "trees"), by("A", "ships"), by("A", "gems"), by("A", "parrots"), by("10", "ships")]).name, "Four of a Kind");
 assert.equal(bestPokerHand([by("A", "trees"), by("A", "ships"), by("K", "gems"), by("K", "parrots"), by("10", "ships")]).name, "Two Pair");
 assert.equal(bestPokerHand([by("A", "trees"), by("2", "ships"), by("3", "gems"), by("4", "parrots"), by("5", "ships")]).name, "Straight");
+assert.equal(coinsToCopper({ pp: 1, gp: 2, sp: 3, cp: 4 }), 1234, "Separate coin inputs should convert to copper correctly");
 
 const participants = [
   { id: "a", actorId: "actor-a", name: "Ari" },
@@ -31,9 +34,16 @@ const participants = [
   { id: "c", actorId: "actor-c", name: "Cor" },
   { id: "d", actorId: "actor-d", name: "Dee" },
 ];
-let state = createGame({ participants, anteCp: 500, rng: () => 0.42 });
-assert.equal(state.potCp, 2000, "All players ante at game start");
-assert.equal(state.phase, PHASES.SELECT_COMMON);
+let state = createGame({ participants, anteCp: 500, dealerId: "b", rng: () => 0.42 });
+assert.equal(state.potCp, 0, "Antes are not collected until Poppy deals");
+assert.equal(state.phase, PHASES.DEAL, "The table waits for Poppy to deal");
+assert.equal(state.players.find((player) => player.seat === state.dealerSeat).id, "b", "The selected deck owner is the first Poppy");
+assert.ok(state.players.every((player) => player.hand.length === 0), "No private hands exist before Poppy deals");
+const markedCardIds = state.deck.slice(0, 2).map((card) => card.id);
+state = dealPreparedGame(state, { markedCardIds, rng: () => 0.42 });
+assert.equal(state.potCp, 2000, "All players ante when Poppy deals");
+assert.equal(state.phase, PHASES.SELECT_COMMON, "Dealing begins the common-card phase");
+assert.ok(markedCardIds.every((id) => state.players.find((player) => player.id === "b").hand.some((card) => card.id === id)), "Poppy receives the two selected marked cards");
 assert.equal(state.common.length, 0, "Four real players need no dummy common cards");
 
 for (const player of state.players) state = selectCommon(state, player.id, player.hand[0].id);
@@ -60,9 +70,12 @@ assert.equal(state.payouts.reduce((total, payout) => total + payout.copper, 0), 
 for (const player of state.players) state = chooseKeep(state, player.id, null);
 assert.equal(state.phase, PHASES.COMPLETE, "All players must explicitly complete their keeping choice");
 state = dealNextGame(state, () => 0.42);
-assert.equal(state.phase, PHASES.SELECT_COMMON, "A completed round can deal the next game");
+assert.equal(state.phase, PHASES.DEAL, "A completed round prepares the next game for the new Poppy");
 assert.equal(state.gameNumber, 2);
-assert.equal(state.potCp, 2000, "The next game collects a fresh ante from every player");
+assert.equal(state.potCp, 0, "The next ante is not collected until Poppy deals");
+state = dealPreparedGame(state, { rng: () => 0.42 });
+assert.equal(state.phase, PHASES.SELECT_COMMON, "The next game begins only when Poppy uses Deal cards");
+assert.equal(state.potCp, 2000, "The next game collects a fresh ante when Poppy deals");
 assert.ok(state.players.every((player) => player.hand.length === 5), "Each player begins the next game with five cards");
 
 console.log("Poppy’s Prize engine tests passed.");

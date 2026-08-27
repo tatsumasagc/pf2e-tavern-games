@@ -601,3 +601,161 @@ button.pp-card:hover:not(:disabled),
   .pp-seat-selectors,
   .pp-start-stakes { grid-template-columns: 1fr; }
 }
+
+/* Shared phase guidance must remain readable against its pale background. */
+.pp-phase-guide h3 {
+  color: #14373f !important;
+  font-weight: 700;
+  text-shadow: none !important;
+}
+
+/* The player panel has its own viewport-bounded scroll area. */
+#poppys-prize-player {
+  max-height: calc(100vh - 48px);
+}
+
+#poppys-prize-player .window-content {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+#poppys-prize-player .pp-table {
+  min-height: 100%;
+}
+
+.pp-turn-alert {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  margin: 0.8rem 1.3rem 0;
+  padding: 0.7rem 0.85rem;
+  color: #1d320c;
+  background: #fff0a8;
+  border: 2px solid #bd7117;
+  border-left-width: 7px;
+  border-radius: 0.35rem;
+  box-shadow: 0 0 0 3px rgba(237, 180, 54, 0.28);
+  animation: pp-turn-pulse 1.3s ease-in-out infinite alternate;
+}
+
+.pp-turn-alert i {
+  color: #8a4c04;
+  font-size: 1.35rem;
+}
+
+.pp-turn-alert strong,
+.pp-turn-alert span {
+  display: block;
+}
+
+.pp-turn-alert span {
+  margin-top: 0.1rem;
+  font-size: 0.84rem;
+}
+
+.pp-your-turn .pp-player.active {
+  border-left-color: #b9610b;
+  box-shadow: 0 0 0 3px rgba(237, 180, 54, 0.42);
+}
+
+@keyframes pp-turn-pulse {
+  from { box-shadow: 0 0 0 2px rgba(237, 180, 54, 0.22); }
+  to { box-shadow: 0 0 0 5px rgba(237, 180, 54, 0.52); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-turn-alert { animation: none; }
+}
+
+.pp-coin-fields {
+  display: flex;
+  gap: 0.5rem;
+  align-items: end;
+  min-width: 0;
+  margin: 0;
+  padding: 0.55rem 0.7rem 0.65rem;
+  border: 1px solid #b69760;
+  border-radius: 0.35rem;
+}
+
+.pp-coin-fields legend {
+  padding: 0 0.25rem;
+  color: #254951;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.pp-coin-field {
+  display: grid !important;
+  gap: 0.2rem !important;
+  min-width: 0;
+  color: #4e4335 !important;
+  font-size: 0.76rem !important;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+.pp-coin-field input {
+  width: 4.1rem;
+  min-width: 0;
+  text-align: right;
+}
+
+.pp-coin-fields.compact {
+  padding: 0.4rem 0.55rem 0.5rem;
+}
+
+.pp-coin-fields.compact .pp-coin-field input {
+  width: 3.6rem;
+}
+
+.pp-deck-owner-choice,
+.pp-marked-card-fields {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.pp-deck-owner-choice {
+  color: #254951 !important;
+  font-weight: 700;
+}
+
+.pp-marked-card-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.6rem;
+}
+
+.pp-marked-card-fields label {
+  display: grid;
+  gap: 0.25rem;
+  color: #4e4335;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pp-player-launch {
+  margin-top: 0.35rem;
+}
+
+.pp-player-launch .pp-button {
+  font-size: 0.72rem;
+}
+
+.poppys-prize-chat h3 {
+  margin: 0 0 0.35rem;
+  color: #14373f;
+}
+
+.poppys-prize-chat ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+@media (max-width: 520px) {
+  .pp-coin-fields,
+  .pp-marked-card-fields { flex-wrap: wrap; grid-template-columns: 1fr; }
+  .pp-coin-field input { width: 4.6rem; }
+}

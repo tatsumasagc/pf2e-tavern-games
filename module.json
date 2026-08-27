@@ -2,7 +2,7 @@
   "id": "poppys-prize",
   "title": "Poppy’s Prize",
   "description": "A GM-led Poppy’s Prize table with a privacy-safe player interface, supplied deck art, PF2E PC and NPC support, and optional automatic currency transfers.",
-  "version": "1.4.7",
+  "version": "1.5.0",
   "authors": [
     {
       "name": "Manus AI"
@@ -63,7 +63,7 @@
   ],
   "url": "https://github.com/tatsumasagc/poppys-prize",
   "manifest": "https://github.com/tatsumasagc/poppys-prize/releases/latest/download/module.json",
-  "download": "https://github.com/tatsumasagc/poppys-prize/releases/download/v1.4.7/poppys-prize-v1.4.7.zip",
+  "download": "https://github.com/tatsumasagc/poppys-prize/releases/download/v1.5.0/poppys-prize-v1.5.0.zip",
   "readme": "README.md",
   "license": "LICENSE"
 }

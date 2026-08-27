@@ -6,9 +6,11 @@ import {
   chooseKeep,
   choosePlunderTransfer,
   compactCardLabel,
+  coinsToCopper,
   copperToCoins,
   createGame,
   dealNextGame,
+  dealPreparedGame,
   declinePlunder,
   formatCopper,
   getCurrentActor,
@@ -61,6 +63,16 @@ function phaseGuideData(state, playerId = null) {
   const activeName = activeId ? playerName(state, activeId) : null;
   const isOwnTurn = playerId && activeId === playerId;
   const isPlayer = Boolean(playerId);
+  if (state.phase === PHASES.DEAL) {
+    const dealer = state.players?.find((player) => player.seat === state.dealerSeat);
+    const youAreDealer = isPlayer && dealer?.id === playerId;
+    return {
+      title: "Poppy deals the cards",
+      text: isPlayer
+        ? (youAreDealer ? "You are Poppy. Choose whether to use marked cards, then deal five cards to every player." : `${dealer?.name ?? "Poppy"} is preparing the deck. Wait for them to deal the cards.`)
+        : `${dealer?.name ?? "Poppy"} owns the deck and is the current Poppy. Open their player panel or use the Deal cards control when ready.`,
+    };
+  }
   if (state.phase === PHASES.SELECT_COMMON) {
     const selected = playerId && state.common?.some((entry) => entry.playerId === playerId);
     return {
@@ -105,7 +117,7 @@ function phaseGuideData(state, playerId = null) {
   }
   return {
     title: "Round complete",
-    text: isPlayer ? "All carry-over choices are complete. Wait for the GM to deal the next game." : "All carry-over choices are complete. Deal the next game or close the table.",
+    text: isPlayer ? "All carry-over choices are complete. Wait for the GM to prepare the next game and Poppy to deal." : "All carry-over choices are complete. Prepare the next game or close the table.",
   };
 }
 
@@ -152,6 +164,115 @@ function playerName(state, id) {
   return getPlayer(state, id)?.name ?? "Unknown player";
 }
 
+function coinFieldMarkup(prefix, totalCp = 0, { label = "Amount", compact = false } = {}) {
+  const coins = copperToCoins(totalCp);
+  const fields = ["pp", "gp", "sp", "cp"].map((denomination) => `<label class="pp-coin-field"><span>${denomination}</span><input id="${prefix}-${denomination}" name="${prefix}-${denomination}" type="number" min="0" step="1" inputmode="numeric" value="${coins[denomination]}"></label>`).join("");
+  return `<fieldset class="pp-coin-fields ${compact ? "compact" : ""}"><legend>${escapeHTML(label)}</legend>${fields}</fieldset>`;
+}
+
+function coinFieldsToCopper(root, prefix) {
+  return coinsToCopper(Object.fromEntries(["pp", "gp", "sp", "cp"].map((denomination) => [denomination, root.querySelector(`#${prefix}-${denomination}`)?.value ?? 0])));
+}
+
+function activeOwnerIds(actor) {
+  return game.users.filter((user) => user.active && !user.isGM && actor?.testUserPermission?.(user, "OWNER")).map((user) => user.id);
+}
+
+function requestPlayerPanelOpen(actorId) {
+  const actor = getActor(actorId);
+  if (!actor) return notify("warn", "The selected Poppy’s Prize actor is no longer available.");
+  const ownerIds = activeOwnerIds(actor);
+  if (ownerIds.length === 0) return notify("warn", `${actor.name} has no active non-GM Owner to open a player panel.`);
+  game.socket?.emit(`module.${MODULE_ID}`, { type: "open-player-panel", actorId: actor.id });
+  notify("info", `Requested that ${actor.name} open their Poppy’s Prize player panel.`);
+}
+
+async function announceTurn(state, previousState) {
+  const actorId = getCurrentActor(state);
+  const previousActorId = previousState ? getCurrentActor(previousState) : null;
+  if (!actorId || actorId === previousActorId) return;
+  const player = getPlayer(state, actorId);
+  const actor = getActor(player?.actorId);
+  const ownerIds = activeOwnerIds(actor);
+  if (ownerIds.length === 0) return;
+  game.socket?.emit(`module.${MODULE_ID}`, { type: "turn-alert", actorId: actor.id, playerName: player.name, phase: state.phase, recipients: ownerIds });
+}
+
+function cardById(state, cardId) {
+  return state.players.flatMap((player) => player.hand).concat(state.common.map((entry) => entry.card)).find((card) => card?.id === cardId) ?? null;
+}
+
+async function announceWinners(state) {
+  const showdown = state.lastShowdown;
+  if (!showdown || showdown.announced) return;
+  const winners = showdown.winners.map((id) => getPlayer(state, id)).filter(Boolean);
+  if (winners.length === 0) return;
+  const outcome = winners.map((winner) => {
+    const payout = state.payouts?.find((entry) => entry.playerId === winner.id)?.copper ?? 0;
+    const score = showdown.scores?.[winner.id];
+    if (!score) return `<li><strong>${escapeHTML(winner.name)}</strong> wins ${escapeHTML(formatCopper(payout))}: every other player folded.</li>`;
+    const cards = score.cards.map((cardId) => cardById(state, cardId)).filter(Boolean).map((card) => escapeHTML(cardLabel(card))).join(", ");
+    return `<li><strong>${escapeHTML(winner.name)}</strong> wins ${escapeHTML(formatCopper(payout))} with <strong>${escapeHTML(score.name)}</strong>${cards ? `: ${cards}.` : "."}</li>`;
+  }).join("");
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ alias: "Poppy’s Prize" }),
+    content: `<section class="poppys-prize-chat"><h3>Poppy’s Prize — Game ${state.gameNumber} result</h3><ul>${outcome}</ul></section>`,
+    flags: { [MODULE_ID]: { type: "winner-announcement", gameNumber: state.gameNumber } },
+  });
+  showdown.announced = true;
+  await game.settings.set(MODULE_ID, STATE_SETTING, state);
+}
+
+function hasMarkedPlayingCards(actor) {
+  return actor?.items?.some((item) => item.slug === "marked-playing-cards" || item.system?.slug === "marked-playing-cards") === true;
+}
+
+function perceptionDC(actor) {
+  return Number(actor?.perception?.dc?.value ?? actor?.system?.attributes?.perception?.dc ?? 0);
+}
+
+async function rollDeckCheatCheck(state, cheating) {
+  const dealer = state.players.find((player) => player.seat === state.dealerSeat);
+  const dealerActor = getActor(dealer?.actorId);
+  const observers = state.players.filter((player) => player.id !== dealer?.id);
+  const observerDCs = observers.map((player) => perceptionDC(getActor(player.actorId))).filter((dc) => Number.isFinite(dc) && dc > 0);
+  const dc = observerDCs.length ? Math.max(...observerDCs) : 10;
+  const thievery = dealerActor?.skills?.thievery;
+  if (!thievery?.check?.roll) {
+    console.warn(`${MODULE_ID} | ${dealer?.name ?? "The dealer"} cannot make a PF2E Thievery roll for Palm an Object.`);
+    return null;
+  }
+  let roll;
+  try {
+    roll = await thievery.check.roll({
+      action: "palm-an-object",
+      slug: "palm-an-object",
+      title: "Palm an Object — Poppy’s Prize",
+      label: "Palm an Object",
+      dc: { value: dc, label: "Observers’ Perception DC" },
+      messageMode: "blindroll",
+      skipDialog: true,
+      extraRollOptions: ["action:palm-an-object", "poppys-prize:deck-deal"],
+    });
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Palm an Object roll failed to resolve`, error);
+    return null;
+  }
+  const failed = Number(roll?.degreeOfSuccess) <= 1;
+  if (!cheating || !failed) return roll;
+  for (const observer of observers) {
+    const whisper = activeOwnerIds(getActor(observer.actorId));
+    if (whisper.length === 0) continue;
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ alias: "Poppy’s Prize" }),
+      content: `<p>You think <strong>${escapeHTML(dealer.name)}</strong> is cheating.</p>`,
+      whisper,
+      flags: { [MODULE_ID]: { type: "cheating-suspicion", dealerId: dealer.id, gameNumber: state.gameNumber } },
+    });
+  }
+  return roll;
+}
+
 function hasAutoCurrency(state = currentState()) {
   return state?.autoCurrency === true;
 }
@@ -178,6 +299,7 @@ function buildPublicBoard(state) {
     potCp: state.potCp,
     anteCp: state.anteCp,
     dealerSeat: state.dealerSeat,
+    dealerId: state.players.find((player) => player.seat === state.dealerSeat)?.id ?? null,
     currentActorId: getCurrentActor(state),
     autoCurrency: hasAutoCurrency(state),
     common: state.common.map((entry) => ({ seat: entry.seat, playerId: entry.playerId, name: entry.name, dummy: entry.dummy, revealed: entry.revealed, card: publicCard(entry) })),
@@ -196,6 +318,7 @@ function buildPublicBoard(state) {
 
 function buildPlayerView(state, player) {
   const currentId = getCurrentActor(state);
+  const canDeal = state.phase === PHASES.DEAL && player.seat === state.dealerSeat;
   const canSelectCommon = state.phase === PHASES.SELECT_COMMON && !state.common.some((entry) => entry.playerId === player.id);
   const canBet = state.phase === PHASES.BETTING && currentId === player.id;
   const canPlunder = state.phase === PHASES.PLUNDER && currentId === player.id;
@@ -219,6 +342,9 @@ function buildPlayerView(state, player) {
       showdown: state.lastShowdown?.scores?.[player.id] ?? null,
     },
     choices: {
+      canDeal,
+      canCheatDeal: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)),
+      markedCardOptions: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)) ? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
       canSelectCommon,
       canBet,
       canPlunder,
@@ -323,9 +449,12 @@ async function settlePayouts(state) {
 }
 
 async function saveState(state) {
+  const previousState = currentState();
   await game.settings.set(MODULE_ID, STATE_SETTING, state);
   await settlePayouts(state);
+  if (isPrimaryGM()) await announceWinners(state);
   await syncPlayerViews(state);
+  if (isPrimaryGM()) await announceTurn(state, previousState);
   tableApp?.render({ force: true });
   playerApp?.render({ force: true });
 }
@@ -405,6 +534,7 @@ function renderPlayer(state, player, gm) {
       <div><strong>${escapeHTML(player.name)}</strong> ${player.seat === state.dealerSeat ? "<span class=\"pp-dealer\">Poppy</span>" : ""}</div>
       <div class="pp-player-status">${player.folded ? "Folded" : active ? "To act" : waitingCommon ? "Choose common card" : "In game"}</div>
     </header>
+    ${gm ? `<div class="pp-player-launch">${actionButton({ action: "open-player-panel", label: "Open player panel", css: "text", icon: "fa-solid fa-up-right-from-square", dataset: { actor: player.actorId } })}</div>` : ""}
     <div class="pp-player-meta"><span>Contributed: ${escapeHTML(formatCopper(player.contributionCp))}</span>${showing ? `<span>Showdown: ${escapeHTML(showing.name)}</span>` : ""}${keep ? "<span>Card kept</span>" : ""}</div>
     ${renderHand(state, player, gm)}
   </section>`;
@@ -425,7 +555,7 @@ function renderBettingControls(state) {
       ${actionButton({ action: "bet", label: "Fold", css: "danger", dataset: { player: player.id, type: "fold" } })}
     </div>
     <div class="pp-raise-row">
-      <label>Raise to <input id="pp-raise-cp" type="number" min="${minimumRaise}" step="1" value="${minimumRaise}"> <span>cp</span></label>
+      ${coinFieldMarkup("pp-raise", minimumRaise, { label: "Raise total (pp, gp, sp, cp)", compact: true })}
       ${actionButton({ action: "raise", label: "Raise", dataset: { player: player.id } })}
     </div>
     <p class="pp-help">Current bet: <strong>${formatCopper(currentBet)}</strong>. A new bet must be at least ${formatCopper(minimumRaise)}.</p>
@@ -458,12 +588,27 @@ function renderStartState() {
   return `<section class="pp-empty"><h2>Poppy’s Prize table</h2><p>No game is currently open. The GM can assign up to four PF2E PC or NPC actors, with any unused seat set to - Dummy.</p><p>${rulesLinkMarkup()}</p>${actionButton({ action: "new-game", label: "Start a game", icon: "fa-solid fa-anchor" })}</section>`;
 }
 
+function renderDealControls(state, choices = {}) {
+  const dealer = state.players.find((player) => player.seat === state.dealerSeat);
+  const dealAction = isGM() ? "deal-cards" : "player-deal-cards";
+  const dealerActor = getActor(dealer?.actorId);
+  const canCheat = choices.canCheatDeal ?? (state.gameNumber === 1 && hasMarkedPlayingCards(dealerActor));
+  const cardOptions = choices.markedCardOptions ?? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) }));
+  const optionMarkup = `<option value="">Choose a card</option>${cardOptions.map((card) => `<option value="${escapeHTML(card.id)}">${escapeHTML(card.label)}</option>`).join("")}`;
+  return `<section class="pp-control-panel pp-deal-panel"><h3>${escapeHTML(dealer?.name ?? "Poppy")} deals the cards</h3>
+    <p>Cards and antes are applied only after Poppy uses <strong>Deal cards</strong>. ${state.gameNumber === 1 ? "The first Poppy may choose two cards only by cheating with marked playing cards." : "The winner of the previous game is the new Poppy."}</p>
+    ${canCheat ? `<label class="pp-currency-choice"><input id="pp-cheat-deal" type="checkbox"> Use marked playing cards to choose two cards</label><div class="pp-marked-card-fields"><label>First card <select id="pp-marked-card-1">${optionMarkup}</select></label><label>Second card <select id="pp-marked-card-2">${optionMarkup}</select></label></div><p class="pp-help">A secret Thievery check using Palm an Object will be rolled against the other players’ Perception DCs.</p>` : `<p class="pp-help">A secret Palm an Object check will still be rolled for the first deal, but it has no effect because this Poppy is not using marked playing cards.</p>`}
+    <div class="pp-action-row">${actionButton({ action: dealAction, label: "Deal cards", icon: "fa-solid fa-clone" })}${isGM() ? actionButton({ action: "open-player-panel", label: "Open Poppy’s player panel", css: "muted", dataset: { actor: dealer?.actorId ?? "" } }) : ""}</div>
+  </section>`;
+}
+
 function renderControls(state) {
   if (!isGM()) return "<p class=\"pp-viewer-note\">This is a GM-led table. Ask the GM to record a game action.</p>";
+  if (state.phase === PHASES.DEAL) return renderDealControls(state);
   if (state.phase === PHASES.BETTING) return renderBettingControls(state);
   if (state.phase === PHASES.PLUNDER || state.phase === PHASES.TRANSFER) return renderPlunderControls(state);
   if (state.phase === PHASES.KEEP) return "<section class=\"pp-control-panel\"><h3>Keep one card</h3><p>Choose a card in each player’s hand, or use <em>Keep nothing</em>. A round winner may also choose from the common pool.</p></section>";
-  if (state.phase === PHASES.COMPLETE) return `<section class="pp-control-panel"><h3>Round complete</h3><p>All players have made their carry-over choices.</p><div class="pp-action-row">${actionButton({ action: "next-game", label: "Deal next game", icon: "fa-solid fa-dice" })}${actionButton({ action: "clear-game", label: "Close table", css: "danger" })}</div></section>`;
+  if (state.phase === PHASES.COMPLETE) return `<section class="pp-control-panel"><h3>Round complete</h3><p>All players have made their carry-over choices. Prepare the next game, then the new Poppy deals the cards.</p><div class="pp-action-row">${actionButton({ action: "next-game", label: "Prepare next game", icon: "fa-solid fa-dice" })}${actionButton({ action: "clear-game", label: "Close table", css: "danger" })}</div></section>`;
   return `<section class="pp-control-panel"><h3>Common cards</h3><p>Each player must choose one face-down card. The dealer’s card will be revealed first.</p></section>`;
 }
 
@@ -507,6 +652,7 @@ function renderPlayerHand(view) {
 
 function renderPlayerActions(view) {
   const { board, player, choices } = view;
+  if (choices.canDeal) return renderDealControls(board, choices);
   if (choices.canSelectCommon) return `<section class="pp-control-panel"><h3>Choose your common card</h3><p>Select one card from your hand. It remains face-down until the reveal.</p></section>`;
   if (choices.canBet && board.betting) {
     const currentBet = board.betting.currentBet;
@@ -518,7 +664,7 @@ function renderPlayerActions(view) {
         ${currentBet === 0 ? actionButton({ action: "player-bet", label: "Pass", dataset: { type: "pass" } }) : actionButton({ action: "player-bet", label: `Call ${formatCopper(callCost)}`, dataset: { type: "call" } })}
         ${actionButton({ action: "player-bet", label: "Fold", css: "danger", dataset: { type: "fold" } })}
       </div>
-      <div class="pp-raise-row"><label>Raise to <input id="pp-player-raise-cp" type="number" min="${minimumRaise}" step="1" value="${minimumRaise}"> <span>cp</span></label>${actionButton({ action: "player-raise", label: "Raise" })}</div>
+      <div class="pp-raise-row">${coinFieldMarkup("pp-player-raise", minimumRaise, { label: "Raise total (pp, gp, sp, cp)", compact: true })}${actionButton({ action: "player-raise", label: "Raise" })}</div>
       <p class="pp-help">Current bet: <strong>${formatCopper(currentBet)}</strong>. A new bet must be at least ${formatCopper(minimumRaise)}.</p>
     </section>`;
   }
@@ -543,13 +689,15 @@ function renderPlayerPanel(view) {
   const currentPlayer = board.players.find((entry) => entry.id === board.currentActorId);
   const actionText = currentPlayer ? `${currentPlayer.name} is acting` : board.phase === PHASES.COMPLETE ? "Round complete" : "Awaiting selections";
   const payout = board.payouts.find((entry) => entry.playerId === player.id && entry.copper > 0);
-  return `<div class="pp-table pp-player-table">
+  const yourTurn = board.currentActorId === player.id || (board.phase === PHASES.DEAL && board.dealerId === player.id);
+  return `<div class="pp-table pp-player-table ${yourTurn ? "pp-your-turn" : ""}">
     <header class="pp-banner"><div><h2>Poppy’s Prize</h2><p>Game ${board.gameNumber} · ${escapeHTML(actionText)}</p></div><div class="pp-pot"><span>Pot</span><strong>${escapeHTML(formatCopper(board.potCp))}</strong><small>Ante: ${escapeHTML(formatCopper(board.anteCp))}</small></div></header>
     ${renderPhaseGuide(board, { playerId: player.id })}
+    ${yourTurn ? `<section class="pp-turn-alert" role="alert" aria-live="assertive"><i class="fa-solid fa-bell"></i><div><strong>It is your turn.</strong><span>Choose your action below.</span></div></section>` : ""}
     <section class="pp-common"><h3>Common pool</h3><div class="pp-common-cards">${renderPlayerCommon(board)}</div></section>
     ${payout ? `<p class="pp-payout">Your payout: ${escapeHTML(formatCopper(payout.copper))}${board.autoCurrency && payout.paid ? " (paid)" : ""}</p>` : ""}
     ${status?.message ? `<p class="pp-player-message ${escapeHTML(status.kind ?? "")}">${escapeHTML(status.message)}</p>` : ""}
-    <section class="pp-player active"><header><div><strong>${escapeHTML(player.name)}</strong>${player.seat === board.dealerSeat ? " <span class=\"pp-dealer\">Poppy</span>" : ""}</div><div class="pp-player-status">${player.folded ? "Folded" : board.currentActorId === player.id ? "Your turn" : "In game"}</div></header><div class="pp-player-meta"><span>Contributed: ${escapeHTML(formatCopper(player.contributionCp))}</span>${player.showdown ? `<span>Showdown: ${escapeHTML(player.showdown.name)}</span>` : ""}</div>${renderPlayerHand(view)}</section>
+    <section class="pp-player active"><header><div><strong>${escapeHTML(player.name)}</strong>${player.seat === board.dealerSeat ? " <span class=\"pp-dealer\">Poppy</span>" : ""}</div><div class="pp-player-status">${player.folded ? "Folded" : yourTurn ? "Your turn" : "In game"}</div></header><div class="pp-player-meta"><span>Contributed: ${escapeHTML(formatCopper(player.contributionCp))}</span>${player.showdown ? `<span>Showdown: ${escapeHTML(player.showdown.name)}</span>` : ""}</div>${renderPlayerHand(view)}</section>
     ${renderPlayerActions(view)}
     <footer class="pp-footer"><span>Phase: ${escapeHTML(board.phase.replaceAll("-", " "))}</span><span>Your hand is private.</span></footer>
   </div>`;
@@ -588,6 +736,8 @@ class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
     if (!isGM() && action !== "") return notify("warn", "Poppy’s Prize is GM-led. Ask the GM to record this action.");
     if (action === "new-game") return promptStartGame();
     if (action === "clear-game") return clearGame();
+    if (action === "open-player-panel") return requestPlayerPanelOpen(button.dataset.actor);
+    if (action === "deal-cards") return enact((state) => performDeal(state, dealRequestFromRoot(this.element)));
     if (action === "select-common") return enact((state) => selectCommon(state, button.dataset.player, button.dataset.card));
     if (action === "bet") return enact(async (state) => {
       const result = bettingAction(state, button.dataset.player, button.dataset.type);
@@ -595,7 +745,7 @@ class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
       return result.state;
     });
     if (action === "raise") return enact(async (state) => {
-      const amount = Number(this.element.querySelector("#pp-raise-cp")?.value);
+      const amount = coinFieldsToCopper(this.element, "pp-raise");
       const result = bettingAction(state, button.dataset.player, "raise", amount);
       await debitActor(result.debitPlayerId, result.debitCp, "this raise", hasAutoCurrency(state));
       return result.state;
@@ -617,7 +767,7 @@ class PoppysPrizePlayerApplication extends foundry.applications.api.ApplicationV
   static DEFAULT_OPTIONS = {
     id: "poppys-prize-player",
     classes: ["poppys-prize", "application", "poppys-prize-player"],
-    position: { width: 760, height: "auto" },
+    position: { width: 760, height: 760 },
     window: { title: "Poppy’s Prize — Your Hand", icon: "fa-solid fa-anchor", resizable: true },
   };
 
@@ -643,12 +793,13 @@ class PoppysPrizePlayerApplication extends foundry.applications.api.ApplicationV
     const button = event.currentTarget;
     const action = button.dataset.action;
     if (action === "open-rules") return openRulesJournal();
+    if (action === "player-deal-cards") return submitPlayerRequest("deal-cards", dealRequestFromRoot(this.element));
     if (action === "player-select-common") return submitPlayerRequest("select-common", { cardId: button.dataset.card });
     if (action === "player-transfer") return submitPlayerRequest("transfer", { cardId: button.dataset.card });
     if (action === "player-keep") return submitPlayerRequest("keep", { cardId: button.dataset.card });
     if (action === "player-keep-none") return submitPlayerRequest("keep-none");
     if (action === "player-bet") return submitPlayerRequest("bet", { type: button.dataset.type });
-    if (action === "player-raise") return submitPlayerRequest("raise", { amountCp: Number(this.element.querySelector("#pp-player-raise-cp")?.value) });
+    if (action === "player-raise") return submitPlayerRequest("raise", { amountCp: coinFieldsToCopper(this.element, "pp-player-raise") });
     if (action === "player-plunder") return submitPlayerRequest("plunder", {
       targetId: this.element.querySelector("#pp-player-plunder-target")?.value,
       suit: this.element.querySelector("#pp-player-plunder-suit")?.value || null,
@@ -688,7 +839,10 @@ async function processPlayerRequest(actor, request, userId) {
     if (!state || !player) return reject("You are not assigned to the active Poppy’s Prize table.");
     try {
       let next;
-      if (request.action === "select-common") next = selectCommon(state, player.id, request.payload?.cardId);
+      if (request.action === "deal-cards") {
+        if (state.phase !== PHASES.DEAL || player.seat !== state.dealerSeat) throw new Error("Only the assigned Poppy may deal this game.");
+        next = await performDeal(state, request.payload ?? {});
+      } else if (request.action === "select-common") next = selectCommon(state, player.id, request.payload?.cardId);
       else if (request.action === "bet") {
         const result = bettingAction(state, player.id, request.payload?.type);
         await debitActor(result.debitPlayerId, result.debitCp, "this bet", hasAutoCurrency(state));
@@ -733,11 +887,29 @@ async function enact(transform) {
   });
 }
 
+function dealRequestFromRoot(root) {
+  const cheating = root.querySelector("#pp-cheat-deal")?.checked === true;
+  const markedCardIds = cheating ? [root.querySelector("#pp-marked-card-1")?.value, root.querySelector("#pp-marked-card-2")?.value].filter(Boolean) : [];
+  if (cheating && markedCardIds.length !== 2) throw new Error("Choose two distinct cards before using marked playing cards.");
+  return { cheating, markedCardIds };
+}
+
+async function performDeal(state, { cheating = false, markedCardIds = [] } = {}) {
+  if (!state || state.phase !== PHASES.DEAL) throw new Error("The deck is not waiting to be dealt.");
+  const dealer = state.players.find((player) => player.seat === state.dealerSeat);
+  const dealerActor = getActor(dealer?.actorId);
+  const canCheat = state.gameNumber === 1 && hasMarkedPlayingCards(dealerActor);
+  if (cheating && !canCheat) throw new Error("Only the first Poppy with marked-playing-cards may choose two cards.");
+  const next = dealPreparedGame(state, { markedCardIds: cheating ? markedCardIds : [] });
+  await debitAntes(next, `game ${next.gameNumber} ante`);
+  if (next.gameNumber === 1) await rollDeckCheatCheck(next, cheating);
+  return next;
+}
+
 async function nextGame() {
   return enqueue(async () => {
     const state = currentState();
-    if (!state || state.phase !== PHASES.COMPLETE) throw new Error("Finish all keep choices before dealing the next game.");
-    await debitAntes(state, "the next game’s ante");
+    if (!state || state.phase !== PHASES.COMPLETE) throw new Error("Finish all keep choices before preparing the next game.");
     await saveState(dealNextGame(state));
   });
 }
@@ -748,14 +920,14 @@ function promptStartGame() {
   const { partyMembers, otherActors } = getParticipantActorGroups();
   const optionsFor = (entries) => entries.map((actor) => `<option value="${escapeHTML(actor.id)}">${escapeHTML(actor.name)}</option>`).join("");
   const actorOptions = `<option value="" selected>- Dummy</option>${partyMembers.length ? `<optgroup label="Party Members">${optionsFor(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${optionsFor(otherActors)}</optgroup>` : ""}`;
+  const deckOwnerOptions = `<option value="" selected>- Choose a participating character -</option>${partyMembers.length ? `<optgroup label="Party Members">${optionsFor(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${optionsFor(otherActors)}</optgroup>` : ""}`;
   const seats = Array.from({ length: 4 }, (_entry, index) => `<label>Character ${index + 1}<select name="seat-${index + 1}" data-seat>${actorOptions}</select></label>`).join("");
   const content = `<form class="pp-start-form">
     <p>Choose an actor for each of the four seats. Any seat left as <strong>- Dummy</strong> supplies only a common card.</p>
     <div class="pp-seat-selectors">${seats}</div>
-    <div class="pp-start-stakes">
-      <label>Ante <input name="ante" type="number" min="0" step="0.01" value="5"></label>
-      <label>Denomination <select name="denomination"><option value="gp">gp</option><option value="sp">sp</option><option value="cp">cp</option><option value="pp">pp</option></select></label>
-    </div>
+    <label class="pp-deck-owner-choice">Deck owner and first Poppy <select name="deckOwner">${deckOwnerOptions}</select></label>
+    <p class="notes">The deck owner must be one of the selected characters. They are the first Poppy/Dealer and must use the Deal cards control to begin the first game.</p>
+    <div class="pp-start-stakes">${coinFieldMarkup("pp-ante", 500, { label: "Ante per player (pp, gp, sp, cp)" })}</div>
     <label class="pp-currency-choice"><input name="automaticCurrency" type="checkbox"> Automatically transfer PF2E currency</label>
     <p class="notes">When selected, the chosen actors pay antes and bets automatically and receive automatic payouts for this game. Leave it unchecked for narrative or manual wealth tracking.</p>
   </form>`;
@@ -764,15 +936,15 @@ function promptStartGame() {
     content,
     buttons: [{
       action: "start",
-      label: "Deal cards",
+      label: "Prepare table",
       icon: "fa-solid fa-dice",
       default: true,
       callback: (_event, button) => {
         const form = button.form;
         return {
           actorIds: [...form.querySelectorAll("select[data-seat]")].map((select) => select.value).filter(Boolean),
-          ante: Number(form.elements.ante.value),
-          denomination: form.elements.denomination.value,
+          deckOwnerId: form.elements.deckOwner.value,
+          anteCp: coinFieldsToCopper(form, "pp-ante"),
           autoCurrency: form.elements.automaticCurrency.checked,
         };
       },
@@ -784,20 +956,17 @@ function promptStartGame() {
 async function startGame(result) {
   return enqueue(async () => {
     if (!result) return;
-    if (!Number.isFinite(result.ante) || result.ante < 0) throw new Error("Enter a non-negative ante.");
+    if (!Number.isSafeInteger(result.anteCp) || result.anteCp < 0) throw new Error("Enter a non-negative ante in whole coins.");
     if (result.actorIds.length < 2 || result.actorIds.length > 4) throw new Error("Select between two and four PC or NPC actors.");
     if (new Set(result.actorIds).size !== result.actorIds.length) throw new Error("Choose each PC or NPC actor only once.");
-    const multipliers = { cp: 1, sp: 10, gp: 100, pp: 1000 };
-    const anteCp = Math.round(result.ante * (multipliers[result.denomination] ?? 1));
-    if (!Number.isSafeInteger(anteCp)) throw new Error("The ante is too large.");
+    if (!result.actorIds.includes(result.deckOwnerId)) throw new Error("Choose a deck owner from the characters selected for this game.");
     const participants = result.actorIds.map((actorId) => {
       const actor = getActor(actorId);
       if (!actor) throw new Error("One of the chosen actors is no longer available.");
       return { id: actor.id, actorId: actor.id, name: actor.name };
     });
-    const state = createGame({ participants, anteCp });
+    const state = createGame({ participants, anteCp: result.anteCp, dealerId: result.deckOwnerId });
     state.autoCurrency = result.autoCurrency === true;
-    await debitAntes(state, "the opening ante");
     await saveState(state);
     openTable();
   });
@@ -846,6 +1015,18 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
   const module = game.modules.get(MODULE_ID);
   if (module) module.api = Object.freeze({ open: openTable, openPlayer: openPlayerPanel, start: promptStartGame, clear: clearGame });
+  game.socket?.on(`module.${MODULE_ID}`, (payload) => {
+    const actor = getActor(payload?.actorId);
+    if (!actor || isGM() || !actor.isOwner) return;
+    if (payload.type === "open-player-panel") {
+      openPlayerPanel(actor);
+      return;
+    }
+    if (payload.type === "turn-alert" && payload.recipients?.includes(game.user.id)) {
+      openPlayerPanel(actor);
+      ui.notifications.info(`Poppy’s Prize: it is ${payload.playerName ?? "your"} turn.`);
+    }
+  });
   Hooks.on("getActorSheetHeaderButtons", addActorSheetPrizeButton);
   Hooks.on("getCharacterSheetPF2eHeaderButtons", addActorSheetPrizeButton);
   Hooks.on("getNPCSheetPF2eHeaderButtons", addActorSheetPrizeButton);

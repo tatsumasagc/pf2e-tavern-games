@@ -23,6 +23,7 @@ const RANKS = [
 
 export const COPPER_PER_GOLD = 100;
 export const PHASES = Object.freeze({
+  DEAL: "deal",
   SELECT_COMMON: "select-common",
   BETTING: "betting",
   PLUNDER: "plunder",
@@ -90,6 +91,19 @@ export function copperToCoins(copper) {
   const sp = Math.floor((amount % 100) / 10);
   const cp = amount % 10;
   return { pp, gp, sp, cp };
+}
+
+export function coinsToCopper({ pp = 0, gp = 0, sp = 0, cp = 0 } = {}) {
+  const coins = { pp, gp, sp, cp };
+  const multipliers = { pp: 1000, gp: 100, sp: 10, cp: 1 };
+  let total = 0;
+  for (const [denomination, amount] of Object.entries(coins)) {
+    const numeric = Number(amount);
+    assert(Number.isSafeInteger(numeric) && numeric >= 0, `${denomination} must be a non-negative whole number.`);
+    total += numeric * multipliers[denomination];
+  }
+  assert(Number.isSafeInteger(total), "The coin total is too large.");
+  return total;
 }
 
 export function formatCopper(copper) {
@@ -349,7 +363,7 @@ function allCommonsSelected(state) {
 
 export function dealNextGame(state, rng = Math.random) {
   const next = cloneState(state);
-  assert(next.phase === PHASES.KEEP || next.phase === PHASES.COMPLETE, "The next game can only start after keeping cards has concluded.");
+  assert(next.phase === PHASES.KEEP || next.phase === PHASES.COMPLETE, "The next game can only be prepared after keeping cards has concluded.");
   const carry = new Map();
   for (const player of next.players) {
     const forced = player.forcedCarry ?? [];
@@ -367,7 +381,7 @@ export function dealNextGame(state, rng = Math.random) {
   next.deck = shuffle(activeCards, rng);
   next.common = [];
   next.round = 0;
-  next.phase = PHASES.SELECT_COMMON;
+  next.phase = PHASES.DEAL;
   next.betting = null;
   next.plunder = null;
   next.pendingPlunder = null;
@@ -382,19 +396,9 @@ export function dealNextGame(state, rng = Math.random) {
     player.hand = carry.get(player.id);
     player.forcedCarry = [];
     player.folded = false;
-    player.contributionCp = next.anteCp;
-    const deal = draw(next.deck, Math.max(0, 5 - player.hand.length));
-    player.hand.push(...deal.cards);
-    next.deck = deal.deck;
+    player.contributionCp = 0;
   }
-  for (const seat of next.seats.filter((entry) => entry.dummy)) {
-    const deal = draw(next.deck, 1);
-    next.common.push({ seat: seat.seat, playerId: null, name: seat.name, card: deal.cards[0], revealed: false, dummy: true });
-    next.deck = deal.deck;
-  }
-  next.potCp += next.anteCp * next.players.length;
-  log(next, `Game ${next.gameNumber} begins. ${memberBySeat(next, next.dealerSeat)?.name} is Poppy.`);
-  log(next, `Every player antes ${formatCopper(next.anteCp)}.`);
+  log(next, `Game ${next.gameNumber} is ready. ${memberBySeat(next, next.dealerSeat)?.name} is Poppy and must deal the cards.`);
   return next;
 }
 
@@ -408,21 +412,19 @@ function findCardAnywhere(state, cardId) {
   return state.common.find((entry) => entry.card?.id === cardId)?.card ?? null;
 }
 
-export function createGame({ participants, anteCp, rng = Math.random }) {
+export function createGame({ participants, anteCp, dealerId, rng = Math.random }) {
   assert(Array.isArray(participants) && participants.length >= 2 && participants.length <= 4, "Choose between two and four players.");
   assert(Number.isInteger(anteCp) && anteCp >= 0, "The ante must be a whole number of copper pieces.");
-  const playerSeats = shuffle([...participants], rng).map((participant, seat) => ({ ...participant, seat, dummy: false }));
+  const deckOwner = participants.find((participant) => participant.id === dealerId || participant.actorId === dealerId);
+  assert(deckOwner, "Choose one participating actor as the deck owner and first Poppy.");
+  const otherParticipants = shuffle(participants.filter((participant) => participant !== deckOwner), rng);
+  const playerSeats = [deckOwner, ...otherParticipants].map((participant, seat) => ({ ...participant, seat, dummy: false }));
   const seats = [...playerSeats];
   while (seats.length < 4) seats.push({ id: `dummy-${seats.length + 1}`, name: "Dummy player", seat: seats.length, dummy: true });
-  let deck = shuffle(createDeck(), rng);
+  const deck = shuffle(createDeck(), rng);
   const pirateIndex = deck.findIndex((card) => card.pirate);
   const [setAsidePirate] = deck.splice(pirateIndex, 1);
-  const players = [];
-  for (const seat of playerSeats) {
-    const dealt = draw(deck, 5);
-    deck = dealt.deck;
-    players.push({ id: seat.id, actorId: seat.actorId, name: seat.name, seat: seat.seat, hand: dealt.cards, forcedCarry: [], folded: false, contributionCp: anteCp });
-  }
+  const players = playerSeats.map((seat) => ({ id: seat.id, actorId: seat.actorId, name: seat.name, seat: seat.seat, hand: [], forcedCarry: [], folded: false, contributionCp: 0 }));
   const state = {
     version: 1,
     gameNumber: 1,
@@ -433,11 +435,11 @@ export function createGame({ participants, anteCp, rng = Math.random }) {
     discard: [],
     common: [],
     setAsidePirate,
-    dealerSeat: playerSeats[0].seat,
+    dealerSeat: 0,
     anteCp,
-    potCp: anteCp * players.length,
+    potCp: 0,
     round: 0,
-    phase: PHASES.SELECT_COMMON,
+    phase: PHASES.DEAL,
     betting: null,
     plunder: null,
     pendingPlunder: null,
@@ -447,14 +449,46 @@ export function createGame({ participants, anteCp, rng = Math.random }) {
     lastShowdown: null,
     log: [],
   };
-  for (const seat of seats.filter((entry) => entry.dummy)) {
-    const dealt = draw(state.deck, 1);
-    state.deck = dealt.deck;
-    state.common.push({ seat: seat.seat, playerId: null, name: seat.name, card: dealt.cards[0], revealed: false, dummy: true });
-  }
-  log(state, `A new game begins. ${memberBySeat(state, state.dealerSeat).name} is Poppy.`);
-  log(state, `Every player antes ${formatCopper(anteCp)}.`);
+  log(state, `${memberBySeat(state, state.dealerSeat).name} owns the deck and is the first Poppy.`);
+  log(state, "The deck is ready. Poppy must deal the cards before the first round begins.");
   return state;
+}
+
+export function dealPreparedGame(state, { markedCardIds = [], rng = Math.random } = {}) {
+  const next = cloneState(state);
+  assert(next.phase === PHASES.DEAL, "Cards can only be dealt while the table is waiting for Poppy.");
+  const dealer = playerById(next, memberBySeat(next, next.dealerSeat)?.id);
+  assert(dealer, "The current Poppy is missing from the table.");
+  const choices = Array.isArray(markedCardIds) ? markedCardIds.filter(Boolean) : [];
+  assert(new Set(choices).size === choices.length, "Choose each marked card only once.");
+  assert(next.gameNumber !== 1 || choices.length <= 2, "Poppy can choose at most two marked cards for the first game.");
+  assert(next.gameNumber === 1 || choices.length === 0, "Marked-card choices are available only for the first game.");
+  const marked = choices.map((cardId) => {
+    const index = next.deck.findIndex((card) => card.id === cardId);
+    assert(index >= 0, "A chosen marked card is not available in the deck.");
+    return next.deck.splice(index, 1)[0];
+  });
+  next.deck = shuffle(next.deck, rng);
+  dealer.hand.push(...marked);
+  for (const seat of orderedSeats(next)) {
+    const member = memberBySeat(next, seat);
+    if (!member || member.dummy) continue;
+    const player = playerById(next, member.id);
+    const dealt = draw(next.deck, Math.max(0, 5 - player.hand.length));
+    player.hand.push(...dealt.cards);
+    player.contributionCp += next.anteCp;
+    next.deck = dealt.deck;
+  }
+  for (const seat of next.seats.filter((entry) => entry.dummy)) {
+    const dealt = draw(next.deck, 1);
+    next.common.push({ seat: seat.seat, playerId: null, name: seat.name, card: dealt.cards[0], revealed: false, dummy: true });
+    next.deck = dealt.deck;
+  }
+  next.potCp += next.anteCp * next.players.length;
+  next.phase = PHASES.SELECT_COMMON;
+  log(next, `${dealer.name} deals the cards for game ${next.gameNumber}.`);
+  log(next, `Every player antes ${formatCopper(next.anteCp)}.`);
+  return next;
 }
 
 export function selectCommon(state, playerId, cardId) {
