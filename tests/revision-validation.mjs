@@ -12,7 +12,7 @@ const macroPack = new URL("packs/poppys-prize-macros/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.5.0", "The release version should be 1.5.0");
+assert.equal(manifest.version, "1.5.1", "The release version should be 1.5.1");
 assert.ok(!Object.hasOwn(manifest, "system"), "Foundry v14 manifests must not include the unsupported top-level system key");
 assert.equal(manifest.relationships?.systems?.[0]?.id, "pf2e", "The supported PF2E relationship should be retained");
 assert.equal(manifest.relationships?.systems?.[0]?.type, "system", "The PF2E relationship should identify a system package");
@@ -64,6 +64,12 @@ assert.match(mainSource, /marked-playing-cards/, "Marked-playing-card eligibilit
 assert.match(mainSource, /action: "palm-an-object"/, "Cheating should use the Palm an Object action context");
 assert.match(mainSource, /messageMode: "blindroll"/, "Palm an Object checks should be secret");
 assert.match(mainSource, /You think <strong>\$\{escapeHTML\(dealer\.name\)\}<\/strong> is cheating\./, "Failed cheating checks should whisper suspicion to observers");
+assert.match(mainSource, /state\.cheatingDealerId === player\.id/, "Only the recorded cheating dealer should receive marked-card vision");
+assert.match(mainSource, /markedCardVision/, "Marked-card vision should be stored in the actor-owned player view");
+assert.match(mainSource, /function renderMarkedCardVision/, "The player panel should render the marked-card vision section");
+assert.match(mainSource, /Your marked playing cards reveal the text identity/, "The cheating view should explain the private information it shows");
+assert.match(mainSource, /cardMarkup\(entry\.card, \{ faceDown: true \}\)/, "Marked-card vision should retain the concealed card-back artwork");
+assert.doesNotMatch(mainSource.slice(mainSource.indexOf("function buildPublicBoard"), mainSource.indexOf("function buildPlayerView")), /cheatingDealerId|markedCardVision/, "Public board data must not contain marked-card cheating information");
 assert.match(mainSource, /coinFieldMarkup\("pp-ante"/, "The ante should use separate denomination fields");
 assert.match(mainSource, /coinFieldMarkup\("pp-raise"/, "GM raises should use separate denomination fields");
 assert.match(mainSource, /coinFieldMarkup\("pp-player-raise"/, "Player raises should use separate denomination fields");
@@ -94,4 +100,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide 
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro should open the Poppy’s Prize module");
 
-console.log("Poppy’s Prize 1.5.0 revision validation passed.");
+console.log("Poppy’s Prize 1.5.1 revision validation passed.");

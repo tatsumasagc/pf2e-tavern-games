@@ -759,3 +759,59 @@ button.pp-card:hover:not(:disabled),
   .pp-marked-card-fields { flex-wrap: wrap; grid-template-columns: 1fr; }
   .pp-coin-field input { width: 4.6rem; }
 }
+
+/* Private information granted only to the first Poppy after using marked cards. */
+.pp-marked-card-vision {
+  margin: 0.8rem 1.3rem 0;
+  padding: 0.8rem 0.9rem;
+  color: #263640;
+  background: #e7d9f1;
+  border: 2px solid #76528e;
+  border-left-width: 6px;
+  border-radius: 0.4rem;
+}
+
+.pp-marked-card-vision h3 {
+  margin: 0 0 0.25rem;
+  color: #39224b;
+}
+
+.pp-marked-card-vision > p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.pp-marked-card-vision-grid {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-top: 0.65rem;
+}
+
+.pp-marked-card-vision-entry {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 94px;
+  text-align: center;
+}
+
+.pp-marked-card-vision-entry p {
+  min-height: 3.6rem;
+  margin: 0;
+  color: #39224b;
+  font-size: 0.74rem;
+  line-height: 1.2;
+}
+
+.pp-marked-card-vision-entry p span {
+  display: inline-block;
+  margin-top: 0.12rem;
+  color: #1d2329;
+  font-weight: 700;
+}
+
+.pp-marked-card-vision-entry .pp-card {
+  width: 62px;
+  height: 93px;
+}

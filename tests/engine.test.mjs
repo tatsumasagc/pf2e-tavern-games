@@ -44,6 +44,7 @@ state = dealPreparedGame(state, { markedCardIds, rng: () => 0.42 });
 assert.equal(state.potCp, 2000, "All players ante when Poppy deals");
 assert.equal(state.phase, PHASES.SELECT_COMMON, "Dealing begins the common-card phase");
 assert.ok(markedCardIds.every((id) => state.players.find((player) => player.id === "b").hand.some((card) => card.id === id)), "Poppy receives the two selected marked cards");
+assert.equal(state.cheatingDealerId, "b", "Only the dealer who used marked cards is recorded as cheating");
 assert.equal(state.common.length, 0, "Four real players need no dummy common cards");
 
 for (const player of state.players) state = selectCommon(state, player.id, player.hand[0].id);
@@ -74,6 +75,7 @@ assert.equal(state.phase, PHASES.DEAL, "A completed round prepares the next game
 assert.equal(state.gameNumber, 2);
 assert.equal(state.potCp, 0, "The next ante is not collected until Poppy deals");
 state = dealPreparedGame(state, { rng: () => 0.42 });
+assert.equal(state.cheatingDealerId, null, "Marked-card sight does not carry into later games");
 assert.equal(state.phase, PHASES.SELECT_COMMON, "The next game begins only when Poppy uses Deal cards");
 assert.equal(state.potCp, 2000, "The next game collects a fresh ante when Poppy deals");
 assert.ok(state.players.every((player) => player.hand.length === 5), "Each player begins the next game with five cards");

@@ -388,6 +388,7 @@ export function dealNextGame(state, rng = Math.random) {
   next.keepers = null;
   next.payouts = [];
   next.lastShowdown = null;
+  next.cheatingDealerId = null;
   next.gameNumber += 1;
   const winner = next.winners?.[0] ? playerById(next, next.winners[0]) : null;
   if (winner) next.dealerSeat = winner.seat;
@@ -447,6 +448,7 @@ export function createGame({ participants, anteCp, dealerId, rng = Math.random }
     winners: [],
     payouts: [],
     lastShowdown: null,
+    cheatingDealerId: null,
     log: [],
   };
   log(state, `${memberBySeat(state, state.dealerSeat).name} owns the deck and is the first Poppy.`);
@@ -462,6 +464,7 @@ export function dealPreparedGame(state, { markedCardIds = [], rng = Math.random 
   const choices = Array.isArray(markedCardIds) ? markedCardIds.filter(Boolean) : [];
   assert(new Set(choices).size === choices.length, "Choose each marked card only once.");
   assert(next.gameNumber !== 1 || choices.length <= 2, "Poppy can choose at most two marked cards for the first game.");
+  assert(choices.length === 0 || choices.length === 2, "Marked playing cards must select exactly two cards.");
   assert(next.gameNumber === 1 || choices.length === 0, "Marked-card choices are available only for the first game.");
   const marked = choices.map((cardId) => {
     const index = next.deck.findIndex((card) => card.id === cardId);
@@ -469,6 +472,7 @@ export function dealPreparedGame(state, { markedCardIds = [], rng = Math.random 
     return next.deck.splice(index, 1)[0];
   });
   next.deck = shuffle(next.deck, rng);
+  next.cheatingDealerId = marked.length === 2 ? dealer.id : null;
   dealer.hand.push(...marked);
   for (const seat of orderedSeats(next)) {
     const member = memberBySeat(next, seat);

@@ -325,6 +325,11 @@ function buildPlayerView(state, player) {
   const canTransfer = state.phase === PHASES.TRANSFER && state.pendingPlunder?.targetId === player.id;
   const canKeep = state.phase === PHASES.KEEP && state.keepers && state.keepers[player.id] !== undefined;
   const protectedPlayerIds = state.plunder?.queue?.map((entry) => entry.playerId) ?? [];
+  const cheatingWithMarkedCards = state.cheatingDealerId === player.id;
+  const markedCardVision = cheatingWithMarkedCards ? [
+    ...state.players.filter((entry) => entry.id !== player.id).flatMap((entry) => entry.hand.map((card) => ({ holder: entry.name, type: "Hand", card }))),
+    ...state.common.filter((entry) => !entry.revealed).map((entry) => ({ holder: entry.name, type: entry.dummy ? "Dummy common card" : "Common card", card: entry.card })),
+  ] : [];
   return {
     version: 1,
     actorId: player.actorId,
@@ -340,6 +345,8 @@ function buildPlayerView(state, player) {
       selectedKeep: state.keepers?.[player.id] ?? false,
       isWinner: (state.winners ?? []).includes(player.id),
       showdown: state.lastShowdown?.scores?.[player.id] ?? null,
+      cheatingWithMarkedCards,
+      markedCardVision,
     },
     choices: {
       canDeal,
@@ -635,6 +642,12 @@ function renderPlayerCommon(board) {
   </section>`).join("");
 }
 
+function renderMarkedCardVision(player) {
+  if (!player.cheatingWithMarkedCards || !player.markedCardVision?.length) return "";
+  const cards = player.markedCardVision.map((entry) => `<section class="pp-marked-card-vision-entry"><p><strong>${escapeHTML(entry.holder)}</strong> · ${escapeHTML(entry.type)}<br><span>${escapeHTML(cardLabel(entry.card))}</span></p>${cardMarkup(entry.card, { faceDown: true })}</section>`).join("");
+  return `<section class="pp-marked-card-vision"><h3>Marked-card sight</h3><p>Your marked playing cards reveal the text identity of each face-down card. The card artwork remains concealed.</p><div class="pp-marked-card-vision-grid">${cards}</div></section>`;
+}
+
 function renderPlayerHand(view) {
   const { board, player, choices } = view;
   const transferMatches = new Set(choices.transferMatches);
@@ -695,6 +708,7 @@ function renderPlayerPanel(view) {
     ${renderPhaseGuide(board, { playerId: player.id })}
     ${yourTurn ? `<section class="pp-turn-alert" role="alert" aria-live="assertive"><i class="fa-solid fa-bell"></i><div><strong>It is your turn.</strong><span>Choose your action below.</span></div></section>` : ""}
     <section class="pp-common"><h3>Common pool</h3><div class="pp-common-cards">${renderPlayerCommon(board)}</div></section>
+    ${renderMarkedCardVision(player)}
     ${payout ? `<p class="pp-payout">Your payout: ${escapeHTML(formatCopper(payout.copper))}${board.autoCurrency && payout.paid ? " (paid)" : ""}</p>` : ""}
     ${status?.message ? `<p class="pp-player-message ${escapeHTML(status.kind ?? "")}">${escapeHTML(status.message)}</p>` : ""}
     <section class="pp-player active"><header><div><strong>${escapeHTML(player.name)}</strong>${player.seat === board.dealerSeat ? " <span class=\"pp-dealer\">Poppy</span>" : ""}</div><div class="pp-player-status">${player.folded ? "Folded" : yourTurn ? "Your turn" : "In game"}</div></header><div class="pp-player-meta"><span>Contributed: ${escapeHTML(formatCopper(player.contributionCp))}</span>${player.showdown ? `<span>Showdown: ${escapeHTML(player.showdown.name)}</span>` : ""}</div>${renderPlayerHand(view)}</section>

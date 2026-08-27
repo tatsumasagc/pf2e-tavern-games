@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.5.1 — 27 August 2026
+
+When the first Poppy actually uses marked playing cards, their actor-owned player panel now shows a **Marked-card sight** section. It displays the text identity above the card-back image for every other participant’s face-down hand card and every unrevealed common card. This private visibility is never written to the public board or another actor’s player view, and it expires when the next game is prepared.
+
 ## 1.5.0 — 27 August 2026
 
 This feature release adds a GM **Open player panel** control for each participant, an independently scrollable player window, high-contrast phase-guide titles, and prominent in-client turn alerts that open the active participant’s panel. Completed rounds now announce the winner or split winners, every payout, the winning hand, and its five scoring cards to the shared chat.
