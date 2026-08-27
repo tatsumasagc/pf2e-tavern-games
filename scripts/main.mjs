@@ -231,12 +231,24 @@ function perceptionDC(actor) {
   return Number(actor?.perception?.dc?.value ?? actor?.system?.attributes?.perception?.dc ?? 0);
 }
 
+function blindCheckDegreeAgainstDC(roll, dc) {
+  const total = Number(roll?.total);
+  if (!Number.isFinite(total) || !Number.isFinite(dc) || dc <= 0) return null;
+  let degree = total >= dc + 10 ? 3 : total >= dc ? 2 : total <= dc - 10 ? 0 : 1;
+  const natural = Number(roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
+  if (natural === 20) degree = Math.min(3, degree + 1);
+  if (natural === 1) degree = Math.max(0, degree - 1);
+  return degree;
+}
+
+function activeGMIds() {
+  return game.users.filter((user) => user.active && user.isGM).map((user) => user.id);
+}
+
 async function rollDeckCheatCheck(state, cheating) {
   const dealer = state.players.find((player) => player.seat === state.dealerSeat);
   const dealerActor = getActor(dealer?.actorId);
-  const observers = state.players.filter((player) => player.id !== dealer?.id);
-  const observerDCs = observers.map((player) => perceptionDC(getActor(player.actorId))).filter((dc) => Number.isFinite(dc) && dc > 0);
-  const dc = observerDCs.length ? Math.max(...observerDCs) : 10;
+  const observers = state.players.filter((player) => player.id !== dealer?.id).map((player) => ({ player, actor: getActor(player.actorId) }));
   const thievery = dealerActor?.skills?.thievery;
   if (!thievery?.check?.roll) {
     console.warn(`${MODULE_ID} | ${dealer?.name ?? "The dealer"} cannot make a PF2E Thievery roll for Palm an Object.`);
@@ -249,7 +261,6 @@ async function rollDeckCheatCheck(state, cheating) {
       slug: "palm-an-object",
       title: "Palm an Object — Poppy’s Prize",
       label: "Palm an Object",
-      dc: { value: dc, label: "Observers’ Perception DC" },
       messageMode: "blindroll",
       skipDialog: true,
       extraRollOptions: ["action:palm-an-object", "poppys-prize:deck-deal"],
@@ -258,17 +269,30 @@ async function rollDeckCheatCheck(state, cheating) {
     console.warn(`${MODULE_ID} | Palm an Object roll failed to resolve`, error);
     return null;
   }
-  const failed = Number(roll?.degreeOfSuccess) <= 1;
-  if (!cheating || !failed) return roll;
+  if (!cheating) return roll;
   for (const observer of observers) {
-    const whisper = activeOwnerIds(getActor(observer.actorId));
-    if (whisper.length === 0) continue;
-    await ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ alias: "Poppy’s Prize" }),
-      content: `<p>You think <strong>${escapeHTML(dealer.name)}</strong> is cheating.</p>`,
-      whisper,
-      flags: { [MODULE_ID]: { type: "cheating-suspicion", dealerId: dealer.id, gameNumber: state.gameNumber } },
-    });
+    const dc = perceptionDC(observer.actor);
+    const degree = blindCheckDegreeAgainstDC(roll, dc);
+    if (degree === null || degree >= 2) continue;
+    const observerOwners = activeOwnerIds(observer.actor);
+    const gms = activeGMIds();
+    const flags = { [MODULE_ID]: { type: "cheating-suspicion", dealerId: dealer.id, observerId: observer.player.id, gameNumber: state.gameNumber } };
+    if (observerOwners.length) {
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ alias: "Poppy’s Prize" }),
+        content: `<p>You think <strong>${escapeHTML(dealer.name)}</strong> is cheating.</p>`,
+        whisper: observerOwners,
+        flags,
+      });
+    }
+    if (gms.length) {
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ alias: "Poppy’s Prize" }),
+        content: `<p><strong>${escapeHTML(observer.player.name)}</strong> thinks <strong>${escapeHTML(dealer.name)}</strong> is cheating.</p>`,
+        whisper: gms,
+        flags,
+      });
+    }
   }
   return roll;
 }
@@ -326,10 +350,19 @@ function buildPlayerView(state, player) {
   const canKeep = state.phase === PHASES.KEEP && state.keepers && state.keepers[player.id] !== undefined;
   const protectedPlayerIds = state.plunder?.queue?.map((entry) => entry.playerId) ?? [];
   const cheatingWithMarkedCards = state.cheatingDealerId === player.id;
-  const markedCardVision = cheatingWithMarkedCards ? [
-    ...state.players.filter((entry) => entry.id !== player.id).flatMap((entry) => entry.hand.map((card) => ({ holder: entry.name, type: "Hand", card }))),
-    ...state.common.filter((entry) => !entry.revealed).map((entry) => ({ holder: entry.name, type: entry.dummy ? "Dummy common card" : "Common card", card: entry.card })),
-  ] : [];
+  const markedCardVision = cheatingWithMarkedCards ? {
+    hands: state.players.filter((entry) => entry.id !== player.id).map((entry) => ({
+      playerId: entry.id,
+      playerName: entry.name,
+      cards: entry.hand.map((card) => ({ card })),
+    })),
+    commonPool: state.common.filter((entry) => !entry.revealed).map((entry) => ({
+      seat: entry.seat,
+      holder: entry.name,
+      type: entry.dummy ? "Dummy common card" : "Common card",
+      card: entry.card,
+    })),
+  } : null;
   return {
     version: 1,
     actorId: player.actorId,
@@ -643,9 +676,12 @@ function renderPlayerCommon(board) {
 }
 
 function renderMarkedCardVision(player) {
-  if (!player.cheatingWithMarkedCards || !player.markedCardVision?.length) return "";
-  const cards = player.markedCardVision.map((entry) => `<section class="pp-marked-card-vision-entry"><p><strong>${escapeHTML(entry.holder)}</strong> · ${escapeHTML(entry.type)}<br><span>${escapeHTML(cardLabel(entry.card))}</span></p>${cardMarkup(entry.card, { faceDown: true })}</section>`).join("");
-  return `<section class="pp-marked-card-vision"><h3>Marked-card sight</h3><p>Your marked playing cards reveal the text identity of each face-down card. The card artwork remains concealed.</p><div class="pp-marked-card-vision-grid">${cards}</div></section>`;
+  const vision = player.markedCardVision;
+  if (!player.cheatingWithMarkedCards || !vision) return "";
+  const cardMarkupWithLabel = (entry, label) => `<section class="pp-marked-card-vision-entry"><p>${escapeHTML(label)}<br><span>${escapeHTML(cardLabel(entry.card))}</span></p>${cardMarkup(entry.card, { faceDown: true })}</section>`;
+  const handGroups = vision.hands.map((group) => `<section class="pp-marked-card-group"><h4>${escapeHTML(group.playerName)}’s hand</h4><div class="pp-marked-card-vision-grid">${group.cards.map((entry) => cardMarkupWithLabel(entry, "Face-down hand card")).join("")}</div></section>`).join("");
+  const commonPool = `<section class="pp-marked-card-group pp-marked-common-pool"><h4>Common pool</h4><div class="pp-marked-card-vision-grid">${vision.commonPool.map((entry) => cardMarkupWithLabel(entry, `${entry.holder} · ${entry.type}`)).join("") || "<p class=\"pp-muted\">Every common card has been revealed.</p>"}</div></section>`;
+  return `<section class="pp-marked-card-vision"><h3>Marked-card sight</h3><p>Your marked playing cards reveal the text identity of each face-down card. The card artwork remains concealed.</p>${handGroups}${commonPool}</section>`;
 }
 
 function renderPlayerHand(view) {

@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.5.2 — 27 August 2026
+
+Marked-card sight now groups concealed cards into a named hidden-hand section for each other participant plus a separate **Common pool** section. Each identity remains directly above the matching card-back image. The Palm an Object check is now a blind, no-DC GM roll, followed by individual degree-of-success comparisons against each observer’s Perception DC. On a failed comparison, the observer’s active Owner receives the suspicion whisper and the GM receives a matching audit whisper that names the observer.
+
 ## 1.5.1 — 27 August 2026
 
 When the first Poppy actually uses marked playing cards, their actor-owned player panel now shows a **Marked-card sight** section. It displays the text identity above the card-back image for every other participant’s face-down hand card and every unrevealed common card. This private visibility is never written to the public board or another actor’s player view, and it expires when the next game is prepared.

@@ -815,3 +815,23 @@ button.pp-card:hover:not(:disabled),
   width: 62px;
   height: 93px;
 }
+
+.pp-marked-card-group {
+  margin-top: 0.8rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(57, 34, 75, 0.32);
+}
+
+.pp-marked-card-group h4 {
+  margin: 0;
+  color: #39224b;
+  font-size: 0.95rem;
+}
+
+.pp-marked-card-group .pp-marked-card-vision-grid {
+  margin-top: 0.45rem;
+}
+
+.pp-marked-common-pool {
+  border-top: 2px solid #76528e;
+}
