@@ -1,8 +1,8 @@
 # Poppy’s Prize
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.5.2 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
+**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.6.0 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
 
-The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] Version 1.5.2 uses the supported `relationships.systems` declaration for PF2E compatibility and removes the rejected legacy top-level `system` key. The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
+The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] Version 1.6.0 uses the supported `relationships.systems` declaration for PF2E compatibility and removes the rejected legacy top-level `system` key. The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
 > **Content note.** This module automates a game procedure. It does **not** include text, illustrations, maps, cards, or other reproduced adventure content from *Jewel of the Indigo Isles*.
 
@@ -28,7 +28,11 @@ Every eligible PF2E character and NPC sheet now has a **Poppy’s Prize** anchor
 
 ## Macro compendium
 
-The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-only **Poppy’s Prize Macros** pack. The pack now contains a compiled **Open Poppy’s Prize** script Macro, which launches the table and shows a clear warning if the module has not been enabled. The macro uses the included square nautical card-and-anchor icon. To use it frequently, open the pack as a GM and drag the macro to the Foundry macro bar.
+The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-only **Poppy’s Prize Macros** pack. The pack contains a compiled **Open Poppy’s Prize** script Macro, which launches the table and shows a clear warning if the module has not been enabled. The macro uses the included square nautical card-and-anchor icon. To use it frequently, open the pack as a GM and drag the macro to the Foundry macro bar.
+
+## Journal Entries compendium
+
+The same **Poppy’s Prize** Compendium Packs folder includes the player-readable **Poppy’s Prize Journals** pack. It contains **Poppy’s Prize — Rules Reference**, a concise game procedure reference, and **How to Use the Poppy’s Prize Module**, a practical Foundry setup and play guide. Both Journal Entries display the note: *Created by Tatsu_Gamer using Manus AI*.
 
 | Module setting | Default | Effect |
 |---|---:|---|

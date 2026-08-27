@@ -1,0 +1,32 @@
+{
+  "_key": "!journal!PPPrizeRules001",
+  "_id": "PPPrizeRules001",
+  "name": "Poppy’s Prize — Rules Reference",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "poppys-prize": {
+      "content": "rules-reference"
+    }
+  },
+  "pages": [
+    {
+      "_key": "!journal.pages!PPPrizeRules001.PPPrizeRulesP01",
+      "_id": "PPPrizeRulesP01",
+      "name": "Poppy’s Prize rules",
+      "type": "text",
+      "text": {
+        "content": "<h1>Poppy’s Prize</h1><p>Poppy’s Prize is a four-seat poker-style card game. Use two to four real participants; any empty seat is represented by a dummy common card. The deck contains 52 suited cards plus two Pirates.</p><h2>Prepare and deal</h2><p>The GM selects the participants, ante, optional automatic currency handling, and the deck owner/first Poppy. The selected Poppy deals the first game. The first deal sets one Pirate aside, deals each participant five cards, and then collects the ante. Subsequent games are prepared first and dealt by the new Poppy after carry-over is complete.</p><h2>Common cards and betting</h2><p>Each participant secretly selects one hand card for the common pool. The common cards are revealed clockwise from Poppy, with a betting round after each reveal. On a betting turn, a participant may pass when no bet exists, otherwise call, raise, fold, or—in a no-bet round—open betting. A raise must meet the module’s stated minimum total.</p><h2>Pirates and Plunder</h2><p>After the fourth common card and its betting round, each Pirate holder acts in turn. A Pirate holder may demand a card from another participant by suit, value, or both. The target must surrender a matching hand card if able. A Pirate holder cannot be chosen as a Plunder target.</p><h2>Showdown and the next game</h2><p>After final betting, each active participant makes the best five-card poker hand from their private hand and the common pool. The pot is paid to the winner or split among tied winners. Participants may then keep one card for the next game; a winner may instead keep one common card. The new Poppy prepares and deals the following game.</p><hr><p><em>Created by Tatsu_Gamer using Manus AI</em></p>",
+        "format": 1
+      },
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {}
+    }
+  ]
+}

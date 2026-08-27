@@ -1,0 +1,32 @@
+{
+  "_key": "!journal!PPPrizeGuide001",
+  "_id": "PPPrizeGuide001",
+  "name": "How to Use the Poppy’s Prize Module",
+  "folder": null,
+  "sort": 100000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "poppys-prize": {
+      "content": "module-guide"
+    }
+  },
+  "pages": [
+    {
+      "_key": "!journal.pages!PPPrizeGuide001.PPPrizeGuideP01",
+      "_id": "PPPrizeGuideP01",
+      "name": "Using the module",
+      "type": "text",
+      "text": {
+        "content": "<h1>How to Use the Poppy’s Prize Module</h1><h2>Open and set up a table</h2><p>Enable the module in a PF2E world, then select the anchor in Token controls, use the Poppy’s Prize button on an eligible actor sheet, or run the <strong>Open Poppy’s Prize</strong> Macro from the Poppy’s Prize compendium folder. The GM chooses up to four PC or NPC actors. Each unused selector remains <strong>- Dummy</strong>. The list shows Party Members first, followed by other actors in alphabetical order.</p><p>Select the deck owner and first Poppy, decide whether to automatically transfer PF2E currency, and enter the ante in pp, gp, sp, and cp. Choose <strong>Start a game</strong>; this prepares the table but does not yet deal cards or collect antes.</p><h2>Player panels</h2><p>Give each participant’s Foundry User <strong>Owner</strong> permission on their actor. Players can then open their private panel from their actor sheet or Token controls. The GM can also use <strong>Open player panel</strong> beside any participant on the GM table. The panel contains only that actor’s hand and legal actions. A prominent alert appears when that actor needs to act.</p><h2>Deal, play, and finish</h2><p>The Poppy/Dealer selects <strong>Deal cards</strong> to begin the game. The GM may record actions directly, or players may make their legal selection, betting, Plunder, and carry-over choices from their own panel. The phase guide explains the current stage and the common pool shows only publicly revealed cards. At showdown, the module posts a shared result message with winners, payouts, scoring hand, and cards.</p><h2>Marked playing cards</h2><p>For game one only, a deck owner with an inventory item whose slug is <code>marked-playing-cards</code> may choose to use marked cards and select two opening cards. A blind Palm an Object check is then compared privately with each observer’s Perception DC. The cheating dealer’s private panel groups all other concealed hands and the unrevealed common pool in a marked-card sight section. It is never shown to other players.</p><h2>Resetting</h2><p><strong>Reset table</strong> clears the game state and player views. It does not reverse any automatic currency payments already made.</p><hr><p><em>Created by Tatsu_Gamer using Manus AI</em></p>",
+        "format": 1
+      },
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {}
+    }
+  ]
+}

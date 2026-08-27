@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.6.0 — 27 August 2026
+
+The manifest author is now **Tatsu_Gamer**. The Poppy’s Prize compendium folder now also contains a player-readable **Poppy’s Prize Journals** pack with two Journal Entries: **Poppy’s Prize — Rules Reference** and **How to Use the Poppy’s Prize Module**. Both entries include the creator note: *Created by Tatsu_Gamer using Manus AI*.
+
 ## 1.5.2 — 27 August 2026
 
 Marked-card sight now groups concealed cards into a named hidden-hand section for each other participant plus a separate **Common pool** section. Each identity remains directly above the matching card-back image. The Palm an Object check is now a blind, no-DC GM roll, followed by individual degree-of-success comparisons against each observer’s Perception DC. On a failed comparison, the observer’s active Owner receives the suspicion whisper and the GM receives a matching audit whisper that names the observer.
