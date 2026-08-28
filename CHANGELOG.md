@@ -2,6 +2,12 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.1 — 28 August 2026
+
+Equipment-based cheating is now strictly offered only to the role-holder who possesses the corresponding inventory item. **Marked-card sight** and opening-card selection appear only for the current Poppy or Golem Dealer/deck owner with `marked-playing-cards`; **Bounder** result selection appears only for the qualifying Shooter with `games-loaded-dice`; and **Century** result selection appears only for the qualifying Dealer with `games-loaded-dice`.
+
+Poppy’s Prize, Golem, and Drinking Contest cheating now requires the actor to choose a blind **Performance** check or blind **Deception — Create a Diversion** check. The selected result is compared independently with every other qualified participant’s Perception DC. A failure or critical failure sends the established suspicion whispers to the active GM and the observing actor’s active Owners; success and critical success send none. The old Palm an Object check is no longer used for those cheating workflows.
+
 ## 2.1.0 — 28 August 2026
 
 The **PF2e Tavern Games Journals** compendium now contains six distinct Journal Entries: dedicated rules references for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and the **Drinking Contest**, plus **How to Use PF2e Tavern Games**. Each game reference includes its creator credit and source acknowledgement where applicable. The module-use guide now links the cheating equipment labels to the requested `@UUID[Compendium.pf2e.equipment-srd.Item.Q4KkKGGXq4bNGHh2]` compendium item syntax.

@@ -1,18 +1,18 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.0 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.1 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
 ## Installation
 
-Download `pf2e-tavern-games-v2.1.0.zip` from the latest release and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download `pf2e-tavern-games-v2.1.1.zip` from the latest release and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.0 uses the `pf2e-tavern-games` package ID. It retains a one-time GM migration for table state and actor-owned player views created under the retired `poppys-prize` package ID. Disable the retired module after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.1 uses the `pf2e-tavern-games` package ID. It retains a one-time GM migration for table state and actor-owned player views created under the retired `poppys-prize` package ID. Disable the retired module after the new package has loaded successfully.
 
 ## Open the game library
 
@@ -32,15 +32,15 @@ The GM creates and controls every table. For Golem, Bounder, Century, and the Dr
 
 ## Cheating
 
-The module checks item slugs, never names, for cheating equipment. A cheating-related check is blind to the GM and cheating information stays within authorised actor-owned views or specified whispers.
+The module checks item slugs, never names, for cheating equipment. It offers marked-card sight or loaded-dice result selection only when the actor currently serving in the required role has the matching item in their inventory. A cheating-related concealment check is blind to the GM and cheating information stays within authorised actor-owned views or specified whispers.
 
 | Game | Eligibility and result |
 |---|---|
-| **Poppy’s Prize** | The current Poppy with `marked-playing-cards` can select two opening cards on game one. Any later Poppy with the item can elect marked-card sight. A blind Palm an Object roll is compared separately with each observer’s Perception DC. |
-| **Golem** | The Dealer with `marked-playing-cards` can select two opening cards on the first hand and receives marked-card sight. The Palm an Object procedure uses the same blind, observer-by-observer detection model as Poppy’s Prize. |
-| **Bounder** | The Shooter with `games-loaded-dice` may choose the result of either d20 roll. |
-| **Century** | The Dealer with `games-loaded-dice` may choose the twenty results. |
-| **Drinking Contest** | Any contestant may choose to cheat when pressing Ready. Their Fortitude save automatically succeeds; their blind Performance check is compared separately with each other contestant’s Perception DC. The GM and observers who detect the cheat receive targeted private notices. |
+| **Poppy’s Prize** | Only the current deck owner with `marked-playing-cards` can select two opening cards on game one or elect later-game marked-card sight. Whenever cheating, they choose a blind Performance or Deception Create a Diversion check, compared separately with each observer’s Perception DC. |
+| **Golem** | Only the Dealer/deck owner with `marked-playing-cards` can select two opening cards on the first hand or use marked-card sight. They choose a blind Performance or Deception Create a Diversion check, using the same observer-by-observer detection model as Poppy’s Prize. |
+| **Bounder** | Only the Shooter with `games-loaded-dice` in their inventory may choose the result of either d20 roll. |
+| **Century** | Only the Dealer with `games-loaded-dice` in their inventory may choose the twenty results. |
+| **Drinking Contest** | Any contestant may choose to cheat when pressing Ready. Their Fortitude save automatically succeeds; they choose a blind Performance or Deception Create a Diversion check, compared separately with each other contestant’s Perception DC. The GM and observers who detect the cheat receive targeted private notices. |
 
 ## Drinking Contest stages
 

@@ -271,11 +271,27 @@ async function announceResult(current) {
   await ChatMessage.create({ content: `<section class="tg-result"><h3>${escapeHTML(TAVERN_GAME_NAMES[current.game])} result</h3><ul>${lines}</ul></section>`, flags: { [MODULE_ID]: { resultAnnouncement: current.announcedResult } } });
 }
 
-async function rollStatisticBlind(entryActor, statistic, { dc = null, label = "Tavern game check" } = {}) {
+async function rollStatisticBlind(entryActor, statistic, { dc = null, label = "Tavern game check", action = null, slug = null, extraRollOptions = [] } = {}) {
   const target = statistic === "fortitude" ? entryActor?.saves?.fortitude : entryActor?.skills?.[statistic];
   if (!target?.check?.roll) throw new Error(`${entryActor?.name ?? "Actor"} does not have a ${statistic} statistic to roll.`);
-  const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", dc: dc === null ? undefined : { value: dc }, extraRollOptions: [`tavern-game:${statistic}`], label });
+  const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", dc: dc === null ? undefined : { value: dc }, ...(action ? { action } : {}), ...(slug ? { slug } : {}), extraRollOptions: [`tavern-game:${statistic}`, ...extraRollOptions], label });
   return { total: Number(roll?.total ?? 0), roll };
+}
+
+function cheatMethodControls(name) {
+  return `<fieldset class="tg-cheat-method"><legend>Conceal the cheat with</legend><label><input type="radio" name="${escapeHTML(name)}" value="performance" checked> Performance</label><label><input type="radio" name="${escapeHTML(name)}" value="deception"> Deception — Create a Diversion</label></fieldset>`;
+}
+
+function selectedCheatMethod(root, name) {
+  return root.querySelector(`input[name="${name}"]:checked`)?.value === "deception" ? "deception" : "performance";
+}
+
+async function rollConcealmentCheck(entryActor, method, label) {
+  const deception = method === "deception";
+  return rollStatisticBlind(entryActor, deception ? "deception" : "performance", {
+    label: `${deception ? "Create a Diversion" : "Performance"} — ${label}`,
+    ...(deception ? { action: "create-a-diversion", slug: "create-a-diversion", extraRollOptions: ["action:create-a-diversion", "trait:action:create-a-diversion"] } : { extraRollOptions: ["action:performance"] }),
+  });
 }
 
 function degreeFromRoll(roll, dc) {
@@ -299,10 +315,10 @@ async function whisperCheat(observer, cheater, gameName) {
   if (gms.length) await ChatMessage.create({ whisper: gms, content: `<p><strong>${escapeHTML(observer.name)}</strong> noticed that <strong>${escapeHTML(cheater.name)}</strong> may be cheating at ${escapeHTML(gameName)}.</p>`, flags: { [MODULE_ID]: { cheatAudit: true } } });
 }
 
-async function detectCheating(current, cheater, performanceRoll, gameName) {
+async function detectCheating(current, cheater, concealmentRoll, gameName) {
   for (const observer of current.players.filter((entry) => entry.id !== cheater.id && qualified(current, entry))) {
     const dc = perceptionDC(actor(observer.actorId));
-    if (dc > 0 && ["failure", "criticalFailure"].includes(degreeFromRoll(performanceRoll, dc))) await whisperCheat(observer, cheater, gameName);
+    if (dc > 0 && ["failure", "criticalFailure"].includes(degreeFromRoll(concealmentRoll, dc))) await whisperCheat(observer, cheater, gameName);
   }
 }
 
@@ -378,7 +394,13 @@ function renderPlayers(current, { gm = false } = {}) {
 
 function renderGolemGM(current) {
   const dealer = playerById(current, current.dealerId);
-  if (current.phase === "golem-deal") return `<section class="tg-controls"><h3>Dealer controls</h3><p>${escapeHTML(dealer.name)} deals the next Golem hand.</p><label class="tg-check"><input id="tg-golem-marked" type="checkbox" ${hasMarkedCards(actor(dealer.actorId)) ? "" : "disabled"}> Use marked playing cards${hasMarkedCards(actor(dealer.actorId)) ? "" : " (requires marked-playing-cards)"}</label><div id="tg-golem-marked-options" class="tg-hidden"><p>For game one only, choose exactly two cards for the dealer’s opening hand.</p><select id="tg-golem-card-one">${current.deck.map((card) => `<option value="${card.id}">${escapeHTML(cardLabel(card))}</option>`).join("")}</select><select id="tg-golem-card-two">${current.deck.map((card) => `<option value="${card.id}">${escapeHTML(cardLabel(card))}</option>`).join("")}</select></div><button type="button" data-action="tg-golem-deal">Deal Golem hand</button></section>`;
+  if (current.phase === "golem-deal") {
+    const markedCards = hasMarkedCards(actor(dealer.actorId));
+    const markedControls = markedCards
+      ? `<label class="tg-check"><input id="tg-golem-marked" type="checkbox"> ${current.gameNumber === 1 ? "Use marked playing cards to choose two opening cards" : "Use marked-card sight"}</label>${cheatMethodControls("tg-golem-cheat-method")}${current.gameNumber === 1 ? `<div id="tg-golem-marked-options" class="tg-hidden"><p>Choose exactly two cards for the dealer’s opening hand.</p><select id="tg-golem-card-one">${current.deck.map((card) => `<option value="${card.id}">${escapeHTML(cardLabel(card))}</option>`).join("")}</select><select id="tg-golem-card-two">${current.deck.map((card) => `<option value="${card.id}">${escapeHTML(cardLabel(card))}</option>`).join("")}</select></div>` : `<p class="tg-muted">The hand is dealt randomly; marked-card sight reveals other hidden hands and the discard pile only to this Dealer.</p>`}`
+      : `<p class="tg-muted">Only a deck owner with Marked Playing Cards in their inventory may use marked-card sight or cheat.</p>`;
+    return `<section class="tg-controls"><h3>Dealer controls</h3><p>${escapeHTML(dealer.name)} deals the next Golem hand.</p>${markedControls}<button type="button" data-action="tg-golem-deal">Deal Golem hand</button></section>`;
+  }
   if (current.phase.startsWith("golem-betting")) {
     const turn = current.players.find((entry) => entry.seat === current.betting.turnSeat);
     return `<section class="tg-controls"><h3>${escapeHTML(turn.name)}’s betting turn</h3><p>Current bet: <strong>${escapeHTML(formatCopper(current.betting.currentBet))}</strong></p><button data-action="tg-golem-match" data-player="${turn.id}">${current.betting.currentBet ? "Match" : "Pass"}</button><button data-action="tg-golem-fold" data-player="${turn.id}" class="danger">Fold</button>${coinFields("tg-golem-raise", current.betting.currentBet ? current.betting.currentBet + current.betting.minimumRaise : current.anteCp, "Bet / raise total")}<button data-action="tg-golem-raise" data-player="${turn.id}">Bet or raise</button></section>`;
@@ -427,7 +449,7 @@ function renderPlayerGame(view) {
   const showMarked = view.markedCardVision;
   let controls = "<p>Wait for your turn or the GM’s next instruction.</p>";
   if (board.game === TAVERN_GAME_IDS.GOLEM) {
-    if (choices.canDeal) controls = `<button data-action="tg-player-golem-deal">Deal Golem hand</button>${choices.canMarked ? `<label class="tg-check"><input id="tg-player-golem-marked" type="checkbox"> Use marked playing cards</label>${choices.markedOptions?.length ? `<div id="tg-player-golem-marked-options" class="tg-hidden"><p>For game one only, choose exactly two cards for your opening hand.</p><select id="tg-player-golem-card-one">${choices.markedOptions.map((card) => `<option value="${card.id}">${escapeHTML(card.label)}</option>`).join("")}</select><select id="tg-player-golem-card-two">${choices.markedOptions.map((card) => `<option value="${card.id}">${escapeHTML(card.label)}</option>`).join("")}</select></div>` : ""}` : ""}`;
+    if (choices.canDeal) controls = `<button data-action="tg-player-golem-deal">Deal Golem hand</button>${choices.canMarked ? `<label class="tg-check"><input id="tg-player-golem-marked" type="checkbox"> Use marked playing cards</label>${cheatMethodControls("tg-player-golem-cheat-method")}${choices.markedOptions?.length ? `<div id="tg-player-golem-marked-options" class="tg-hidden"><p>For game one only, choose exactly two cards for your opening hand.</p><select id="tg-player-golem-card-one">${choices.markedOptions.map((card) => `<option value="${card.id}">${escapeHTML(card.label)}</option>`).join("")}</select><select id="tg-player-golem-card-two">${choices.markedOptions.map((card) => `<option value="${card.id}">${escapeHTML(card.label)}</option>`).join("")}</select></div>` : ""}` : `<p class="tg-muted">You do not have Marked Playing Cards in your inventory, so this hand must be dealt fairly.</p>`}`;
     else if (choices.betting) controls = `<button data-action="tg-player-golem-match">${current.betting?.currentBet ? "Match" : "Pass"}</button><button data-action="tg-player-golem-fold" class="danger">Fold</button>${coinFields("tg-player-golem-raise", current.betting?.currentBet ? current.betting.currentBet + current.betting.minimumRaise : current.anteCp, "Bet / raise total")}<button data-action="tg-player-golem-raise">Bet or raise</button>`;
     else if (choices.canDiscard) controls = `<p>Select up to two cards in your hand to discard.</p><button data-action="tg-player-golem-discard">Discard selected cards</button><button data-action="tg-player-golem-discard-none">Keep all cards</button>`;
     return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Golem — Your Hand</h2></header><section class="tg-phase"><h3>${escapeHTML(board.phaseTitle)}</h3><p>${escapeHTML(phaseInstructions(current, player.id))}</p></section><section class="tg-hand"><h3>Your hand</h3><div>${player.hand.map((card) => cardMarkup(card, { selectable: choices.canDiscard })).join("")}</div></section>${showMarked ? `<section class="tg-marked"><h3>Marked-card sight</h3><p>Your marked cards reveal every other private Golem hand and the face-down discard pile.</p>${showMarked.hands.map((group) => `<h4>${escapeHTML(group.name)}’s hand</h4><div class="tg-marked-cards">${group.cards.map((card) => `<figure><figcaption>${escapeHTML(cardLabel(card))}</figcaption><img src="modules/${MODULE_ID}/assets/cards/card_back.webp" alt="Face-down card"></figure>`).join("")}</div>`).join("")}<h4>Discard pile</h4><div class="tg-marked-cards">${showMarked.discards.map((card) => `<figure><figcaption>${escapeHTML(cardLabel(card))}</figcaption><img src="modules/${MODULE_ID}/assets/cards/card_back.webp" alt="Face-down card"></figure>`).join("") || "<p>No cards discarded yet.</p>"}</div></section>` : ""}<section class="tg-controls">${controls}</section></div>`;
@@ -444,7 +466,7 @@ function renderPlayerGame(view) {
     else if (choices.canDraw) controls = choices.loadedDice ? `<label>Twenty unique numbers (comma-separated)<textarea id="tg-century-loaded" rows="3" placeholder="1, 5, 12, ..."></textarea></label><button data-action="tg-player-century-draw">Set loaded-dice draw</button>` : `<button data-action="tg-player-century-draw">Draw 20 numbers</button>`;
     return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Century</h2><p>${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><p>${escapeHTML(phaseInstructions(current, player.id))}</p></section>${player.predictions?.length ? `<p>Your numbers: <strong>${player.predictions.join(", ")}</strong></p>` : ""}<section class="tg-controls">${controls}</section></div>`;
   }
-  if (choices.canReady) controls = `<label class="tg-check"><input id="tg-drink-cheat" type="checkbox"> Cheat (your Fortitude save is treated as a success, but your blind Performance may be noticed)</label><button data-action="tg-player-drink-ready">Ready for round ${board.round}</button>`;
+  if (choices.canReady) controls = `<label class="tg-check"><input id="tg-drink-cheat" type="checkbox"> Cheat (your Fortitude save is treated as a success)</label>${cheatMethodControls("tg-drink-cheat-method")}<p class="tg-muted">A blind Performance or Deception (Create a Diversion) check is compared privately with the other contestants’ Perception DCs.</p><button data-action="tg-player-drink-ready">Ready for round ${board.round}</button>`;
   return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Drinking Contest</h2><p>Round ${board.round} · ${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><h3>${escapeHTML(drinkStage(player.stage ?? 0).name)} — Stage ${player.stage ?? 0}</h3><p>${escapeHTML(drinkStage(player.stage ?? 0).effect)} ${escapeHTML(phaseInstructions(current, player.id))}</p></section><section class="tg-controls">${controls}</section></div>`;
 }
 
@@ -482,8 +504,8 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
     if (action === "tg-player-bounder-bet") { payload.kind = root.querySelector("#tg-bounder-kind")?.value; payload.amountCp = coinsFrom(root, "tg-bounder-bet"); }
     if (action === "tg-player-century-select") { payload.numbers = (root.querySelector("#tg-century-numbers")?.value ?? "").split(/[,\s]+/).filter(Boolean).map(Number); payload.stakeCp = coinsFrom(root, "tg-century-stake"); }
     if (action === "tg-player-century-draw") payload.numbers = (root.querySelector("#tg-century-loaded")?.value ?? "").split(/[,\s]+/).filter(Boolean).map(Number);
-    if (action === "tg-player-drink-ready") payload.cheat = root.querySelector("#tg-drink-cheat")?.checked === true;
-    if (action === "tg-player-golem-deal") { payload.marked = root.querySelector("#tg-player-golem-marked")?.checked === true; payload.markedCardIds = payload.marked ? [root.querySelector("#tg-player-golem-card-one")?.value, root.querySelector("#tg-player-golem-card-two")?.value].filter(Boolean) : []; }
+    if (action === "tg-player-drink-ready") { payload.cheat = root.querySelector("#tg-drink-cheat")?.checked === true; payload.concealment = selectedCheatMethod(root, "tg-drink-cheat-method"); }
+    if (action === "tg-player-golem-deal") { payload.marked = root.querySelector("#tg-player-golem-marked")?.checked === true; payload.markedCardIds = payload.marked ? [root.querySelector("#tg-player-golem-card-one")?.value, root.querySelector("#tg-player-golem-card-two")?.value].filter(Boolean) : []; payload.concealment = selectedCheatMethod(root, "tg-player-golem-cheat-method"); }
     submitPlayerAction(action, payload);
   }
 }
@@ -573,11 +595,13 @@ async function gmAction(action, playerId, root) {
   if (!current) return;
   let next = current;
   if (action === "tg-golem-deal") {
-    const marked = root.querySelector("#tg-golem-marked")?.checked === true && hasMarkedCards(actor(current.dealerId));
+    const dealerActor = actor(current.dealerId);
+    const marked = root.querySelector("#tg-golem-marked")?.checked === true && hasMarkedCards(dealerActor);
+    const concealment = selectedCheatMethod(root, "tg-golem-cheat-method");
     const ids = marked && current.gameNumber === 1 ? [root.querySelector("#tg-golem-card-one")?.value, root.querySelector("#tg-golem-card-two")?.value] : [];
     next = dealGolem(current, { markedCardIds: ids.filter(Boolean) });
     if (marked) next.cheatingDealerId = next.dealerId;
-    await markedCardCheck(next, playerById(next, next.dealerId), marked);
+    await markedCardCheck(next, playerById(next, next.dealerId), marked, concealment);
   }   else if (action === "tg-golem-match") next = golemBet(current, playerId, current.betting.currentBet ? "match" : "pass");
   else if (action === "tg-golem-fold") next = golemBet(current, playerId, "fold").state;
   else if (action === "tg-golem-raise") next = golemBet(current, playerId, current.betting.currentBet ? "raise" : "bet", coinsFrom(root, "tg-golem-raise")).state;
@@ -595,30 +619,35 @@ async function gmAction(action, playerId, root) {
   await saveGame(next);
 }
 
-async function markedCardCheck(current, cheater, cheating) {
+async function markedCardCheck(current, cheater, cheating, concealment = "performance") {
+  if (!cheating) return null;
   const entryActor = actor(cheater.actorId);
-  const check = await rollStatisticBlind(entryActor, "thievery", { label: "Palm an Object — Golem" });
-  if (cheating) await detectCheating(current, cheater, check.roll, "Golem");
+  const check = await rollConcealmentCheck(entryActor, concealment, "Golem cheating");
+  await detectCheating(current, cheater, check.roll, "Golem");
+  return check;
 }
 
 async function resolveDrinks(current) {
   const contestants = current.players.filter((entry) => qualified(current, entry));
   const attempts = await Promise.all(contestants.map(async (contestant) => {
     const entryActor = actor(contestant.actorId);
-    const cheat = current.drinkingCheats?.[contestant.id] === true;
+    const cheatRequest = current.drinkingCheats?.[contestant.id];
+    const cheat = cheatRequest === true || cheatRequest?.cheated === true;
+    const concealment = cheatRequest?.concealment === "deception" ? "deception" : "performance";
     const [performance, fortitude] = await Promise.all([
-      rollStatisticBlind(entryActor, "performance", { label: "Drinking Contest Performance" }),
+      cheat ? rollConcealmentCheck(entryActor, concealment, "Drinking Contest cheating") : rollStatisticBlind(entryActor, "performance", { label: "Drinking Contest Performance" }),
       cheat ? Promise.resolve({ total: null, roll: null }) : rollStatisticBlind(entryActor, "fortitude", { dc: current.fortitudeDC, label: "Drinking Contest Fortitude" }),
     ]);
-    return { contestant, cheat, performance, fortitude };
+    return { contestant, cheat, concealment, performance, fortitude };
   }));
   await Promise.all(attempts.filter((attempt) => attempt.cheat).map((attempt) => detectCheating(current, attempt.contestant, attempt.performance.roll, "the drinking contest")));
-  const resolutions = attempts.map(({ contestant, cheat, performance, fortitude }) => ({
+  const resolutions = attempts.map(({ contestant, cheat, concealment, performance, fortitude }) => ({
     playerId: contestant.id,
     performanceTotal: performance.total,
     fortitudeTotal: fortitude.total,
     fortitudeDegree: cheat ? "success" : degreeFromRoll(fortitude.roll, current.fortitudeDC),
     cheated: cheat,
+    concealment,
   }));
   const next = resolveDrinkingRound(current, resolutions);
   await Promise.all(next.players.map((contestant) => applyDrinkingStage(actor(contestant.actorId), contestant.stage)));
@@ -644,7 +673,7 @@ async function processPlayerAction(entryActor, request, userId) {
     if (!current || !entrant || !qualified(current, entrant)) return;
     let next = current;
     const payload = request.payload ?? {};
-    if (request.action === "tg-player-golem-deal" && entrant.id === current.dealerId) { const cheating = payload.marked === true && hasMarkedCards(entryActor); next = dealGolem(current, { markedCardIds: cheating ? payload.markedCardIds ?? [] : [] }); if (cheating) next.cheatingDealerId = entrant.id; await markedCardCheck(next, entrant, cheating); }
+    if (request.action === "tg-player-golem-deal" && entrant.id === current.dealerId) { const cheating = payload.marked === true && hasMarkedCards(entryActor); next = dealGolem(current, { markedCardIds: cheating ? payload.markedCardIds ?? [] : [] }); if (cheating) next.cheatingDealerId = entrant.id; await markedCardCheck(next, entrant, cheating, payload.concealment === "deception" ? "deception" : "performance"); }
     else if (request.action === "tg-player-golem-match" && current.betting?.turnSeat === entrant.seat) next = golemBet(current, entrant.id, current.betting.currentBet ? "match" : "pass").state;
     else if (request.action === "tg-player-golem-fold" && current.betting?.turnSeat === entrant.seat) next = golemBet(current, entrant.id, "fold").state;
     else if (request.action === "tg-player-golem-raise" && current.betting?.turnSeat === entrant.seat) next = golemBet(current, entrant.id, current.betting.currentBet ? "raise" : "bet", payload.totalCp).state;
@@ -656,7 +685,7 @@ async function processPlayerAction(entryActor, request, userId) {
     else if (request.action === "tg-player-bounder-double" && entrant.id === current.shooterId) next = bounderDoubleStake(current);
     else if (request.action === "tg-player-century-select") next = centuryChooseNumbers(current, entrant.id, payload.numbers, payload.stakeCp);
     else if (request.action === "tg-player-century-draw" && entrant.id === current.dealerId) next = centuryDraw(current, hasLoadedDice(entryActor) && payload.numbers?.length ? payload.numbers : null);
-    else if (request.action === "tg-player-drink-ready") { next = setDrinkingReady(current, entrant.id, true); next.drinkingCheats ??= {}; next.drinkingCheats[entrant.id] = payload.cheat === true; if (next.phase === "drinking-resolve") next = await resolveDrinks(next); }
+    else if (request.action === "tg-player-drink-ready") { next = setDrinkingReady(current, entrant.id, true); next.drinkingCheats ??= {}; next.drinkingCheats[entrant.id] = { cheated: payload.cheat === true, concealment: payload.concealment === "deception" ? "deception" : "performance" }; if (next.phase === "drinking-resolve") next = await resolveDrinks(next); }
     else throw new Error("That player action is not legal at the current tavern-game phase.");
     await entryActor.unsetFlag(MODULE_ID, REQUEST_FLAG);
     await entryActor.setFlag(MODULE_ID, STATUS_FLAG, { kind: "accepted", message: "The GM accepted your action." });

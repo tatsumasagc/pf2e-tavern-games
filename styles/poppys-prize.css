@@ -1035,3 +1035,35 @@ button.pp-card:hover:not(:disabled),
     max-height: 38vh;
   }
 }
+
+.pp-cheat-method,
+.pf2e-tavern-games .tg-cheat-method {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.7rem;
+  align-items: center;
+  margin: 0.45rem 0;
+  padding: 0.35rem 0.5rem;
+  color: #2b3136;
+  background: #eef4e7;
+  border: 1px solid #78926d;
+  border-radius: 0.3rem;
+}
+
+.pp-cheat-method legend,
+.pf2e-tavern-games .tg-cheat-method legend {
+  padding: 0 0.25rem;
+  color: #244e3b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.pp-cheat-method label,
+.pf2e-tavern-games .tg-cheat-method label {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}

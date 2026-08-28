@@ -252,31 +252,33 @@ function activeGMIds() {
   return game.users.filter((user) => user.active && user.isGM).map((user) => user.id);
 }
 
-async function rollDeckCheatCheck(state, cheating) {
+async function rollDeckCheatCheck(state, cheating, concealment = "performance") {
+  if (!cheating) return null;
   const dealer = state.players.find((player) => player.seat === state.dealerSeat);
   const dealerActor = getActor(dealer?.actorId);
   const observers = state.players.filter((player) => player.id !== dealer?.id).map((player) => ({ player, actor: getActor(player.actorId) }));
-  const thievery = dealerActor?.skills?.thievery;
-  if (!thievery?.check?.roll) {
-    console.warn(`${MODULE_ID} | ${dealer?.name ?? "The dealer"} cannot make a PF2E Thievery roll for Palm an Object.`);
+  const useDiversion = concealment === "deception";
+  const skillName = useDiversion ? "deception" : "performance";
+  const skill = dealerActor?.skills?.[skillName];
+  const checkName = useDiversion ? "Create a Diversion" : "Performance";
+  if (!skill?.check?.roll) {
+    console.warn(`${MODULE_ID} | ${dealer?.name ?? "The dealer"} cannot make a PF2E ${checkName} check.`);
     return null;
   }
   let roll;
   try {
-    roll = await thievery.check.roll({
-      action: "palm-an-object",
-      slug: "palm-an-object",
-      title: "Palm an Object — Poppy’s Prize",
-      label: "Palm an Object",
+    roll = await skill.check.roll({
+      ...(useDiversion ? { action: "create-a-diversion", slug: "create-a-diversion" } : {}),
+      title: `${checkName} — Poppy’s Prize cheating`,
+      label: checkName,
       messageMode: "blindroll",
       skipDialog: true,
-      extraRollOptions: ["action:palm-an-object", "poppys-prize:deck-deal"],
+      extraRollOptions: ["poppys-prize:deck-deal", ...(useDiversion ? ["action:create-a-diversion", "trait:action:create-a-diversion"] : ["action:performance"])],
     });
   } catch (error) {
-    console.warn(`${MODULE_ID} | Palm an Object roll failed to resolve`, error);
+    console.warn(`${MODULE_ID} | ${checkName} roll failed to resolve`, error);
     return null;
   }
-  if (!cheating) return roll;
   for (const observer of observers) {
     const dc = perceptionDC(observer.actor);
     const degree = blindCheckDegreeAgainstDC(roll, dc);
@@ -658,9 +660,9 @@ function renderDealControls(state, choices = {}) {
   const cardOptions = choices.markedCardOptions ?? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) }));
   const optionMarkup = `<option value="">Choose a card</option>${cardOptions.map((card) => `<option value="${escapeHTML(card.id)}">${escapeHTML(card.label)}</option>`).join("")}`;
   const markedControls = canCheat
-    ? `<label class="pp-currency-choice"><input id="pp-cheat-deal" type="checkbox"> Use marked playing cards to choose two cards</label><div class="pp-marked-card-fields"><label>First card <select id="pp-marked-card-1">${optionMarkup}</select></label><label>Second card <select id="pp-marked-card-2">${optionMarkup}</select></label></div><p class="pp-help">A blind Palm an Object check will be compared privately with the other players’ Perception DCs.</p>`
+    ? `<label class="pp-currency-choice"><input id="pp-cheat-deal" type="checkbox"> Use marked playing cards to choose two cards</label><div class="pp-marked-card-fields"><label>First card <select id="pp-marked-card-1">${optionMarkup}</select></label><label>Second card <select id="pp-marked-card-2">${optionMarkup}</select></label></div>${renderCheatMethodControls("pp-cheat-method")}<p class="pp-help">A blind Performance or Deception (Create a Diversion) check will be compared privately with the other players’ Perception DCs.</p>`
     : canUseMarkedCards
-      ? `<label class="pp-currency-choice"><input id="pp-marked-sight" type="checkbox"> Use marked playing cards to read face-down cards</label><p class="pp-help">The cards are still dealt randomly. Marked-card sight reveals the other hands and unrevealed common pool only to this Poppy.</p>`
+      ? `<label class="pp-currency-choice"><input id="pp-marked-sight" type="checkbox"> Use marked playing cards to read face-down cards</label>${renderCheatMethodControls("pp-cheat-method")}<p class="pp-help">The cards are still dealt randomly. A blind Performance or Deception (Create a Diversion) check is compared privately with the other players’ Perception DCs. Marked-card sight reveals the other hands and unrevealed common pool only to this Poppy.</p>`
       : `<p class="pp-help">This Poppy does not have marked playing cards. The next deal is fair.</p>`;
   return `<section class="pp-control-panel pp-deal-panel"><h3>${escapeHTML(dealer?.name ?? "Poppy")} deals the cards</h3>
     <p>Cards and antes are applied only after Poppy uses <strong>Deal cards</strong>. ${state.gameNumber === 1 ? "The first Poppy may choose two cards only by cheating with marked playing cards." : "The winner of the previous game is the new Poppy."}</p>
@@ -1021,25 +1023,33 @@ async function enact(transform) {
   });
 }
 
-function dealRequestFromRoot(root) {
-  const cheating = root.querySelector("#pp-cheat-deal")?.checked === true;
-  const markedCardSight = cheating || root.querySelector("#pp-marked-sight")?.checked === true;
-  const markedCardIds = cheating ? [root.querySelector("#pp-marked-card-1")?.value, root.querySelector("#pp-marked-card-2")?.value].filter(Boolean) : [];
-  if (cheating && markedCardIds.length !== 2) throw new Error("Choose two distinct cards before using marked playing cards.");
-  return { cheating, markedCardSight, markedCardIds };
+function renderCheatMethodControls(name) {
+  return `<fieldset class="pp-cheat-method"><legend>Conceal the cheat with</legend><label><input type="radio" name="${escapeHTML(name)}" value="performance" checked> Performance</label><label><input type="radio" name="${escapeHTML(name)}" value="deception"> Deception — Create a Diversion</label></fieldset>`;
 }
 
-async function performDeal(state, { cheating = false, markedCardSight = false, markedCardIds = [] } = {}) {
+function dealRequestFromRoot(root) {
+  const selectOpeningCards = root.querySelector("#pp-cheat-deal")?.checked === true;
+  const useMarkedCardSight = root.querySelector("#pp-marked-sight")?.checked === true;
+  const cheating = selectOpeningCards || useMarkedCardSight;
+  const markedCardSight = cheating;
+  const markedCardIds = selectOpeningCards ? [root.querySelector("#pp-marked-card-1")?.value, root.querySelector("#pp-marked-card-2")?.value].filter(Boolean) : [];
+  const concealment = root.querySelector('input[name="pp-cheat-method"]:checked')?.value === "deception" ? "deception" : "performance";
+  if (selectOpeningCards && markedCardIds.length !== 2) throw new Error("Choose two distinct cards before using marked playing cards.");
+  return { cheating, markedCardSight, markedCardIds, concealment };
+}
+
+async function performDeal(state, { cheating = false, markedCardSight = false, markedCardIds = [], concealment = "performance" } = {}) {
   if (!state || state.phase !== PHASES.DEAL) throw new Error("The deck is not waiting to be dealt.");
   const dealer = state.players.find((player) => player.seat === state.dealerSeat);
   const dealerActor = getActor(dealer?.actorId);
   const canUseMarkedCards = hasMarkedPlayingCards(dealerActor);
-  const canCheat = state.gameNumber === 1 && canUseMarkedCards;
-  if (cheating && !canCheat) throw new Error("Only the first Poppy with marked-playing-cards may choose two cards.");
+  const canSelectOpeningCards = state.gameNumber === 1 && canUseMarkedCards;
+  if (markedCardIds.length && !canSelectOpeningCards) throw new Error("Only the first Poppy with marked-playing-cards may choose two cards.");
+  if (cheating && !canUseMarkedCards) throw new Error("Only a Poppy with marked-playing-cards may cheat with marked-card sight.");
   if (markedCardSight && !canUseMarkedCards) throw new Error("Only a Poppy with marked-playing-cards may use marked-card sight.");
-  const next = dealPreparedGame(state, { markedCardIds: cheating ? markedCardIds : [], markedCardSight: Boolean(markedCardSight) });
+  const next = dealPreparedGame(state, { markedCardIds: markedCardIds.length ? markedCardIds : [], markedCardSight: Boolean(markedCardSight) });
   await debitAntes(next, `game ${next.gameNumber} ante`);
-  if (next.gameNumber === 1) await rollDeckCheatCheck(next, cheating);
+  await rollDeckCheatCheck(next, cheating, concealment);
   return next;
 }
 
