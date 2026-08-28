@@ -383,6 +383,7 @@ function buildPlayerView(state, player) {
     },
     choices: {
       canDeal,
+      canUseMarkedCards: canDeal && hasMarkedPlayingCards(getActor(player.actorId)),
       canCheatDeal: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)),
       markedCardOptions: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)) ? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
       canSelectCommon,
@@ -632,12 +633,18 @@ function renderDealControls(state, choices = {}) {
   const dealer = state.players.find((player) => player.seat === state.dealerSeat);
   const dealAction = isGM() ? "deal-cards" : "player-deal-cards";
   const dealerActor = getActor(dealer?.actorId);
-  const canCheat = choices.canCheatDeal ?? (state.gameNumber === 1 && hasMarkedPlayingCards(dealerActor));
+  const canUseMarkedCards = choices.canUseMarkedCards ?? hasMarkedPlayingCards(dealerActor);
+  const canCheat = choices.canCheatDeal ?? (state.gameNumber === 1 && canUseMarkedCards);
   const cardOptions = choices.markedCardOptions ?? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) }));
   const optionMarkup = `<option value="">Choose a card</option>${cardOptions.map((card) => `<option value="${escapeHTML(card.id)}">${escapeHTML(card.label)}</option>`).join("")}`;
+  const markedControls = canCheat
+    ? `<label class="pp-currency-choice"><input id="pp-cheat-deal" type="checkbox"> Use marked playing cards to choose two cards</label><div class="pp-marked-card-fields"><label>First card <select id="pp-marked-card-1">${optionMarkup}</select></label><label>Second card <select id="pp-marked-card-2">${optionMarkup}</select></label></div><p class="pp-help">A blind Palm an Object check will be compared privately with the other players’ Perception DCs.</p>`
+    : canUseMarkedCards
+      ? `<label class="pp-currency-choice"><input id="pp-marked-sight" type="checkbox"> Use marked playing cards to read face-down cards</label><p class="pp-help">The cards are still dealt randomly. Marked-card sight reveals the other hands and unrevealed common pool only to this Poppy.</p>`
+      : `<p class="pp-help">This Poppy does not have marked playing cards. The next deal is fair.</p>`;
   return `<section class="pp-control-panel pp-deal-panel"><h3>${escapeHTML(dealer?.name ?? "Poppy")} deals the cards</h3>
     <p>Cards and antes are applied only after Poppy uses <strong>Deal cards</strong>. ${state.gameNumber === 1 ? "The first Poppy may choose two cards only by cheating with marked playing cards." : "The winner of the previous game is the new Poppy."}</p>
-    ${canCheat ? `<label class="pp-currency-choice"><input id="pp-cheat-deal" type="checkbox"> Use marked playing cards to choose two cards</label><div class="pp-marked-card-fields"><label>First card <select id="pp-marked-card-1">${optionMarkup}</select></label><label>Second card <select id="pp-marked-card-2">${optionMarkup}</select></label></div><p class="pp-help">A secret Thievery check using Palm an Object will be rolled against the other players’ Perception DCs.</p>` : `<p class="pp-help">A secret Palm an Object check will still be rolled for the first deal, but it has no effect because this Poppy is not using marked playing cards.</p>`}
+    ${markedControls}
     <div class="pp-action-row">${actionButton({ action: dealAction, label: "Deal cards", icon: "fa-solid fa-clone" })}${isGM() ? actionButton({ action: "open-player-panel", label: "Open Poppy’s player panel", css: "muted", dataset: { actor: dealer?.actorId ?? "" } }) : ""}</div>
   </section>`;
 }
@@ -939,18 +946,21 @@ async function enact(transform) {
 
 function dealRequestFromRoot(root) {
   const cheating = root.querySelector("#pp-cheat-deal")?.checked === true;
+  const markedCardSight = cheating || root.querySelector("#pp-marked-sight")?.checked === true;
   const markedCardIds = cheating ? [root.querySelector("#pp-marked-card-1")?.value, root.querySelector("#pp-marked-card-2")?.value].filter(Boolean) : [];
   if (cheating && markedCardIds.length !== 2) throw new Error("Choose two distinct cards before using marked playing cards.");
-  return { cheating, markedCardIds };
+  return { cheating, markedCardSight, markedCardIds };
 }
 
-async function performDeal(state, { cheating = false, markedCardIds = [] } = {}) {
+async function performDeal(state, { cheating = false, markedCardSight = false, markedCardIds = [] } = {}) {
   if (!state || state.phase !== PHASES.DEAL) throw new Error("The deck is not waiting to be dealt.");
   const dealer = state.players.find((player) => player.seat === state.dealerSeat);
   const dealerActor = getActor(dealer?.actorId);
-  const canCheat = state.gameNumber === 1 && hasMarkedPlayingCards(dealerActor);
+  const canUseMarkedCards = hasMarkedPlayingCards(dealerActor);
+  const canCheat = state.gameNumber === 1 && canUseMarkedCards;
   if (cheating && !canCheat) throw new Error("Only the first Poppy with marked-playing-cards may choose two cards.");
-  const next = dealPreparedGame(state, { markedCardIds: cheating ? markedCardIds : [] });
+  if (markedCardSight && !canUseMarkedCards) throw new Error("Only a Poppy with marked-playing-cards may use marked-card sight.");
+  const next = dealPreparedGame(state, { markedCardIds: cheating ? markedCardIds : [], markedCardSight: Boolean(markedCardSight) });
   await debitAntes(next, `game ${next.gameNumber} ante`);
   if (next.gameNumber === 1) await rollDeckCheatCheck(next, cheating);
   return next;

@@ -14,7 +14,7 @@ const journalPack = new URL("packs/poppys-prize-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.6.0", "The release version should be 1.6.0");
+assert.equal(manifest.version, "1.6.1", "The release version should be 1.6.1");
 assert.equal(manifest.authors?.[0]?.name, "Tatsu_Gamer", "The module manifest author should credit Tatsu_Gamer.");
 assert.ok(!Object.hasOwn(manifest, "system"), "Foundry v14 manifests must not include the unsupported top-level system key");
 assert.equal(manifest.relationships?.systems?.[0]?.id, "pf2e", "The supported PF2E relationship should be retained");
@@ -73,7 +73,12 @@ assert.match(mainSource, /activeGMIds\(\)/, "Each detection should whisper the a
 assert.match(mainSource, /observerOwners = activeOwnerIds\(observer\.actor\)/, "Each detection should whisper the observer’s active Owner");
 const blindRollSource = mainSource.slice(mainSource.indexOf("async function rollDeckCheatCheck"), mainSource.indexOf("function hasAutoCurrency"));
 assert.doesNotMatch(blindRollSource, /dc:\s*\{/, "The blind Palm an Object roll should not receive a displayed target DC");
-assert.match(mainSource, /state\.cheatingDealerId === player\.id/, "Only the recorded cheating dealer should receive marked-card vision");
+assert.match(mainSource, /state\.cheatingDealerId === player\.id/, "Only the recorded marked-card dealer should receive marked-card vision");
+assert.match(mainSource, /canUseMarkedCards: canDeal && hasMarkedPlayingCards/, "Any active Poppy with marked-playing-cards should be eligible for marked-card sight");
+assert.match(mainSource, /id="pp-marked-sight"/, "Later-game Poppies should be able to elect marked-card sight");
+assert.match(mainSource, /markedCardSight = cheating \|\| root\.querySelector\("#pp-marked-sight"\)/, "The deal request should carry the later-game marked-card sight choice");
+assert.match(mainSource, /markedCardSight: Boolean\(markedCardSight\)/, "The GM should pass the validated marked-card sight choice to the engine");
+assert.match(mainSource, /state\.gameNumber === 1 && canUseMarkedCards/, "Only the first game should expose two-card marked selection");
 assert.match(mainSource, /markedCardVision/, "Marked-card vision should be stored in the actor-owned player view");
 assert.match(mainSource, /function renderMarkedCardVision/, "The player panel should render the marked-card vision section");
 assert.match(mainSource, /hands: state\.players/, "Marked-card sight should group concealed cards by other player");
@@ -83,6 +88,10 @@ assert.match(mainSource, /<h4>Common pool<\/h4>/, "Marked-card sight should labe
 assert.match(mainSource, /pp-marked-card-group/, "The player panel should render visually separate marked-card groups");
 assert.match(mainSource, /Your marked playing cards reveal the text identity/, "The cheating view should explain the private information it shows");
 assert.match(mainSource, /cardMarkup\(entry\.card, \{ faceDown: true \}\)/, "Marked-card vision should retain the concealed card-back artwork");
+const engineSource = readFileSync(new URL("scripts/engine.mjs", moduleRoot), "utf8");
+assert.match(engineSource, /markedCardSight = false/, "The engine should accept a separate marked-card sight choice");
+assert.match(engineSource, /next\.cheatingDealerId = markedCardSight \|\| marked\.length === 2/, "Marked-card sight should apply without a later-game card choice");
+assert.match(engineSource, /next\.gameNumber === 1 \|\| choices\.length === 0/, "Two-card marked selection must remain first-game-only");
 assert.doesNotMatch(mainSource.slice(mainSource.indexOf("function buildPublicBoard"), mainSource.indexOf("function buildPlayerView")), /cheatingDealerId|markedCardVision/, "Public board data must not contain marked-card cheating information");
 assert.match(mainSource, /coinFieldMarkup\("pp-ante"/, "The ante should use separate denomination fields");
 assert.match(mainSource, /coinFieldMarkup\("pp-raise"/, "GM raises should use separate denomination fields");
@@ -125,4 +134,4 @@ for (const name of ["Poppy’s Prize — Rules Reference", "How to Use the Poppy
   assert.match(journal.pages?.[0]?.text?.content ?? "", /Created by Tatsu_Gamer using Manus AI/, `${name} should include the creator note.`);
 }
 
-console.log("Poppy’s Prize 1.6.0 revision validation passed.");
+console.log("Poppy’s Prize 1.6.1 revision validation passed.");

@@ -2,6 +2,10 @@
 
 All notable changes to **Poppy’s Prize** are documented in this file.
 
+## 1.6.1 — 27 August 2026
+
+In a later game at the same table, the active Poppy can now elect to use `marked-playing-cards` for private marked-card sight when their actor has that item. This exposes grouped hidden hands and the unrevealed common pool only to that Poppy; it does not permit later-game selection of two opening cards.
+
 ## 1.6.0 — 27 August 2026
 
 The manifest author is now **Tatsu_Gamer**. The Poppy’s Prize compendium folder now also contains a player-readable **Poppy’s Prize Journals** pack with two Journal Entries: **Poppy’s Prize — Rules Reference** and **How to Use the Poppy’s Prize Module**. Both entries include the creator note: *Created by Tatsu_Gamer using Manus AI*.
