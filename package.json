@@ -1,9 +1,9 @@
 {
-  "name": "poppys-prize",
-  "version": "1.6.1",
+  "name": "pf2e-tavern-games",
+  "version": "1.7.0",
   "private": true,
   "type": "module",
-  "description": "Build tools for the Poppy’s Prize Foundry VTT module.",
+  "description": "Build tools for the PF2e Tavern Games Foundry VTT module.",
   "scripts": {
     "build:pack": "node tools/build-packs.mjs",
     "test": "node tests/engine.test.mjs && node tests/revision-validation.mjs && node tools/inspect-macro-pack.mjs && node tools/inspect-journal-pack.mjs"

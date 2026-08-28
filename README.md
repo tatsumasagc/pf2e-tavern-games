@@ -1,8 +1,8 @@
-# Poppy’s Prize
+# PF2e Tavern Games
 
-**Poppy’s Prize** is a GM-led Foundry VTT module for the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.6.1 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
+**PF2e Tavern Games** is a Foundry VTT module for automating tavern games in PF2E. Its first included game is **Poppy’s Prize**, the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.7.0 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
 
-The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] Version 1.6.1 uses the supported `relationships.systems` declaration for PF2E compatibility and removes the rejected legacy top-level `system` key. The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
+The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] Version 1.7.0 uses the supported `relationships.systems` declaration for PF2E compatibility and removes the rejected legacy top-level `system` key. The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
 > **Content note.** This module automates a game procedure. It does **not** include text, illustrations, maps, cards, or other reproduced adventure content from *Jewel of the Indigo Isles*.
 
@@ -24,15 +24,15 @@ The GM should create or import every actor who will join the game before opening
 
 Ante and raise totals use separate whole-number **pp**, **gp**, **sp**, and **cp** fields, in that order. The module converts these fields to copper internally and still rejects totals below the game’s minimum legal bet.
 
-Every eligible PF2E character and NPC sheet now has a **Poppy’s Prize** anchor button in its header. A GM can use it to open the table. An actor owner can use it to open that actor’s private hand when the actor is assigned to an active game. The control remains visible to an actor owner before a game begins, but it explains when that actor has not yet been selected for the table.
+Every eligible PF2E character and NPC sheet now has a **PF2e Tavern Games** anchor button in its header. A GM can use it to open the table. An actor owner can use it to open that actor’s private hand when the actor is assigned to an active game. The control remains visible to an actor owner before a game begins, but it explains when that actor has not yet been selected for the table.
 
 ## Macro compendium
 
-The Compendium Packs sidebar contains a **Poppy’s Prize** folder with a GM-only **Poppy’s Prize Macros** pack. The pack contains a compiled **Open Poppy’s Prize** script Macro, which launches the table and shows a clear warning if the module has not been enabled. The macro uses the included square nautical card-and-anchor icon. To use it frequently, open the pack as a GM and drag the macro to the Foundry macro bar.
+The Compendium Packs sidebar contains a **PF2e Tavern Games** folder with a GM-only **PF2e Tavern Games Macros** pack. The pack contains a compiled **Open Poppy’s Prize** script Macro, which launches the table and shows a clear warning if the module has not been enabled. The macro uses the included square nautical card-and-anchor icon. To use it frequently, open the pack as a GM and drag the macro to the Foundry macro bar.
 
 ## Journal Entries compendium
 
-The same **Poppy’s Prize** Compendium Packs folder includes the player-readable **Poppy’s Prize Journals** pack. It contains **Poppy’s Prize — Rules Reference**, a concise game procedure reference, and **How to Use the Poppy’s Prize Module**, a practical Foundry setup and play guide. Both Journal Entries display the note: *Created by Tatsu_Gamer using Manus AI*.
+The same **PF2e Tavern Games** Compendium Packs folder includes the player-readable **PF2e Tavern Games Journals** pack. It contains **Poppy’s Prize — Rules Reference**, a concise game procedure reference, and **How to Use PF2e Tavern Games**, a practical Foundry setup and play guide. Both Journal Entries display the note: *Created by Tatsu_Gamer using Manus AI*.
 
 | Module setting | Default | Effect |
 |---|---:|---|

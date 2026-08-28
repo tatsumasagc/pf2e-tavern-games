@@ -445,7 +445,7 @@ function addActorSheetPrizeButton(sheet, buttons) {
   const actor = sheet?.actor;
   if (!canShowPlayerPanelForActor(actor) || buttons.some((button) => button.class === "poppys-prize-sheet")) return;
   buttons.unshift({
-    label: "Poppy’s Prize",
+    label: "PF2e Tavern Games",
     class: "poppys-prize-sheet",
     icon: "fa-solid fa-anchor",
     onclick: () => (isGM() ? openTable() : openPlayerPanel(actor)),
@@ -765,7 +765,7 @@ class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
     id: "poppys-prize-table",
     classes: ["poppys-prize", "application", "poppys-prize-gm"],
     position: { width: 1120, height: 820 },
-    window: { title: "Poppy’s Prize", icon: "fa-solid fa-anchor", resizable: true },
+    window: { title: "PF2e Tavern Games — Poppy’s Prize", icon: "fa-solid fa-anchor", resizable: true },
   };
 
   async _renderHTML() {
@@ -825,7 +825,7 @@ class PoppysPrizePlayerApplication extends foundry.applications.api.ApplicationV
     id: "poppys-prize-player",
     classes: ["poppys-prize", "application", "poppys-prize-player"],
     position: { width: 760, height: 760 },
-    window: { title: "Poppy’s Prize — Your Hand", icon: "fa-solid fa-anchor", resizable: true },
+    window: { title: "PF2e Tavern Games — Poppy’s Prize: Your Hand", icon: "fa-solid fa-anchor", resizable: true },
   };
 
   async _renderHTML() {
@@ -992,7 +992,7 @@ function promptStartGame() {
     <p class="notes">When selected, the chosen actors pay antes and bets automatically and receive automatic payouts for this game. Leave it unchecked for narrative or manual wealth tracking.</p>
   </form>`;
   new foundry.applications.api.DialogV2({
-    window: { title: "Start Poppy’s Prize" },
+    window: { title: "PF2e Tavern Games — Start Poppy’s Prize" },
     content,
     buttons: [{
       action: "start",
@@ -1035,7 +1035,7 @@ async function startGame(result) {
 function clearGame() {
   if (!isGM()) return;
   return foundry.applications.api.DialogV2.confirm({
-    window: { title: "Reset Poppy’s Prize table" },
+    window: { title: "PF2e Tavern Games — Reset Poppy’s Prize table" },
     content: "<p>Close the current table? This clears the stored game and player-view data; it does not refund or change any character currency.</p>",
     yes: { label: "Close table", icon: "fa-solid fa-trash" },
     no: { label: "Keep playing" },
@@ -1053,7 +1053,7 @@ function clearGame() {
 
 Hooks.once("init", () => {
   game.settings.register(MODULE_ID, STATE_SETTING, {
-    name: "Poppy’s Prize table state",
+    name: "PF2e Tavern Games table state",
     hint: "Internal world state for an active Poppy’s Prize game.",
     scope: "world",
     config: false,
@@ -1062,7 +1062,7 @@ Hooks.once("init", () => {
     default: null,
   });
   game.settings.register(MODULE_ID, PUBLIC_STATE_SETTING, {
-    name: "Poppy’s Prize public board",
+    name: "PF2e Tavern Games public board",
     hint: "Public game data with no private hands or face-down card identities.",
     scope: "world",
     config: false,
@@ -1084,7 +1084,7 @@ Hooks.once("ready", () => {
     }
     if (payload.type === "turn-alert" && payload.recipients?.includes(game.user.id)) {
       openPlayerPanel(actor);
-      ui.notifications.info(`Poppy’s Prize: it is ${payload.playerName ?? "your"} turn.`);
+      ui.notifications.info(`PF2e Tavern Games — Poppy’s Prize: it is ${payload.playerName ?? "your"} turn.`);
     }
   });
   Hooks.on("getActorSheetHeaderButtons", addActorSheetPrizeButton);
@@ -1096,7 +1096,7 @@ Hooks.once("ready", () => {
     if (!tokenControls || tokenControls.tools.some((tool) => tool.name === "poppys-prize")) return;
     tokenControls.tools.push({
       name: "poppys-prize",
-      title: isGM() ? "Poppy’s Prize table" : "Poppy’s Prize — Your Hand",
+      title: isGM() ? "PF2e Tavern Games — Poppy’s Prize" : "PF2e Tavern Games — Your Hand",
       icon: "fa-solid fa-anchor",
       button: true,
       visible: true,

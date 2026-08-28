@@ -14,7 +14,8 @@ const journalPack = new URL("packs/poppys-prize-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.6.1", "The release version should be 1.6.1");
+assert.equal(manifest.version, "1.7.0", "The release version should be 1.7.0");
+assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.equal(manifest.authors?.[0]?.name, "Tatsu_Gamer", "The module manifest author should credit Tatsu_Gamer.");
 assert.ok(!Object.hasOwn(manifest, "system"), "Foundry v14 manifests must not include the unsupported top-level system key");
 assert.equal(manifest.relationships?.systems?.[0]?.id, "pf2e", "The supported PF2E relationship should be retained");
@@ -111,12 +112,14 @@ for (const name of ["card_back.webp", "ships_01.webp", "gems_king.webp", "parrot
   assert.ok(existsSync(new URL(name, cardDirectory)), `Missing required deck asset: ${name}`);
 }
 assert.doesNotMatch(cssSource, /centre/, "The stylesheet should use CSS-compatible alignment keywords");
-assert.equal(manifest.packs?.[0]?.name, "poppys-prize-macros", "The Macro pack should be registered in the manifest");
+assert.equal(manifest.packs?.[0]?.name, "poppys-prize-macros", "The Macro pack should retain its stable package ID");
+assert.equal(manifest.packs?.[0]?.label, "PF2e Tavern Games Macros", "The Macro pack should use the renamed visible label");
 const journalManifest = manifest.packs?.find((pack) => pack.name === "poppys-prize-journals");
 assert.equal(journalManifest?.type, "JournalEntry", "The JournalEntry pack should be registered in the manifest");
+assert.equal(journalManifest?.label, "PF2e Tavern Games Journals", "The JournalEntry pack should use the renamed visible label");
 assert.ok(manifest.packFolders?.[0]?.packs?.includes("poppys-prize-journals"), "The journal pack should appear in the Poppy’s Prize compendium folder");
 assert.equal(manifest.packs?.[0]?.type, "Macro", "The registered compendium should contain Macro documents");
-assert.equal(manifest.packFolders?.[0]?.name, "Poppy’s Prize", "The Macro pack should appear in the Poppy’s Prize compendium folder");
+assert.equal(manifest.packFolders?.[0]?.name, "PF2e Tavern Games", "The packs should appear in the renamed compendium folder");
 assert.ok(existsSync(icon), "The macro icon should be included");
 assert.ok(existsSync(macroSource), "The tracked macro source should be included");
 assert.ok(readdirSync(macroPack).some((name) => name.startsWith("MANIFEST-")), "The compiled LevelDB Macro pack should be included");
@@ -128,10 +131,10 @@ assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The macro s
 assert.ok(readdirSync(journalPack).some((name) => name.startsWith("MANIFEST-")), "The compiled LevelDB JournalEntry pack should be included");
 const journalSources = readdirSync(journalSourceDirectory).filter((name) => name.endsWith(".json")).map((name) => JSON.parse(readFileSync(new URL(name, journalSourceDirectory), "utf8")));
 assert.equal(journalSources.length, 2, "The module should provide rules and module-use JournalEntry sources.");
-for (const name of ["Poppy’s Prize — Rules Reference", "How to Use the Poppy’s Prize Module"]) {
+for (const name of ["Poppy’s Prize — Rules Reference", "How to Use PF2e Tavern Games"]) {
   const journal = journalSources.find((entry) => entry.name === name);
   assert.ok(journal, `Missing JournalEntry source: ${name}`);
   assert.match(journal.pages?.[0]?.text?.content ?? "", /Created by Tatsu_Gamer using Manus AI/, `${name} should include the creator note.`);
 }
 
-console.log("Poppy’s Prize 1.6.1 revision validation passed.");
+console.log("PF2e Tavern Games 1.7.0 revision validation passed.");
