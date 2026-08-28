@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 1.7.1 — 28 August 2026
+
+The private GitHub repository is now **tatsumasagc/pf2e-tavern-games**. The manifest, update manifest URL, versioned download URL, README, and release asset name now use the renamed repository. The Foundry package ID remains `poppys-prize` for installed-world compatibility.
+
 ## 1.7.0 — 28 August 2026
 
 The module’s visible identity is now **PF2e Tavern Games**. Its existing game remains **Poppy’s Prize**, and the Macro and Journal packs have been relabelled and moved under the **PF2e Tavern Games** compendium folder. The stable package ID `poppys-prize`, data keys, asset paths, and repository location are retained so existing installations and saved active tables continue to work after the update.

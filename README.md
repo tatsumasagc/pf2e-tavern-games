@@ -1,14 +1,14 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for automating tavern games in PF2E. Its first included game is **Poppy’s Prize**, the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.7.0 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
+**PF2e Tavern Games** is a Foundry VTT module for automating tavern games in PF2E. Its first included game is **Poppy’s Prize**, the piratical poker game described in *Jewel of the Indigo Isles*. It creates a shared card table, runs the four common-card and betting rounds, handles the two-Pirate Plunder phase, evaluates the best five-card poker hands, splits the pot when appropriate, and preserves the game’s between-round card-keeping procedure. Version 1.7.1 uses the supplied **54-card playable deck**—52 suited cards plus two Pirates—and a separate card-back image for concealed cards. It permits both PF2E PC and NPC actors as players, includes a launch macro in its own compendium folder, provides four explicit setup seats that can be left as dummies, and adds a privacy-safe player panel.
 
-The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] Version 1.7.0 uses the supported `relationships.systems` declaration for PF2E compatibility and removes the rejected legacy top-level `system` key. The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
+The module targets **Foundry VTT 14.367** and **PF2E 8.4.1**. PF2E 8.4.1 is verified for Foundry 14.367 by the system’s package listing.[1] Version 1.7.1 uses the supported `relationships.systems` declaration for PF2E compatibility and removes the rejected legacy top-level `system` key. The module uses Foundry’s declared module manifest, ES module, settings, and standard document APIs rather than overriding core interface methods.[2]
 
 > **Content note.** This module automates a game procedure. It does **not** include text, illustrations, maps, cards, or other reproduced adventure content from *Jewel of the Indigo Isles*.
 
 ## Installation
 
-Extract `poppys-prize.zip` into your Foundry user-data directory under `Data/modules/`. The final path must be:
+The source and releases are hosted at [tatsumasagc/pf2e-tavern-games](https://github.com/tatsumasagc/pf2e-tavern-games). Extract `pf2e-tavern-games-v1.7.1.zip` into your Foundry user-data directory under `Data/modules/`. The final path must be:
 
 ```text
 Data/modules/poppys-prize/module.json

@@ -14,7 +14,10 @@ const journalPack = new URL("packs/poppys-prize-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.7.0", "The release version should be 1.7.0");
+assert.equal(manifest.version, "1.7.1", "The release version should be 1.7.1");
+assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
+assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v1\.7\.1\/pf2e-tavern-games-v1\.7\.1\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.equal(manifest.authors?.[0]?.name, "Tatsu_Gamer", "The module manifest author should credit Tatsu_Gamer.");
 assert.ok(!Object.hasOwn(manifest, "system"), "Foundry v14 manifests must not include the unsupported top-level system key");
@@ -137,4 +140,4 @@ for (const name of ["Poppy’s Prize — Rules Reference", "How to Use PF2e Tave
   assert.match(journal.pages?.[0]?.text?.content ?? "", /Created by Tatsu_Gamer using Manus AI/, `${name} should include the creator note.`);
 }
 
-console.log("PF2e Tavern Games 1.7.0 revision validation passed.");
+console.log("PF2e Tavern Games 1.7.1 revision validation passed.");
