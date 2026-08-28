@@ -12,6 +12,7 @@ import {
   declinePlunder,
   getCurrentActor,
   selectCommon,
+  sortCardsForSelection,
 } from "../scripts/engine.mjs";
 
 const deck = createDeck();
@@ -27,6 +28,8 @@ assert.equal(bestPokerHand([by("A", "trees"), by("A", "ships"), by("A", "gems"),
 assert.equal(bestPokerHand([by("A", "trees"), by("A", "ships"), by("K", "gems"), by("K", "parrots"), by("10", "ships")]).name, "Two Pair");
 assert.equal(bestPokerHand([by("A", "trees"), by("2", "ships"), by("3", "gems"), by("4", "parrots"), by("5", "ships")]).name, "Straight");
 assert.equal(coinsToCopper({ pp: 1, gp: 2, sp: 3, cp: 4 }), 1234, "Separate coin inputs should convert to copper correctly");
+const orderedSelection = sortCardsForSelection([by("K", "parrots"), deck.find((card) => card.id === "c-54"), by("J", "trees"), by("2", "ships"), by("A", "trees"), by("10", "trees"), by("A", "ships"), deck.find((card) => card.id === "c-53")]);
+assert.deepEqual(orderedSelection.map((card) => card.id), [by("A", "trees").id, by("10", "trees").id, by("J", "trees").id, by("A", "ships").id, by("2", "ships").id, by("K", "parrots").id, "c-53", "c-54"], "Selectable cards should sort by suit, then numeric value, with Pirates last.");
 
 const participants = [
   { id: "a", actorId: "actor-a", name: "Ari" },

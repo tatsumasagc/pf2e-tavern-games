@@ -14,6 +14,7 @@ import {
   disqualifyPoppyPlayer,
   declinePlunder,
   formatCopper,
+  sortCardsForSelection,
   getCurrentActor,
   plunder,
   selectCommon,
@@ -394,8 +395,8 @@ function buildPlayerView(state, player) {
       canDeal,
       canUseMarkedCards: canDeal && hasMarkedPlayingCards(getActor(player.actorId)),
       canCheatDeal: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)),
-      markedCardOptions: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)) ? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
-      dealerHandOptions: canDeal ? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
+      markedCardOptions: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)) ? sortCardsForSelection(state.deck).map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
+      dealerHandOptions: canDeal ? sortCardsForSelection(state.deck).map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
       dealerHandCardsNeeded: canDeal ? Math.max(0, 5 - player.hand.length) : 0,
       canSelectCommon,
       canBet,
@@ -659,7 +660,7 @@ function renderDealControls(state, choices = {}) {
   const dealerActor = getActor(dealer?.actorId);
   const canUseMarkedCards = choices.canUseMarkedCards ?? hasMarkedPlayingCards(dealerActor);
   const canCheat = choices.canCheatDeal ?? (state.gameNumber === 1 && canUseMarkedCards);
-  const cardOptions = choices.markedCardOptions ?? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) }));
+  const cardOptions = choices.markedCardOptions ?? sortCardsForSelection(state.deck).map((card) => ({ id: card.id, label: cardLabel(card) }));
   const handOptions = choices.dealerHandOptions ?? cardOptions;
   const handCardsNeeded = choices.dealerHandCardsNeeded ?? Math.max(0, 5 - (dealer?.hand?.length ?? 0));
   const optionMarkup = `<option value="">Choose a card</option>${cardOptions.map((card) => `<option value="${escapeHTML(card.id)}">${escapeHTML(card.label)}</option>`).join("")}`;

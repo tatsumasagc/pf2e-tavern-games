@@ -49,6 +49,28 @@ export function compactCardLabel(card) {
   return `${card.rank}${suit?.symbol ?? ""}`;
 }
 
+const SELECTION_SUIT_ORDER = new Map(SUITS.map((suit, index) => [suit.id, index]));
+
+function selectionRank(card) {
+  if (card?.rank === "A") return 1;
+  if (card?.rank === "J") return 11;
+  if (card?.rank === "Q") return 12;
+  if (card?.rank === "K") return 13;
+  const numericRank = Number(card?.rank);
+  return Number.isFinite(numericRank) ? numericRank : Number.MAX_SAFE_INTEGER;
+}
+
+export function sortCardsForSelection(cards = []) {
+  return [...cards].sort((left, right) => {
+    const leftSuit = left?.pirate ? Number.MAX_SAFE_INTEGER : (SELECTION_SUIT_ORDER.get(left?.suit) ?? Number.MAX_SAFE_INTEGER - 1);
+    const rightSuit = right?.pirate ? Number.MAX_SAFE_INTEGER : (SELECTION_SUIT_ORDER.get(right?.suit) ?? Number.MAX_SAFE_INTEGER - 1);
+    if (leftSuit !== rightSuit) return leftSuit - rightSuit;
+    const rankDifference = selectionRank(left) - selectionRank(right);
+    if (rankDifference !== 0) return rankDifference;
+    return String(left?.id ?? "").localeCompare(String(right?.id ?? ""));
+  });
+}
+
 function rankAssetName(rank) {
   if (rank === "A") return "01";
   if (rank === "J") return "jack";

@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.7 — 28 August 2026
+
+Every card-choice dropdown used for Poppy’s Prize or Golem marked-card selection and Dealer social cheating now uses a stable **suit-then-value** order in both the GM table and the authorised Dealer player panel. Poppy’s Prize lists Trees, Ships, Gems, and Parrots by rank with Pirates last; Golem lists Flesh, Clay, Stone, and Iron with ranks 1 through 13 in each suit.
+
 ## 2.1.6 — 28 August 2026
 
 Golem now uses the supplied `golem_deck_complete.zip` art set: 52 numbered PNG face cards across Flesh, Clay, Stone, and Iron, together with `golem_card_back.png` for every concealed Golem card. The prior standard-suit dark-gold WebP deck and the unused joker are no longer bundled or referenced. Golem’s poker scoring remains unchanged; its displayed ranks now match the supplied 1–13 artwork.

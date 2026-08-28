@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.6 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.7 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -26,13 +26,13 @@ Install PF2e Tavern Games directly from Foundry’s **Add-on Modules** setup scr
 
 ### Manual ZIP installation
 
-Download the latest `pf2e-tavern-games-v2.1.6.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download the latest `pf2e-tavern-games-v2.1.7.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.6 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.7 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Open the game library
 
@@ -49,6 +49,10 @@ A GM can open the library from the dice control in the Token Controls, from the 
 ## Golem card art
 
 Golem now uses the supplied **53-image material deck** in the GM card table and each participant’s private hand: 52 numbered face cards across **Flesh, Clay, Stone, and Iron** (ranks 1–13), plus `golem_card_back.png`. The module uses that supplied PNG unchanged wherever a Golem card must remain concealed, including the deck owner’s marked-card sight. No retired standard-suit or joker artwork is included in Golem’s playable deck.
+
+## Card-selection order
+
+Whenever a Poppy or Golem Dealer can choose cards from a dropdown—whether for marked cards or social cheating—the available cards are ordered by **suit first** and then by **numeric value**. Poppy’s Prize shows Trees, Ships, Gems, and Parrots, with rank 1/Ace through 13/King in each suit; Pirates follow all suited cards. Golem shows Flesh, Clay, Stone, and Iron, with ranks 1 through 13 in each material suit. The GM and the Dealer’s private player panel use the same order.
 
 ## GM oversight and player panels
 

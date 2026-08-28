@@ -22,7 +22,7 @@ import {
   loadedDiceEligible,
   markedCardsEligible,
 } from "../scripts/tavern-games-engine.mjs";
-
+import { sortCardsForSelection } from "../scripts/engine.mjs";
 const participants = [
   { id: "a", actorId: "a", name: "Aster" },
   { id: "b", actorId: "b", name: "Beryl" },
@@ -39,6 +39,8 @@ assert.equal(new Set(golem.deck.map((card) => card.image)).size, 52, "Every Gole
 assert.ok(golem.deck.every((card) => /^assets\/golem-cards\/(flesh|clay|stone|iron)_(01|02|03|04|05|06|07|08|09|10|11|12|13)\.png$/.test(card.image)), "Golem should use only mapped supplied numbered material-card faces.");
 assert.ok(golem.deck.some((card) => card.image === "assets/golem-cards/clay_01.png" && card.displayLabel === "1 of Clay"), "Golem should label supplied material-suit cards with their visible numbered rank.");
 assert.ok(golem.deck.every((card) => !card.image.endsWith("golem_card_back.png") && !card.image.endsWith("back.webp") && !card.image.endsWith("joker.webp")), "The supplied card back and retired artwork must never enter Golem’s playable deck.");
+const orderedGolemChoices = sortCardsForSelection(golem.deck);
+assert.deepEqual([orderedGolemChoices[0], orderedGolemChoices[12], orderedGolemChoices[13], orderedGolemChoices.at(-1)].map((card) => card.displayLabel), ["1 of Flesh", "13 of Flesh", "1 of Clay", "13 of Iron"], "Golem card choices should sort by material suit and then numeric value.");
 assert.equal(golem.amuletSeat, 2, "The player to the dealer’s right should hold the initial amulet.");
 golem = dealGolem(golem, { markedCardIds: [golem.deck[0].id, golem.deck[1].id] });
 assert.equal(golem.phase, "golem-betting-1");

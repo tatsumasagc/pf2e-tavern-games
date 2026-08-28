@@ -21,11 +21,11 @@ const golemAssetNames = readdirSync(golemCardDirectory);
 const golemCards = golemAssetNames.filter((name) => name.endsWith(".png"));
 const golemPlayableCards = golemCards.filter((name) => name !== "golem_card_back.png");
 
-assert.equal(manifest.version, "2.1.6", "The release version should be 2.1.6");
+assert.equal(manifest.version, "2.1.7", "The release version should be 2.1.7");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.6\/pf2e-tavern-games-v2\.1\.6\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.7\/pf2e-tavern-games-v2\.1\.7\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
 assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
@@ -160,6 +160,10 @@ assert.match(mainSource, /pp-marked-card-group/, "The player panel should render
 assert.match(mainSource, /Your marked playing cards reveal the text identity/, "The cheating view should explain the private information it shows");
 assert.match(mainSource, /cardMarkup\(entry\.card, \{ faceDown: true \}\)/, "Marked-card vision should retain the concealed card-back artwork");
 const engineSource = readFileSync(new URL("scripts/engine.mjs", moduleRoot), "utf8");
+assert.match(engineSource, /export function sortCardsForSelection/, "Card-selection sorting should be available from the shared engine.");
+assert.match(engineSource, /SELECTION_SUIT_ORDER/, "The shared sorter should use a defined suit order.");
+assert.match(mainSource, /sortCardsForSelection\(state\.deck\)/, "Poppy’s Prize card-choice lists should sort available cards by suit and value.");
+assert.match(tavernSource, /sortCardsForSelection\(current\.deck\)/, "Golem card-choice lists should sort available cards by suit and value.");
 assert.match(engineSource, /markedCardSight = false/, "The engine should accept a separate marked-card sight choice");
 assert.match(engineSource, /next\.cheatingDealerId = markedCardSight \|\| markedChoices\.length === 2/, "Marked-card sight should apply without a later-game card choice");
 assert.match(engineSource, /dealerHandCardIds = \[\]/, "The engine should accept a separately selected cheating dealer hand.");
@@ -221,5 +225,7 @@ assert.match(moduleGuide.pages[0].text.content, /Dealer social cheating/, "The g
 assert.match(moduleGuide.pages[0].text.content, /Cheat and choose my hand/, "The guide should explain dealer-selected-hand cheating.");
 assert.match(moduleGuide.pages[0].text.content, /golem_card_back\.png/, "The guide should identify the supplied Golem card-back image.");
 assert.match(moduleGuide.pages[0].text.content, /Flesh, Clay, Stone, and Iron/, "The guide should identify every supplied Golem material suit.");
+assert.match(moduleGuide.pages[0].text.content, /Card-selection order/, "The guide should document sorted card-selection dropdowns.");
+assert.match(moduleGuide.pages[0].text.content, /ordered by suit and then numeric value/, "The guide should explain the suit-and-value ordering.");
 
-console.log("PF2e Tavern Games 2.1.6 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.7 revision validation passed.");
