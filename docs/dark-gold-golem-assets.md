@@ -1,9 +1,15 @@
-# Dark-Gold Golem Deck Asset Mapping
+# Golem Deck Asset Mapping
 
-The supplied `dark-gold.zip` contains **54 WebP assets**: 52 standard playing-card faces, one `back.webp`, and one `joker.webp`.
+The supplied `golem_deck_complete.zip` contains **53 PNG assets**: 52 numbered face cards and one reversible `golem_card_back.png` image.
 
-The Golem playable deck uses the 52 standard suited faces only. Faces are named `{suit}-{rank}.webp`, where suit is `clubs`, `diamonds`, `hearts`, or `spades`, and rank is `02` through `10`, `ace`, `jack`, `queen`, or `king`.
+| Asset group | Files | Module use |
+| --- | --- | --- |
+| Flesh | `flesh_01.png` through `flesh_13.png` | Playable Golem face cards |
+| Clay | `clay_01.png` through `clay_13.png` | Playable Golem face cards |
+| Stone | `stone_01.png` through `stone_13.png` | Playable Golem face cards |
+| Iron | `iron_01.png` through `iron_13.png` | Playable Golem face cards |
+| Card back | `golem_card_back.png` | All concealed Golem cards, including marked-card sight |
 
-The dark-gold face artwork is a 1024×1536 portrait card with a dark slate field, an antique-gold border, suit/rank pips, and a central d20/anvil motif. `back.webp` is the matching 1024×1536 dark-gold card back and must be rendered for every concealed Golem card. `joker.webp` is excluded from Golem’s deck and card mapping.
+The Golem playable deck contains only the 52 numbered material-suit faces. The engine maps its four logical suits to **Flesh**, **Clay**, **Stone**, and **Iron**, preserving its poker evaluator by treating the displayed rank 1 as high for scoring. The source cards are 1536 × 2304 pixels in a 2:3 portrait ratio and are bundled unchanged under `assets/golem-cards/`.
 
-The module will store these assets in `assets/golem-cards/` and resolve them under the stable Foundry URL prefix `modules/pf2e-tavern-games/assets/golem-cards/`.
+Foundry resolves the files using the stable module prefix `modules/pf2e-tavern-games/assets/golem-cards/`.

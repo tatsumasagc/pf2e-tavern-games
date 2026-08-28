@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.5 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.6 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -26,13 +26,13 @@ Install PF2e Tavern Games directly from Foundry’s **Add-on Modules** setup scr
 
 ### Manual ZIP installation
 
-Download the latest `pf2e-tavern-games-v2.1.5.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download the latest `pf2e-tavern-games-v2.1.6.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.5 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.6 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Open the game library
 
@@ -48,7 +48,7 @@ A GM can open the library from the dice control in the Token Controls, from the 
 
 ## Golem card art
 
-Golem uses the supplied dark-gold 52-card deck artwork in the GM card table and each participant’s private hand. The matching `back.webp` is used wherever a Golem card must remain concealed, including the deck owner’s marked-card sight. The supplied `joker.webp` is intentionally unused: it is not in Golem’s playable deck and is not included in the module’s Golem card assets.
+Golem now uses the supplied **53-image material deck** in the GM card table and each participant’s private hand: 52 numbered face cards across **Flesh, Clay, Stone, and Iron** (ranks 1–13), plus `golem_card_back.png`. The module uses that supplied PNG unchanged wherever a Golem card must remain concealed, including the deck owner’s marked-card sight. No retired standard-suit or joker artwork is included in Golem’s playable deck.
 
 ## GM oversight and player panels
 
@@ -94,7 +94,7 @@ The **PF2e Tavern Games** compendium folder includes the **PF2e Tavern Games Mac
 
 ## Sources and content boundary
 
-Poppy’s Prize originates in *Jewel of the Indigo Isles*. Golem, Bounder, and Century originate in *Pathfinder #159: All or Nothing*, p. 76, as presented by [Archives of Nethys][1]. The Drinking Contest is a table rule supplied for this module. This repository provides automation and reference material; it does not reproduce published adventure text or assets beyond the user-supplied Poppy’s Prize card art.
+Poppy’s Prize originates in *Jewel of the Indigo Isles*. Golem, Bounder, and Century originate in *Pathfinder #159: All or Nothing*, p. 76, as presented by [Archives of Nethys][1]. The Drinking Contest is a table rule supplied for this module. This repository provides automation and reference material; it does not reproduce published adventure text or assets beyond the user-supplied Poppy’s Prize and Golem card art.
 
 [1]: https://2e.aonprd.com/Rules.aspx?ID=1452
 

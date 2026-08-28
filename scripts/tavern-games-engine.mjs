@@ -96,30 +96,27 @@ function randomInteger(minimum, maximum, rng = Math.random) {
 }
 
 const GOLEM_SUIT_ART = Object.freeze({
-  trees: { file: "clubs", label: "Clubs", symbol: "♣" },
-  ships: { file: "spades", label: "Spades", symbol: "♠" },
-  gems: { file: "diamonds", label: "Diamonds", symbol: "♦" },
-  parrots: { file: "hearts", label: "Hearts", symbol: "♥" },
+  trees: { file: "flesh", label: "Flesh", symbol: "F" },
+  ships: { file: "clay", label: "Clay", symbol: "C" },
+  gems: { file: "stone", label: "Stone", symbol: "S" },
+  parrots: { file: "iron", label: "Iron", symbol: "I" },
 });
 
 function golemRankFile(rank) {
-  if (rank === "A") return "ace";
-  if (rank === "J") return "jack";
-  if (rank === "Q") return "queen";
-  if (rank === "K") return "king";
-  return String(rank).padStart(2, "0");
+  const numericRank = rank === "A" ? 1 : rank === "J" ? 11 : rank === "Q" ? 12 : rank === "K" ? 13 : Number(rank);
+  return String(numericRank).padStart(2, "0");
 }
 
 function cardDeckForGolem() {
   return createDeck().filter((card) => !card.pirate).map((card) => {
     const art = GOLEM_SUIT_ART[card.suit];
-    const rankLabel = card.rank === "A" ? "Ace" : card.rank === "J" ? "Jack" : card.rank === "Q" ? "Queen" : card.rank === "K" ? "King" : card.rank;
+    const rankLabel = String(Number(golemRankFile(card.rank)));
     return {
       ...card,
       rank: card.rank === "A" ? "1" : card.rank,
-      image: `assets/golem-cards/${art.file}-${golemRankFile(card.rank)}.webp`,
+      image: `assets/golem-cards/${art.file}_${golemRankFile(card.rank)}.png`,
       displayLabel: `${rankLabel} of ${art.label}`,
-      displayCompact: `${card.rank === "A" ? "A" : card.rank}${art.symbol}`,
+      displayCompact: `${rankLabel}${art.symbol}`,
     };
   });
 }
