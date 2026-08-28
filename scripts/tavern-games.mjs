@@ -328,7 +328,7 @@ async function detectCheating(current, cheater, concealmentRoll, gameName) {
   }
 }
 
-async function applyDrinkingStage(entryActor, stageNumber) {
+export async function applyDrinkingStage(entryActor, stageNumber) {
   const stage = drinkStage(stageNumber);
   const previous = entryActor.getFlag(MODULE_ID, DRINKING_EFFECT_FLAG) ?? [];
   for (const record of previous) {
@@ -373,7 +373,7 @@ async function applyDrinkingStage(entryActor, stageNumber) {
   await entryActor.setFlag(MODULE_ID, DRINKING_EFFECT_FLAG, records);
 }
 
-async function clearDrinkingEffects(entryActor) {
+export async function clearDrinkingEffects(entryActor) {
   const previous = entryActor.getFlag(MODULE_ID, DRINKING_EFFECT_FLAG) ?? [];
   for (const record of previous) {
     const item = entryActor.items.get(record.itemId);

@@ -2,6 +2,12 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.3 — 28 August 2026
+
+The module-use Journal Entry and README now include a dedicated, step-by-step **Dealer social cheating** guide. It distinguishes universal Poppy and Golem Dealer hand selection from item-gated marked-card sight, explains the blind Performance or Deception — Create a Diversion roll, and documents the observer-specific detection and whisper outcome.
+
+The test suite now includes a mocked PF2E actor integration test for the Drinking Contest. It verifies automated effects and conditions across Stages 1–6, ten-minute and eight-hour durations, fear-save bonus rules, stage replacement, Stage 6 unconsciousness, cleanup, and preservation of a pre-existing stronger condition.
+
 ## 2.1.2 — 28 August 2026
 
 Any active **Poppy’s Prize Poppy** or **Golem Dealer** can now elect to cheat by selecting every card needed to complete their own hand and choosing a blind **Performance** or **Deception — Create a Diversion** concealment check. The selected hand remains subject to the existing observer-by-observer Perception DC comparison and failure-only GM/observer whispers.

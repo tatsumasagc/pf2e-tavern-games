@@ -42,6 +42,12 @@ The module checks item slugs, never names, for cheating equipment. It offers mar
 | **Century** | Only the Dealer with `games-loaded-dice` in their inventory may choose the twenty results. |
 | **Drinking Contest** | Any contestant may choose to cheat when pressing Ready. Their Fortitude save automatically succeeds; they choose a blind Performance or Deception Create a Diversion check, compared separately with each other contestant’s Perception DC. The GM and observers who detect the cheat receive targeted private notices. |
 
+## Dealer social cheating
+
+In the prepared **Deal** phase of Poppy’s Prize or Golem, the active Poppy or Dealer may select **Cheat and choose my hand**. They choose every card required to complete their own hand, then select either **Performance** or **Deception — Create a Diversion**. The module records the chosen cards only in the GM-authoritative game state, makes the chosen skill roll blind to the GM, and compares that roll independently with each qualified observer’s Perception DC.
+
+A failure or critical failure against an observer whispers a suspicion message to that observer’s active Owners and a separate audit message to the GM. No message is issued when the cheating Dealer succeeds or critically succeeds against an observer. This social-cheating route gives no information about other hands. An actor must still have `marked-playing-cards` to use marked-card sight or the special two-card first-hand marked selection.
+
 ## Drinking Contest stages
 
 The GM sets the Fortitude DC when starting a contest. Once all qualified contestants are Ready, the module submits each Performance and Fortitude check together as blind-to-GM rolls. A critical success decreases stage by 1; success leaves it unchanged; failure increases it by 1; and critical failure increases it by 2. The module applies the stated PF2E conditions and a timed effect for the fear-save bonus. Stage 6 eliminates the contestant.

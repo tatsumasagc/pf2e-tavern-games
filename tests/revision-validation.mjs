@@ -16,11 +16,11 @@ const journalPack = new URL("packs/pf2e-tavern-games-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "2.1.2", "The release version should be 2.1.2");
+assert.equal(manifest.version, "2.1.3", "The release version should be 2.1.3");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.2\/pf2e-tavern-games-v2\.1\.2\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.3\/pf2e-tavern-games-v2\.1\.3\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.ok(manifest.esmodules.includes("scripts/tavern-games.mjs"), "The multi-game controller should be registered in the manifest.");
 assert.ok(existsSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot)), "The deterministic multi-game engine should be included.");
@@ -33,7 +33,9 @@ assert.match(tavernSource, /choices\.canMarked \?/, "The Golem player panel shou
 assert.match(tavernSource, /entry\.id === current\.shooterId && hasLoadedDice\(entryActor\)/, "Bounder should offer loaded-dice choices only to an eligible Shooter.");
 assert.match(tavernSource, /entry\.id === current\.dealerId && hasLoadedDice\(entryActor\)/, "Century should offer loaded-dice choices only to an eligible Dealer.");
 assert.match(tavernSource, /messageMode: "blindroll"/, "Drinking and cheating checks should be blind to the GM.");
-assert.match(tavernSource, /applyDrinkingStage/, "The drinking contest should apply stage effects.");
+assert.match(tavernSource, /export async function applyDrinkingStage/, "The drinking contest should expose its PF2E stage-effect lifecycle for integration testing.");
+assert.match(tavernSource, /export async function clearDrinkingEffects/, "The drinking contest should expose its cleanup lifecycle for integration testing.");
+assert.ok(existsSync(new URL("tests/drinking-stage-effects.test.mjs", moduleRoot)), "The module should include automated Drinking Contest stage-condition integration tests.");
 assert.match(tavernSource, /tg-disqualify/, "The GM table should expose a disqualification control.");
 assert.match(tavernSource, /function participantLimits\(gameId\)/, "Added games should define count limits before participant selection.");
 assert.match(tavernSource, /Number of participants/, "Added-game setup should ask for a participant count first.");
@@ -193,5 +195,7 @@ for (const name of ["Golem — Rules Reference", "Bounder — Rules Reference", 
 const moduleGuide = journalSources.find((entry) => entry.name === "How to Use PF2e Tavern Games");
 assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Marked Playing Cards\}/, "The guide should contain the requested Marked Playing Cards UUID link.");
 assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Loaded Dice\}/, "The guide should contain the requested Loaded Dice UUID link.");
+assert.match(moduleGuide.pages[0].text.content, /Dealer social cheating/, "The guide should document the universal dealer social-cheating workflow.");
+assert.match(moduleGuide.pages[0].text.content, /Cheat and choose my hand/, "The guide should explain dealer-selected-hand cheating.");
 
-console.log("PF2e Tavern Games 2.1.2 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.3 revision validation passed.");
