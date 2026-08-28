@@ -2,7 +2,7 @@
   "id": "pf2e-tavern-games",
   "title": "PF2e Tavern Games",
   "description": "PF2e Tavern Games automates Poppy’s Prize, Golem, Bounder, Century, and drinking contests with GM-led tables, privacy-safe player panels, game-specific cheating, optional card art, and PF2E PC and NPC support.",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "authors": [
     {
       "name": "Tatsu_Gamer"
@@ -76,7 +76,7 @@
   ],
   "url": "https://github.com/tatsumasagc/pf2e-tavern-games",
   "manifest": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/latest/download/module.json",
-  "download": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/download/v2.1.7/pf2e-tavern-games-v2.1.7.zip",
+  "download": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/download/v2.1.8/pf2e-tavern-games-v2.1.8.zip",
   "readme": "README.md",
   "license": "LICENSE"
 }

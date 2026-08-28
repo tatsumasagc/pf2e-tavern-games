@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.8 — 28 August 2026
+
+Each Drinking Contest stage now creates a single, module-owned parent effect that uses a new overflowing-tankard icon. The parent uses canonical PF2E `GrantItem` rules to grant every required stage condition as a linked child. Removing the parent effect manually, on expiry, during a stage change, or during contest cleanup now cascade-removes all linked conditions while preserving unrelated pre-existing conditions.
+
 ## 2.1.7 — 28 August 2026
 
 Every card-choice dropdown used for Poppy’s Prize or Golem marked-card selection and Dealer social cheating now uses a stable **suit-then-value** order in both the GM table and the authorised Dealer player panel. Poppy’s Prize lists Trees, Ships, Gems, and Parrots by rank with Pirates last; Golem lists Flesh, Clay, Stone, and Iron with ranks 1 through 13 in each suit.

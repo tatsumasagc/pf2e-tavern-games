@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.7 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.8 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -26,13 +26,13 @@ Install PF2e Tavern Games directly from Foundry’s **Add-on Modules** setup scr
 
 ### Manual ZIP installation
 
-Download the latest `pf2e-tavern-games-v2.1.7.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download the latest `pf2e-tavern-games-v2.1.8.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.7 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.8 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Open the game library
 
@@ -45,6 +45,10 @@ A GM can open the library from the dice control in the Token Controls, from the 
 | **Bounder** | 2+ | A Shooter’s two d20 results attempt to bracket the Dealer’s 3d6 total; players may make point or side bets. |
 | **Century** | 2+ | Players select 2–10 numbers from 1–100; the Dealer draws twenty unique two-d10 results and applies the official payout table. |
 | **Drinking Contest** | 2+ | Every contestant presses Ready each round; blind Performance and Fortitude rolls drive a six-stage condition track. |
+
+## Drinking Contest effect lifecycle
+
+Each drinking stage now creates one **Drinking Contest** parent effect with a dedicated overflowing-tankard icon. The effect grants every stage condition as a linked PF2E condition. Removing the parent effect—manually, at expiry, when a stage changes, or when the contest closes—also removes every condition that effect granted. Conditions that already existed on the actor remain separate and are not removed by the contest cleanup.
 
 ## Golem card art
 

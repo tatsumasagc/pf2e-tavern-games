@@ -328,59 +328,72 @@ async function detectCheating(current, cheater, concealmentRoll, gameName) {
   }
 }
 
-export async function applyDrinkingStage(entryActor, stageNumber) {
-  const stage = drinkStage(stageNumber);
-  const previous = entryActor.getFlag(MODULE_ID, DRINKING_EFFECT_FLAG) ?? [];
-  for (const record of previous) {
+const DRINKING_CONDITION_UUIDS = Object.freeze({
+  clumsy: "Compendium.pf2e.conditionitems.Item.i3OJZU2nk64Df3xm",
+  "off-guard": "Compendium.pf2e.conditionitems.Item.AJh5ex99aV6VTggg",
+  sickened: "Compendium.pf2e.conditionitems.Item.fesd1n5eVhpCSS18",
+  stupefied: "Compendium.pf2e.conditionitems.Item.e1XGnhKNSQIm5IXg",
+  unconscious: "Compendium.pf2e.conditionitems.Item.fBnFDH2MTzgFijKf",
+});
+
+function drinkingConditionGrant(condition) {
+  const uuid = DRINKING_CONDITION_UUIDS[condition.slug];
+  if (!uuid) throw new Error(`No PF2E condition UUID is configured for ${condition.slug}.`);
+  return {
+    key: "GrantItem",
+    uuid,
+    allowDuplicate: true,
+    onDeleteActions: { granter: "cascade", grantee: "detach" },
+    ...(typeof condition.value === "number" ? { alterations: [{ mode: "override", property: "badge-value", value: condition.value }] } : {}),
+  };
+}
+
+async function clearLegacyDrinkingRecords(entryActor, records) {
+  for (const record of records) {
     const item = entryActor.items.get(record.itemId);
     if (!item) continue;
     if (record.created) await item.delete();
     else if (record.originalValue !== undefined) await item.update({ "system.value.value": record.originalValue });
   }
-  const records = [];
-  for (const condition of stage.conditions) {
-    const existing = entryActor.itemTypes?.condition?.find((item) => item.slug === condition.slug && item.active);
-    if (existing) {
-      const currentValue = existing.system?.value?.value;
-      const targetValue = condition.value;
-      if (typeof targetValue === "number" && typeof currentValue === "number" && currentValue < targetValue) {
-        await existing.update({ "system.value.value": targetValue });
-        records.push({ itemId: existing.id, created: false, originalValue: currentValue });
-      }
-      continue;
-    }
-    const created = await entryActor.increaseCondition?.(condition.slug, { value: condition.value ?? undefined });
-    if (created) records.push({ itemId: created.id, created: true });
-  }
-  // A module-owned effect documents the duration and gives the stage-one fear-save bonus.
+}
+
+export async function applyDrinkingStage(entryActor, stageNumber) {
+  const stage = drinkStage(stageNumber);
+  await clearDrinkingEffects(entryActor);
+  if (stage.stage <= 0) return;
+
+  // This parent effect owns every contest condition it grants. PF2E's cascade action
+  // deletes the linked condition documents whenever the effect is deleted manually,
+  // on expiry, when changing stage, or when the table is closed.
   const effectSource = {
     name: `Drinking Contest — ${stage.name}`,
     type: "effect",
-    img: "icons/consumables/drinks/wine-amphorae-brown.webp",
-    flags: { [MODULE_ID]: { drinkingStage: stage.stage } },
+    img: `modules/${MODULE_ID}/assets/icons/drinking-contest-effect.png`,
+    flags: { [MODULE_ID]: { drinkingStage: stage.stage, linkedConditions: true } },
     system: {
       slug: `tavern-games-drinking-stage-${stage.stage}`,
       duration: { value: stage.duration === "8 hours" ? 8 : 10, unit: stage.duration === "8 hours" ? "hours" : "minutes", expiry: "turn-start", sustained: false },
       start: { value: game.time.worldTime, initiative: null },
       tokenIcon: { show: false },
-      rules: stage.stage === 1 || stage.stage === 2 ? [{ key: "FlatModifier", selector: "saving-throw", type: "item", value: 1, predicate: ["fear"], label: "Liquid Courage" }] : [],
+      rules: [
+        ...(stage.stage === 1 || stage.stage === 2 ? [{ key: "FlatModifier", selector: "saving-throw", type: "item", value: 1, predicate: ["fear"], label: "Liquid Courage" }] : []),
+        ...stage.conditions.map(drinkingConditionGrant),
+      ],
     },
   };
-  if (stage.stage > 0) {
-    const [effect] = await entryActor.createEmbeddedDocuments("Item", [effectSource]);
-    if (effect) records.push({ itemId: effect.id, created: true });
-  }
-  await entryActor.setFlag(MODULE_ID, DRINKING_EFFECT_FLAG, records);
+  const [effect] = await entryActor.createEmbeddedDocuments("Item", [effectSource]);
+  if (effect) await entryActor.setFlag(MODULE_ID, DRINKING_EFFECT_FLAG, { version: 2, effectId: effect.id, stage: stage.stage });
 }
 
 export async function clearDrinkingEffects(entryActor) {
-  const previous = entryActor.getFlag(MODULE_ID, DRINKING_EFFECT_FLAG) ?? [];
-  for (const record of previous) {
-    const item = entryActor.items.get(record.itemId);
-    if (!item) continue;
-    if (record.created) await item.delete();
-    else if (record.originalValue !== undefined) await item.update({ "system.value.value": record.originalValue });
-  }
+  const previous = entryActor.getFlag(MODULE_ID, DRINKING_EFFECT_FLAG) ?? null;
+  const effectId = Array.isArray(previous) ? null : previous?.effectId;
+  const effect = effectId ? entryActor.items.get(effectId) : null;
+  if (effect) await effect.delete();
+  // This supports tables created by v2.1.7 and older, which tracked each condition
+  // independently before the parent effect became the GrantItem granter.
+  const legacyRecords = Array.isArray(previous) ? previous : previous?.records ?? [];
+  await clearLegacyDrinkingRecords(entryActor, legacyRecords);
   await entryActor.unsetFlag(MODULE_ID, DRINKING_EFFECT_FLAG);
 }
 

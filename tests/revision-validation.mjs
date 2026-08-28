@@ -21,11 +21,11 @@ const golemAssetNames = readdirSync(golemCardDirectory);
 const golemCards = golemAssetNames.filter((name) => name.endsWith(".png"));
 const golemPlayableCards = golemCards.filter((name) => name !== "golem_card_back.png");
 
-assert.equal(manifest.version, "2.1.7", "The release version should be 2.1.7");
+assert.equal(manifest.version, "2.1.8", "The release version should be 2.1.8");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.7\/pf2e-tavern-games-v2\.1\.7\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.8\/pf2e-tavern-games-v2\.1\.8\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
 assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
@@ -135,6 +135,12 @@ const blindRollSource = mainSource.slice(mainSource.indexOf("async function roll
 assert.doesNotMatch(blindRollSource, /dc:\s*\{/, "The blind concealment check should not receive a displayed target DC.");
 assert.match(blindRollSource, /action:create-a-diversion/, "Poppy’s Prize should add the Create a Diversion action option for Deception cheating.");
 assert.match(mainSource, /renderCheatMethodControls\("pp-cheat-method"\)/, "Poppy’s Prize should let an eligible deck owner choose Performance or Deception.");
+assert.ok(existsSync(new URL("assets/icons/drinking-contest-effect.png", moduleRoot)), "The Drinking Contest parent-effect icon should be bundled.");
+assert.match(tavernSource, /DRINKING_CONDITION_UUIDS/, "The Drinking Contest should map every stage condition to a canonical PF2E UUID.");
+assert.match(tavernSource, /key: "GrantItem"/, "The Drinking Contest parent effect should grant its stage conditions.");
+assert.match(tavernSource, /onDeleteActions: \{ granter: "cascade", grantee: "detach" \}/, "Deleting the Drinking Contest parent effect should cascade-delete linked conditions.");
+assert.match(tavernSource, /assets\/icons\/drinking-contest-effect\.png/, "The Drinking Contest parent effect should use the bundled tankard icon.");
+assert.match(tavernSource, /clearLegacyDrinkingRecords/, "The Drinking Contest cleanup should retain legacy-state compatibility.");
 assert.match(tavernSource, /function rollConcealmentCheck/, "Golem and Drinking Contest should share a selectable concealment roll helper.");
 assert.match(tavernSource, /action: "create-a-diversion"/, "The multi-game Deception cheat option should use Create a Diversion.");
 assert.match(tavernSource, /tg-golem-cheat-method/, "Golem should provide a concealment-method choice to every Dealer.");
@@ -218,6 +224,9 @@ for (const name of expectedJournals) {
 }
 assert.match(journalSources.find((entry) => entry.name === "Poppy’s Prize — Rules Reference").pages[0].text.content, /Jewel of the Indigo Isles/, "The Poppy’s Prize journal should acknowledge its source.");
 for (const name of ["Golem — Rules Reference", "Bounder — Rules Reference", "Century — Rules Reference"]) assert.match(journalSources.find((entry) => entry.name === name).pages[0].text.content, /Pathfinder #159: All or Nothing/, `${name} should acknowledge its source.`);
+const drinkingGuide = journalSources.find((entry) => entry.name === "Drinking Contest — Rules Reference");
+assert.match(drinkingGuide.pages[0].text.content, /Effect lifecycle/, "The Drinking Contest rules reference should document its parent-effect lifecycle.");
+assert.match(drinkingGuide.pages[0].text.content, /all conditions it granted are removed together/, "The Drinking Contest rules reference should explain linked-condition cascade cleanup.");
 const moduleGuide = journalSources.find((entry) => entry.name === "How to Use PF2e Tavern Games");
 assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Marked Playing Cards\}/, "The guide should contain the requested Marked Playing Cards UUID link.");
 assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Loaded Dice\}/, "The guide should contain the requested Loaded Dice UUID link.");
@@ -227,5 +236,7 @@ assert.match(moduleGuide.pages[0].text.content, /golem_card_back\.png/, "The gui
 assert.match(moduleGuide.pages[0].text.content, /Flesh, Clay, Stone, and Iron/, "The guide should identify every supplied Golem material suit.");
 assert.match(moduleGuide.pages[0].text.content, /Card-selection order/, "The guide should document sorted card-selection dropdowns.");
 assert.match(moduleGuide.pages[0].text.content, /ordered by suit and then numeric value/, "The guide should explain the suit-and-value ordering.");
+assert.match(moduleGuide.pages[0].text.content, /Drinking Contest parent effect/, "The guide should document the Drinking Contest parent effect.");
+assert.match(moduleGuide.pages[0].text.content, /removes those linked conditions together/, "The guide should explain parent-effect cascade cleanup.");
 
-console.log("PF2e Tavern Games 2.1.7 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.8 revision validation passed.");
