@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 1.8.0 — 28 August 2026
+
+The Macro and JournalEntry packs now use fresh `pf2e-tavern-games-*` IDs and paths, resolving the stale Poppy’s Prize parent-folder cache and duplicate Rules Reference presentation. The active GM migrates only the retired module pack configuration into the **PF2e Tavern Games** folder without resetting unrelated compendium organisation. The two bundled Journal Entries now acknowledge that Poppy’s Prize originates in *Jewel of the Indigo Isles*.
+
 ## 1.7.1 — 28 August 2026
 
 The private GitHub repository is now **tatsumasagc/pf2e-tavern-games**. The manifest, update manifest URL, versioned download URL, README, and release asset name now use the renamed repository. The Foundry package ID remains `poppys-prize` for installed-world compatibility.

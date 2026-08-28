@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readdir, readFile, rm } from "node:fs/promises";
 import { extractPack } from "@foundryvtt/foundryvtt-cli";
 
-const source = "./packs/poppys-prize-macros";
-const destination = "./build/inspected-poppys-prize-macros";
+const source = "./packs/pf2e-tavern-games-macros";
+const destination = "./build/inspected-pf2e-tavern-games-macros";
 
 await rm(destination, { recursive: true, force: true });
 await extractPack(source, destination, { yaml: false, recursive: true, clean: true });
@@ -15,4 +15,4 @@ assert.equal(macro.name, "Open Poppy’s Prize", "The compiled Macro pack should
 assert.equal(macro.type, "script", "The compiled compendium document should be a script Macro.");
 assert.equal(macro.img, "modules/poppys-prize/assets/icons/poppys-prize-macro.webp", "The compiled macro should use the supplied icon.");
 assert.match(macro.command, /game\.modules\.get\("poppys-prize"\)/, "The compiled macro should launch the Poppy’s Prize module.");
-console.log("Poppy’s Prize Macro compendium pack validation passed.");
+console.log("PF2e Tavern Games Macro compendium pack validation passed.");

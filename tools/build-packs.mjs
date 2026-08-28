@@ -2,8 +2,8 @@ import { rm } from "node:fs/promises";
 import { compilePack } from "@foundryvtt/foundryvtt-cli";
 
 const packs = [
-  { source: "./src/packs/poppys-prize-macros", destination: "./packs/poppys-prize-macros" },
-  { source: "./src/packs/poppys-prize-journals", destination: "./packs/poppys-prize-journals" },
+  { source: "./src/packs/pf2e-tavern-games-macros", destination: "./packs/pf2e-tavern-games-macros" },
+  { source: "./src/packs/pf2e-tavern-games-journals", destination: "./packs/pf2e-tavern-games-journals" },
 ];
 
 for (const { source, destination } of packs) {

@@ -2,7 +2,7 @@
   "id": "poppys-prize",
   "title": "PF2e Tavern Games",
   "description": "PF2e Tavern Games currently includes Poppy’s Prize: a GM-led card table with a privacy-safe player interface, supplied deck art, PF2E PC and NPC support, and optional automatic currency transfers.",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "authors": [
     {
       "name": "Tatsu_Gamer"
@@ -40,9 +40,9 @@
   "socket": true,
   "packs": [
     {
-      "name": "poppys-prize-macros",
+      "name": "pf2e-tavern-games-macros",
       "label": "PF2e Tavern Games Macros",
-      "path": "packs/poppys-prize-macros",
+      "path": "packs/pf2e-tavern-games-macros",
       "type": "Macro",
       "ownership": {
         "PLAYER": "NONE",
@@ -51,9 +51,9 @@
       }
     },
     {
-      "name": "poppys-prize-journals",
+      "name": "pf2e-tavern-games-journals",
       "label": "PF2e Tavern Games Journals",
-      "path": "packs/poppys-prize-journals",
+      "path": "packs/pf2e-tavern-games-journals",
       "type": "JournalEntry",
       "ownership": {
         "PLAYER": "OBSERVER",
@@ -68,14 +68,14 @@
       "sorting": "a",
       "color": "#1f5963",
       "packs": [
-        "poppys-prize-macros",
-        "poppys-prize-journals"
+        "pf2e-tavern-games-macros",
+        "pf2e-tavern-games-journals"
       ]
     }
   ],
   "url": "https://github.com/tatsumasagc/pf2e-tavern-games",
   "manifest": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/latest/download/module.json",
-  "download": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/download/v1.7.1/pf2e-tavern-games-v1.7.1.zip",
+  "download": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/download/v1.8.0/pf2e-tavern-games-v1.8.0.zip",
   "readme": "README.md",
   "license": "LICENSE"
 }

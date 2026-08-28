@@ -26,6 +26,9 @@ const PLAYER_REQUEST_FLAG = "playerRequest";
 const PLAYER_STATUS_FLAG = "playerStatus";
 const RULES_JOURNAL_UUID = "JournalEntry.pJeEYJAnY1JQi44e";
 const RULES_JOURNAL_REFERENCE = "@UUID[JournalEntry.pJeEYJAnY1JQi44e]{Poppy's Prize}";
+const MODULE_TITLE = "PF2e Tavern Games";
+const LEGACY_COMPENDIUM_FOLDER_TITLE = "Poppy’s Prize";
+const MODULE_COMPENDIUM_PACK_IDS = ["pf2e-tavern-games-macros", "pf2e-tavern-games-journals"];
 let tableApp = null;
 let playerApp = null;
 let actionQueue = Promise.resolve();
@@ -925,6 +928,41 @@ async function processPlayerRequest(actor, request, userId) {
   });
 }
 
+async function migrateLegacyCompendiumFolder() {
+  if (!isPrimaryGM()) return;
+  const legacyPackIds = ["poppys-prize-macros", "poppys-prize-journals"].map((packId) => `${MODULE_ID}.${packId}`);
+  const packs = MODULE_COMPENDIUM_PACK_IDS.map((packId) => game.packs.get(`${MODULE_ID}.${packId}`)).filter(Boolean);
+  const folders = [...(game.packs?.folders?.values?.() ?? [])];
+  const legacyFolder = folders.find((folder) => folder.name === LEGACY_COMPENDIUM_FOLDER_TITLE);
+  let targetFolder = folders.find((folder) => folder.name === MODULE_TITLE);
+  const configuration = foundry.utils.deepClone(game.settings.get("core", "compendiumConfiguration") ?? {});
+  let configurationChanged = false;
+  for (const packId of legacyPackIds) {
+    if (Object.hasOwn(configuration, packId)) {
+      delete configuration[packId];
+      configurationChanged = true;
+    }
+  }
+  try {
+    if (configurationChanged) await game.settings.set("core", "compendiumConfiguration", configuration);
+    if (legacyFolder && !targetFolder) {
+      await legacyFolder.update({ name: MODULE_TITLE });
+      targetFolder = legacyFolder;
+    }
+    if (!targetFolder && (legacyFolder || configurationChanged)) {
+      targetFolder = await Folder.create({ name: MODULE_TITLE, type: "Compendium", sorting: "a", color: "#1f5963" });
+    }
+    if (targetFolder && (legacyFolder || configurationChanged)) {
+      for (const pack of packs) await pack.configure({ folder: targetFolder.id });
+      if (legacyFolder && legacyFolder.id !== targetFolder.id && legacyFolder.contents?.length === 0) await legacyFolder.delete();
+      ui.compendium?.render({ force: true });
+      console.info(`${MODULE_ID} | Migrated compendium packs to ${MODULE_TITLE}.`);
+    }
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Could not migrate the legacy compendium folder`, error);
+  }
+}
+
 function openTable() {
   if (!isGM()) {
     notify("warn", "Poppy’s Prize is a GM-led table. Ask the GM to open and record the game.");
@@ -1073,6 +1111,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
+  void migrateLegacyCompendiumFolder();
   const module = game.modules.get(MODULE_ID);
   if (module) module.api = Object.freeze({ open: openTable, openPlayer: openPlayerPanel, start: promptStartGame, clear: clearGame });
   game.socket?.on(`module.${MODULE_ID}`, (payload) => {
