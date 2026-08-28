@@ -1,8 +1,8 @@
 {
-  "id": "poppys-prize",
+  "id": "pf2e-tavern-games",
   "title": "PF2e Tavern Games",
   "description": "PF2e Tavern Games currently includes Poppy’s Prize: a GM-led card table with a privacy-safe player interface, supplied deck art, PF2E PC and NPC support, and optional automatic currency transfers.",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "authors": [
     {
       "name": "Tatsu_Gamer"
@@ -75,7 +75,7 @@
   ],
   "url": "https://github.com/tatsumasagc/pf2e-tavern-games",
   "manifest": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/latest/download/module.json",
-  "download": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/download/v1.8.0/pf2e-tavern-games-v1.8.0.zip",
+  "download": "https://github.com/tatsumasagc/pf2e-tavern-games/releases/download/v1.9.0/pf2e-tavern-games-v1.9.0.zip",
   "readme": "README.md",
   "license": "LICENSE"
 }

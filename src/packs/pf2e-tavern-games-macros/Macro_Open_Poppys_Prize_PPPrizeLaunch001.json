@@ -4,9 +4,9 @@
   "name": "Open Poppy’s Prize",
   "type": "script",
   "author": null,
-  "img": "modules/poppys-prize/assets/icons/poppys-prize-macro.webp",
+  "img": "modules/pf2e-tavern-games/assets/icons/poppys-prize-macro.webp",
   "scope": "global",
-  "command": "const module = game.modules.get(\"poppys-prize\");\nif (!module?.active) {\n  ui.notifications.warn(\"Enable the Poppy’s Prize module before using this macro.\");\n} else {\n  module.api?.open();\n}",
+  "command": "const module = game.modules.get(\"pf2e-tavern-games\");\nif (!module?.active) {\n  ui.notifications.warn(\"Enable the PF2e Tavern Games module before using this macro.\");\n} else {\n  module.api?.open();\n}",
   "folder": null,
   "sort": 0,
   "ownership": {

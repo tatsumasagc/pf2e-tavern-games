@@ -18,16 +18,19 @@ import {
   selectCommon,
 } from "./engine.mjs";
 
-const MODULE_ID = "poppys-prize";
+const MODULE_ID = "pf2e-tavern-games";
+const LEGACY_MODULE_ID = "poppys-prize";
 const STATE_SETTING = "tableState";
 const PUBLIC_STATE_SETTING = "publicBoard";
 const PLAYER_VIEW_FLAG = "playerView";
 const PLAYER_REQUEST_FLAG = "playerRequest";
 const PLAYER_STATUS_FLAG = "playerStatus";
+const LEGACY_MIGRATION_SETTING = "legacyMigrationVersion";
 const RULES_JOURNAL_UUID = "JournalEntry.pJeEYJAnY1JQi44e";
 const RULES_JOURNAL_REFERENCE = "@UUID[JournalEntry.pJeEYJAnY1JQi44e]{Poppy's Prize}";
 const MODULE_TITLE = "PF2e Tavern Games";
 const LEGACY_COMPENDIUM_FOLDER_TITLE = "Poppy’s Prize";
+const LEGACY_COMPENDIUM_PACK_IDS = ["poppys-prize-macros", "poppys-prize-journals"];
 const MODULE_COMPENDIUM_PACK_IDS = ["pf2e-tavern-games-macros", "pf2e-tavern-games-journals"];
 let tableApp = null;
 let playerApp = null;
@@ -928,9 +931,30 @@ async function processPlayerRequest(actor, request, userId) {
   });
 }
 
+async function migrateLegacyNamespace() {
+  if (!isPrimaryGM() || game.modules.get(LEGACY_MODULE_ID)?.active) return;
+  if (game.settings.get(MODULE_ID, LEGACY_MIGRATION_SETTING) >= 1) return;
+  try {
+    const legacyState = game.settings.get(LEGACY_MODULE_ID, STATE_SETTING);
+    const legacyBoard = game.settings.get(LEGACY_MODULE_ID, PUBLIC_STATE_SETTING);
+    if (!currentState() && legacyState) await game.settings.set(MODULE_ID, STATE_SETTING, legacyState);
+    if (!game.settings.get(MODULE_ID, PUBLIC_STATE_SETTING) && legacyBoard) await game.settings.set(MODULE_ID, PUBLIC_STATE_SETTING, legacyBoard);
+    for (const actor of game.actors) {
+      for (const flagKey of [PLAYER_VIEW_FLAG, PLAYER_REQUEST_FLAG, PLAYER_STATUS_FLAG]) {
+        const legacyValue = actor.getFlag(LEGACY_MODULE_ID, flagKey);
+        if (legacyValue !== undefined && actor.getFlag(MODULE_ID, flagKey) === undefined) await actor.setFlag(MODULE_ID, flagKey, legacyValue);
+      }
+    }
+    await game.settings.set(MODULE_ID, LEGACY_MIGRATION_SETTING, 1);
+    console.info(`${MODULE_ID} | Migrated legacy Poppy’s Prize state into the PF2e Tavern Games namespace.`);
+  } catch (error) {
+    console.warn(`${MODULE_ID} | Could not migrate legacy Poppy’s Prize state`, error);
+  }
+}
+
 async function migrateLegacyCompendiumFolder() {
   if (!isPrimaryGM()) return;
-  const legacyPackIds = ["poppys-prize-macros", "poppys-prize-journals"].map((packId) => `${MODULE_ID}.${packId}`);
+  const legacyPackIds = LEGACY_COMPENDIUM_PACK_IDS.map((packId) => `${LEGACY_MODULE_ID}.${packId}`);
   const packs = MODULE_COMPENDIUM_PACK_IDS.map((packId) => game.packs.get(`${MODULE_ID}.${packId}`)).filter(Boolean);
   const folders = [...(game.packs?.folders?.values?.() ?? [])];
   const legacyFolder = folders.find((folder) => folder.name === LEGACY_COMPENDIUM_FOLDER_TITLE);
@@ -1108,10 +1132,36 @@ Hooks.once("init", () => {
     type: Object,
     default: null,
   });
+  game.settings.register(MODULE_ID, LEGACY_MIGRATION_SETTING, {
+    name: "Legacy Poppy’s Prize migration version",
+    scope: "world",
+    config: false,
+    restricted: true,
+    type: Number,
+    default: 0,
+  });
+  if (!game.modules.get(LEGACY_MODULE_ID)?.active) {
+    for (const [setting, type, defaultValue, restricted] of [
+      [STATE_SETTING, Object, null, true],
+      [PUBLIC_STATE_SETTING, Object, null, false],
+    ]) {
+      game.settings.register(LEGACY_MODULE_ID, setting, {
+        name: "Legacy Poppy’s Prize migration data",
+        scope: "world",
+        config: false,
+        restricted,
+        type,
+        default: defaultValue,
+      });
+    }
+  }
 });
 
 Hooks.once("ready", () => {
-  void migrateLegacyCompendiumFolder();
+  void (async () => {
+    await migrateLegacyNamespace();
+    await migrateLegacyCompendiumFolder();
+  })();
   const module = game.modules.get(MODULE_ID);
   if (module) module.api = Object.freeze({ open: openTable, openPlayer: openPlayerPanel, start: promptStartGame, clear: clearGame });
   game.socket?.on(`module.${MODULE_ID}`, (payload) => {
