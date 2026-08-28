@@ -1006,3 +1006,32 @@ button.pp-card:hover:not(:disabled),
   border-left-color: #842c2c;
   background: rgba(115, 30, 30, 0.12);
 }
+
+/* Individual participant selectors used by Golem, Bounder, Century, and Drinking Contest setup. */
+.pf2e-tavern-games .tg-start .tg-participant-selectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.45rem 0.75rem;
+  max-height: min(44vh, 430px);
+  padding: 0.25rem;
+  overflow-y: auto;
+}
+
+.pf2e-tavern-games .tg-start .tg-participant-selectors > label,
+.pf2e-tavern-games .tg-participant-count > label {
+  display: grid;
+  gap: 0.2rem;
+  font-weight: 600;
+}
+
+.pf2e-tavern-games .tg-start .tg-participant-selectors select,
+.pf2e-tavern-games .tg-participant-count input {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .pf2e-tavern-games .tg-start .tg-participant-selectors {
+    grid-template-columns: 1fr;
+    max-height: 38vh;
+  }
+}

@@ -63,8 +63,25 @@ function state() {
   return game.settings.get(MODULE_ID, STATE_KEY);
 }
 
+function gameActorGroups() {
+  const eligible = game.actors.filter((entry) => ["character", "npc"].includes(entry.type));
+  const partyMemberIds = new Set((game.actors.party?.members ?? []).map((member) => member.id));
+  const sortByName = (entries) => entries.sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang));
+  return {
+    partyMembers: sortByName(eligible.filter((entry) => partyMemberIds.has(entry.id))),
+    otherActors: sortByName(eligible.filter((entry) => !partyMemberIds.has(entry.id))),
+  };
+}
+
 function gameActorList() {
-  return game.actors.filter((entry) => ["character", "npc"].includes(entry.type)).sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang));
+  const { partyMembers, otherActors } = gameActorGroups();
+  return [...partyMembers, ...otherActors];
+}
+
+function participantOptions({ includeDummy = true } = {}) {
+  const { partyMembers, otherActors } = gameActorGroups();
+  const buildOptions = (entries) => entries.map((entry) => `<option value="${escapeHTML(entry.id)}">${escapeHTML(entry.name)}</option>`).join("");
+  return `${includeDummy ? '<option value="" selected>- Dummy</option>' : '<option value="">- Choose a participant -</option>'}${partyMembers.length ? `<optgroup label="Party Members">${buildOptions(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${buildOptions(otherActors)}</optgroup>` : ""}`;
 }
 
 function updateQueue(work) {
@@ -486,23 +503,35 @@ function openTavernPlayer(entryActor = null) {
   return playerApp.render({ force: true });
 }
 
+function participantLimits(gameId) {
+  return gameId === TAVERN_GAME_IDS.GOLEM ? { minimum: 3, maximum: 6 } : { minimum: 2, maximum: 20 };
+}
+
 function promptTavernGame(gameId) {
   const label = TAVERN_GAME_NAMES[gameId];
   if (!label) return;
-  const actors = gameActorList();
-  const options = actors.map((entry) => `<option value="${entry.id}">${escapeHTML(entry.name)}</option>`).join("");
-  const minimum = gameId === TAVERN_GAME_IDS.GOLEM ? 3 : 2;
-  const maximum = gameId === TAVERN_GAME_IDS.GOLEM ? 6 : 20;
-  const dealerLabel = gameId === TAVERN_GAME_IDS.BOUNDER ? "First shooter" : gameId === TAVERN_GAME_IDS.DRINKING ? null : "Dealer / deck owner";
-  const specific = gameId === TAVERN_GAME_IDS.DRINKING ? `<label>Fortitude DC <input name="dc" type="number" min="0" value="15"></label>` : `${coinFields("tg-start-stake", gameId === TAVERN_GAME_IDS.GOLEM ? 5 : 5, gameId === TAVERN_GAME_IDS.CENTURY ? "Minimum stake" : gameId === TAVERN_GAME_IDS.BOUNDER ? "Shooter stake" : "Ante")}`;
-  const content = `<form class="tg-start"><p>Select ${minimum}–${maximum} PC or NPC actors.</p><label>Participants <select name="participants" multiple size="${Math.min(10, actors.length)}">${options}</select></label>${dealerLabel ? `<label>${dealerLabel}<select name="dealer"><option value="">Choose a participant</option>${options}</select></label>` : ""}${specific}<p class="notes">The selected dealer or shooter must also be a participant. Players need Owner permission on their actor to use a private panel.</p></form>`;
-  new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — Start ${label}` }, content, buttons: [{ action: "start", label: `Start ${label}`, default: true, callback: (_event, button) => { const form = button.form; return { actorIds: [...form.elements.participants.selectedOptions].map((option) => option.value), dealerId: form.elements.dealer?.value ?? null, stakeCp: gameId === TAVERN_GAME_IDS.DRINKING ? null : coinsFrom(form, "tg-start-stake"), dc: Number(form.elements.dc?.value ?? 15) }; } }], submit: (result) => startTavernGame(gameId, result) }).render({ force: true });
+  const { minimum, maximum } = participantLimits(gameId);
+  const content = `<form class="tg-start tg-participant-count"><p>Choose how many actors will play ${escapeHTML(label)}. You will select each actor individually on the next screen.</p><label>Number of participants <input name="participantCount" type="number" min="${minimum}" max="${maximum}" value="${minimum}" required></label><p class="notes">${escapeHTML(label)} supports ${minimum}–${maximum} PC or NPC participants.</p></form>`;
+  new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — ${label} participants` }, content, buttons: [{ action: "next", label: "Choose participants", default: true, callback: (_event, button) => Number(button.form.elements.participantCount.value) }], submit: (count) => { if (!Number.isInteger(count) || count < minimum || count > maximum) return ui.notifications.warn(`Choose between ${minimum} and ${maximum} participants.`); return promptTavernParticipantSelection(gameId, count); } }).render({ force: true });
+}
+
+function promptTavernParticipantSelection(gameId, count) {
+  const label = TAVERN_GAME_NAMES[gameId];
+  const actorOptions = participantOptions();
+  const dealerOptions = participantOptions({ includeDummy: false });
+  const dealerLabel = gameId === TAVERN_GAME_IDS.BOUNDER ? "First Shooter" : gameId === TAVERN_GAME_IDS.DRINKING ? null : "Dealer / deck owner";
+  const specific = gameId === TAVERN_GAME_IDS.DRINKING ? `<label>Fortitude DC <input name="dc" type="number" min="0" value="15" required></label>` : coinFields("tg-start-stake", 5, gameId === TAVERN_GAME_IDS.CENTURY ? "Minimum stake" : gameId === TAVERN_GAME_IDS.BOUNDER ? "Shooter stake" : "Ante");
+  const selectors = Array.from({ length: count }, (_entry, index) => `<label>Character ${index + 1}<select name="participant-${index + 1}" data-participant required>${actorOptions}</select></label>`).join("");
+  const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
+  new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — Set up ${label}` }, content, buttons: [{ action: "start", label: `Start ${label}`, default: true, callback: (_event, button) => { const form = button.form; return { actorIds: [...form.querySelectorAll("[data-participant]")].map((select) => select.value), dealerId: form.elements.dealer?.value ?? null, stakeCp: gameId === TAVERN_GAME_IDS.DRINKING ? null : coinsFrom(form, "tg-start-stake"), dc: Number(form.elements.dc?.value ?? 15) }; } }], submit: (result) => startTavernGame(gameId, result) }).render({ force: true });
 }
 
 async function startTavernGame(gameId, result) {
   return updateQueue(async () => {
     if (!result) return;
     if (state()) throw new Error("Close the active PF2e Tavern Games table before starting another game.");
+    if (!Array.isArray(result.actorIds) || result.actorIds.some((id) => !id)) throw new Error("Choose an actor in every participant selector; - Dummy is not valid after choosing a participant count.");
+    if (new Set(result.actorIds).size !== result.actorIds.length) throw new Error("Each participant selector must use a different actor.");
     const participants = result.actorIds.map((id) => { const entryActor = actor(id); if (!entryActor) throw new Error("A selected actor is no longer available."); return { id: entryActor.id, actorId: entryActor.id, name: entryActor.name }; });
     let next;
     if (gameId === TAVERN_GAME_IDS.GOLEM) next = createGolemGame({ participants, dealerId: result.dealerId, anteCp: result.stakeCp });

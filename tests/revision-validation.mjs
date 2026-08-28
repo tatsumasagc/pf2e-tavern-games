@@ -16,11 +16,11 @@ const journalPack = new URL("packs/pf2e-tavern-games-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "2.0.0", "The release version should be 2.0.0");
+assert.equal(manifest.version, "2.1.0", "The release version should be 2.1.0");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.0\.0\/pf2e-tavern-games-v2\.0\.0\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.0\/pf2e-tavern-games-v2\.1\.0\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.ok(manifest.esmodules.includes("scripts/tavern-games.mjs"), "The multi-game controller should be registered in the manifest.");
 assert.ok(existsSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot)), "The deterministic multi-game engine should be included.");
@@ -33,6 +33,14 @@ assert.match(tavernSource, /games-loaded-dice/, "Bounder and Century should chec
 assert.match(tavernSource, /messageMode: "blindroll"/, "Drinking and cheating checks should be blind to the GM.");
 assert.match(tavernSource, /applyDrinkingStage/, "The drinking contest should apply stage effects.");
 assert.match(tavernSource, /tg-disqualify/, "The GM table should expose a disqualification control.");
+assert.match(tavernSource, /function participantLimits\(gameId\)/, "Added games should define count limits before participant selection.");
+assert.match(tavernSource, /Number of participants/, "Added-game setup should ask for a participant count first.");
+assert.match(tavernSource, /promptTavernParticipantSelection\(gameId, count\)/, "Added-game setup should show individual selectors after the count is chosen.");
+assert.match(tavernSource, /data-participant/, "Each chosen participant should use an individual selector.");
+assert.match(tavernSource, /- Dummy/, "Added-game selectors should present Dummy first.");
+assert.match(tavernSource, /<optgroup label="Party Members">/, "Added-game selectors should group Party Members before other actors.");
+assert.match(tavernSource, /game\.actors\.party\?\.members/, "Added-game selectors should identify active PF2E Party members.");
+assert.match(tavernSource, /Each participant selector must use a different actor/, "Added-game setup should reject duplicate participant selections.");
 assert.equal(manifest.authors?.[0]?.name, "Tatsu_Gamer", "The module manifest author should credit Tatsu_Gamer.");
 assert.ok(!Object.hasOwn(manifest, "system"), "Foundry v14 manifests must not include the unsupported top-level system key");
 assert.equal(manifest.relationships?.systems?.[0]?.id, "pf2e", "The supported PF2E relationship should be retained");
@@ -157,13 +165,18 @@ assert.match(macro.command, /game\.modules\.get\("pf2e-tavern-games"\)/, "The ma
 assert.ok(readdirSync(journalPack).some((name) => name.startsWith("MANIFEST-")), "The compiled LevelDB JournalEntry pack should be included");
 assert.ok(!existsSync(new URL("packs/poppys-prize-journals/", moduleRoot)), "The retired JournalEntry pack directory should not be distributed.");
 const journalSources = readdirSync(journalSourceDirectory).filter((name) => name.endsWith(".json")).map((name) => JSON.parse(readFileSync(new URL(name, journalSourceDirectory), "utf8")));
-assert.equal(journalSources.length, 2, "The module should provide rules and module-use JournalEntry sources.");
-for (const name of ["PF2e Tavern Games — Rules Reference", "How to Use PF2e Tavern Games"]) {
+const expectedJournals = ["Poppy’s Prize — Rules Reference", "Golem — Rules Reference", "Bounder — Rules Reference", "Century — Rules Reference", "Drinking Contest — Rules Reference", "How to Use PF2e Tavern Games"];
+assert.equal(journalSources.length, expectedJournals.length, "The module should provide one rules reference per game and a module-use JournalEntry.");
+assert.equal(new Set(journalSources.map((entry) => entry.name)).size, expectedJournals.length, "Journal sources must not share a display name.");
+for (const name of expectedJournals) {
   const journal = journalSources.find((entry) => entry.name === name);
   assert.ok(journal, `Missing JournalEntry source: ${name}`);
   assert.match(journal.pages?.[0]?.text?.content ?? "", /Created by Tatsu_Gamer using Manus AI/, `${name} should include the creator note.`);
-  assert.match(journal.pages?.[0]?.text?.content ?? "", /Jewel of the Indigo Isles/, `${name} should acknowledge Poppy’s Prize’s source.`);
-  assert.match(journal.pages?.[0]?.text?.content ?? "", /Pathfinder #159: All or Nothing/, `${name} should acknowledge the Golem, Bounder, and Century source.`);
 }
+assert.match(journalSources.find((entry) => entry.name === "Poppy’s Prize — Rules Reference").pages[0].text.content, /Jewel of the Indigo Isles/, "The Poppy’s Prize journal should acknowledge its source.");
+for (const name of ["Golem — Rules Reference", "Bounder — Rules Reference", "Century — Rules Reference"]) assert.match(journalSources.find((entry) => entry.name === name).pages[0].text.content, /Pathfinder #159: All or Nothing/, `${name} should acknowledge its source.`);
+const moduleGuide = journalSources.find((entry) => entry.name === "How to Use PF2e Tavern Games");
+assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Marked Playing Cards\}/, "The guide should contain the requested Marked Playing Cards UUID link.");
+assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Loaded Dice\}/, "The guide should contain the requested Loaded Dice UUID link.");
 
-console.log("PF2e Tavern Games 2.0.0 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.0 revision validation passed.");

@@ -2,6 +2,12 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.0 — 28 August 2026
+
+The **PF2e Tavern Games Journals** compendium now contains six distinct Journal Entries: dedicated rules references for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and the **Drinking Contest**, plus **How to Use PF2e Tavern Games**. Each game reference includes its creator credit and source acknowledgement where applicable. The module-use guide now links the cheating equipment labels to the requested `@UUID[Compendium.pf2e.equipment-srd.Item.Q4KkKGGXq4bNGHh2]` compendium item syntax.
+
+Golem, Bounder, Century, and Drinking Contest setup is now a two-step flow. The GM first selects the participant count, then completes an individual selector for every participant. Each selector is ordered exactly as Poppy’s Prize: **- Dummy** first, active **Party Members** alphabetically, then all other eligible PC and NPC actors alphabetically. After a count is chosen, every selector requires a distinct real actor; a dummy cannot be used to bypass the selected count.
+
 ## 2.0.0 — 28 August 2026
 
 PF2e Tavern Games is now a multi-game library. It adds **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest** alongside the existing Poppy’s Prize table. Each added game provides an authoritative GM table, actor-owned player controls, the shared activity log, and a GM **Disqualify** control. Poppy’s Prize now also exposes a confirmed GM disqualification control that safely removes a participant’s pending action.

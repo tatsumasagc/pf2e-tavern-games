@@ -1,18 +1,18 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.0.0 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.0 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
 ## Installation
 
-Download `pf2e-tavern-games-v2.0.0.zip` from the latest release and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download `pf2e-tavern-games-v2.1.0.zip` from the latest release and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.0.0 uses the `pf2e-tavern-games` package ID. It retains a one-time GM migration for table state and actor-owned player views created under the retired `poppys-prize` package ID. Disable the retired module after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.0 uses the `pf2e-tavern-games` package ID. It retains a one-time GM migration for table state and actor-owned player views created under the retired `poppys-prize` package ID. Disable the retired module after the new package has loaded successfully.
 
 ## Open the game library
 
@@ -28,7 +28,7 @@ A GM can open the library from the dice control in the Token Controls, from the 
 
 ## GM oversight and player panels
 
-The GM creates and controls every table. The player panel reveals only a participant’s own hand or legal choices. The GM may use **Open player panel** to prompt an actor’s active Owner to open it remotely. The player interface has an independent scroll area and highlights the current turn. Every tavern-game table provides **Disqualify** beside each active participant; a disqualified actor cannot submit further actions.
+The GM creates and controls every table. For Golem, Bounder, Century, and the Drinking Contest, the GM first chooses the number of participants, then selects every participant from an individual dropdown. Each selector begins with **- Dummy**, followed by Party Members and then other eligible actors in alphabetical order; after a count is chosen, every selector must name a different actor. The player panel reveals only a participant’s own hand or legal choices. The GM may use **Open player panel** to prompt an actor’s active Owner to open it remotely. The player interface has an independent scroll area and highlights the current turn. Every tavern-game table provides **Disqualify** beside each active participant; a disqualified actor cannot submit further actions.
 
 ## Cheating
 
@@ -60,7 +60,7 @@ Starting another contest or closing a drinking table removes only the conditions
 
 ## Compendiums
 
-The **PF2e Tavern Games** compendium folder includes the **PF2e Tavern Games Macros** pack and a player-readable **PF2e Tavern Games Journals** pack. The journals contain a rules reference for all five games and a module-use guide, each with creator and source acknowledgement.
+The **PF2e Tavern Games** compendium folder includes the **PF2e Tavern Games Macros** pack and a player-readable **PF2e Tavern Games Journals** pack. The pack contains six distinct entries: a rules reference for Poppy’s Prize, Golem, Bounder, Century, and the Drinking Contest, plus a module-use guide. Each carries creator and source acknowledgement where applicable.
 
 ## Sources and content boundary
 

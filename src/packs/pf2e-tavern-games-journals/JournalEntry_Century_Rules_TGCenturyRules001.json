@@ -1,0 +1,19 @@
+{
+  "_key": "!journal!TGCenturyRules001",
+  "_id": "TGCenturyRules001",
+  "name": "Century — Rules Reference",
+  "folder": null,
+  "sort": 300000,
+  "ownership": {"default": 0},
+  "flags": {"pf2e-tavern-games": {"content": "century-rules"}},
+  "pages": [{
+    "_key": "!journal.pages!TGCenturyRules001.TGCenturyRulesP01",
+    "_id": "TGCenturyRulesP01",
+    "name": "Century rules",
+    "type": "text",
+    "text": {"content": "<h1>Century</h1><p>Century uses two distinct d10 to create results from 1 to 100. Every participant stakes an amount and secretly chooses from two to ten distinct numbers in that range. Once all selections are locked, the Dealer generates twenty different results, rerolling a duplicate.</p><h2>Resolution</h2><p>The module compares every player’s chosen numbers with the twenty results, then displays matches, the applicable multiplier, and the payout. A player’s multiplier depends on both the count of numbers selected and the count matched, using the published Century payout matrix.</p><h2>Examples</h2><table><thead><tr><th>Numbers selected</th><th>Numbers matched</th><th>Payout multiplier</th></tr></thead><tbody><tr><td>2</td><td>1</td><td>1×</td></tr><tr><td>2</td><td>2</td><td>5×</td></tr><tr><td>3</td><td>2</td><td>2×</td></tr><tr><td>5</td><td>5</td><td>200×</td></tr><tr><td>10</td><td>10</td><td>5000×</td></tr></tbody></table><p>Refer to the source table for every available multiplier; the module applies the complete table automatically.</p><h2>Loaded dice</h2><p>A Dealer with an item slugged <code>games-loaded-dice</code> may choose the twenty distinct results. The selection must contain exactly twenty unique whole numbers from 1 through 100. Without that item, the module draws all results normally.</p><hr><p><strong>Source acknowledgement.</strong> Century originates in <em>Pathfinder #159: All or Nothing</em>, p. 76, as presented by <a href=\"https://2e.aonprd.com/Rules.aspx?ID=1452\">Archives of Nethys</a>.</p><p><em>Created by Tatsu_Gamer using Manus AI</em></p>", "format": 1},
+    "sort": 0,
+    "ownership": {"default": 0},
+    "flags": {}
+  }]
+}

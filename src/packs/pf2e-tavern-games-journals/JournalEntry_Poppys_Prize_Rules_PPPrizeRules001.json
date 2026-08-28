@@ -1,32 +1,19 @@
 {
   "_key": "!journal!PPPrizeRules001",
   "_id": "PPPrizeRules001",
-  "name": "PF2e Tavern Games — Rules Reference",
+  "name": "Poppy’s Prize — Rules Reference",
   "folder": null,
   "sort": 0,
-  "ownership": {
-    "default": 0
-  },
-  "flags": {
-    "pf2e-tavern-games": {
-      "content": "rules-reference"
-    }
-  },
-  "pages": [
-    {
-      "_key": "!journal.pages!PPPrizeRules001.PPPrizeRulesP01",
-      "_id": "PPPrizeRulesP01",
-      "name": "Tavern games rules",
-      "type": "text",
-      "text": {
-        "content": "<h1>PF2e Tavern Games — Rules Reference</h1><p>This module currently automates five games: Poppy’s Prize, Golem, Bounder, Century, and a drinking contest. The GM controls table setup and may disqualify any actor in every game. Players with Owner permission on their actor use their private panel for legal actions.</p><h2>Poppy’s Prize</h2><p>Poppy’s Prize uses a 54-card deck: 52 suited cards and two Pirates. The GM selects two to four participants, an ante, and Poppy. Poppy deals; each player chooses a face-down common card, followed by betting after each common-card reveal. Pirates can Plunder a matching card from another player. At showdown, the best five-card poker hand wins the pot. Participants may carry one card into the next game.</p><h2>Golem</h2><p>Golem is a 52-card, three-to-six player poker game. Each participant antes, receives five cards, and bets from the amulet holder. Active players may discard up to two cards and receive replacements; all discards form the face-down golem hand. After final betting, the best player hand must strictly beat the golem hand to win the pot less the house’s 5% share. If it does not, that player adds twice the ante to the pot and the hand continues. The amulet moves counterclockwise when a pot is won.</p><h2>Bounder</h2><p>The Shooter stakes an amount and rolls a first d20 for a point. The Shooter may double the stake. Other players may bet on the point, all odd, all even, or three of a kind. The dealer rolls 3d6, then the Shooter rolls a second d20. The point bet wins when the two d20s bracket the dealer total; a natural 1 and 20 pair doubles only the Shooter’s winnings. The next clockwise eligible participant becomes Shooter.</p><h2>Century</h2><p>Each player stakes an amount and chooses two through ten distinct numbers from 1 to 100. The Dealer generates twenty distinct results from two d10. Payout is determined by the official Century table from the number selected and numbers matched; the module displays every player’s match count, multiplier, and payout after the draw.</p><h2>Drinking Contest</h2><p>For each round, every contestant presses Ready. Once all qualified contestants are ready, the module makes blind-to-GM Performance and Fortitude checks for each contestant. Compare Fortitude with the GM’s DC: critical success reduces the stage by 1, success has no effect, failure increases it by 1, and critical failure by 2. At Stage 6, a contestant is unconscious for eight hours and eliminated.</p><table><thead><tr><th>Stage</th><th>Name</th><th>Effect</th></tr></thead><tbody><tr><td>1</td><td>Liquid Courage</td><td>+1 item bonus to saving throws against fear for 10 minutes</td></tr><tr><td>2</td><td>Tipsy</td><td>Off-guard and the Stage 1 bonus for 10 minutes</td></tr><tr><td>3</td><td>Sloshed</td><td>Clumsy 1, off-guard, stupefied 2 for 10 minutes</td></tr><tr><td>4</td><td>Wobbling</td><td>Clumsy 2 and sickened 2 for 10 minutes</td></tr><tr><td>5</td><td>Blackout Bound</td><td>Clumsy 2, sickened 2, stupefied 2 for 10 minutes</td></tr><tr><td>6</td><td>Passed Out</td><td>Unconscious for 8 hours; eliminated</td></tr></tbody></table><h2>Cheating</h2><p>In Poppy’s Prize and Golem, a dealer with <code>marked-playing-cards</code> may use marked cards. In Bounder, the Shooter with <code>games-loaded-dice</code> may choose each d20 result; in Century, the Dealer with that slug may choose the twenty results. A drinking contestant may cheat to automatically succeed their Fortitude save; their blind Performance result is compared separately with each other contestant’s Perception DC. The GM and each observer who detects cheating receive private notices.</p><hr><p><strong>Source acknowledgement.</strong> Poppy’s Prize originates in <em>Jewel of the Indigo Isles</em>. Golem, Bounder, and Century originate in <em>Pathfinder #159: All or Nothing</em>, p. 76, as presented by <a href=\"https://2e.aonprd.com/Rules.aspx?ID=1452\">Archives of Nethys</a>. The drinking contest is a table rule supplied for this module.</p><p><em>Created by Tatsu_Gamer using Manus AI</em></p>",
-        "format": 1
-      },
-      "sort": 0,
-      "ownership": {
-        "default": 0
-      },
-      "flags": {}
-    }
-  ]
+  "ownership": {"default": 0},
+  "flags": {"pf2e-tavern-games": {"content": "poppys-prize-rules"}},
+  "pages": [{
+    "_key": "!journal.pages!PPPrizeRules001.PPPrizeRulesP01",
+    "_id": "PPPrizeRulesP01",
+    "name": "Poppy’s Prize rules",
+    "type": "text",
+    "text": {"content": "<h1>Poppy’s Prize</h1><p>Poppy’s Prize is a two-to-four player poker-style card game in PF2e Tavern Games. Its 54-card deck has 52 suited cards plus two Pirates. The GM chooses Poppy, the ante, and optional currency transfer, then Poppy deals the prepared game.</p><h2>Common cards and betting</h2><p>Each participant secretly contributes a hand card to the common pool. The common cards are revealed clockwise from Poppy, with a betting round after each reveal. A bettor may pass when no bet exists, otherwise call, raise, fold, or open a new bet. The module validates each action and any specified minimum.</p><h2>Pirates and Plunder</h2><p>After the fourth common-card betting round, each Pirate holder acts. A holder can demand a card from another participant by suit, value, or both. The target surrenders a matching hand card if able. A Pirate holder cannot be a Plunder target.</p><h2>Showdown and carry-over</h2><p>After final betting, active participants make the best five-card poker hand from their private hand and the common pool. The pot is paid to the winner or split among ties. Participants may then keep one card for the next game; a winner may instead keep one common card.</p><h2>Marked cards</h2><p>A Poppy with <code>marked-playing-cards</code> may use the module’s marked-card options. On the first game, Poppy can choose two opening cards; a later Poppy may instead elect marked-card sight. A blind Palm an Object check is compared privately with each observer’s Perception DC.</p><hr><p><strong>Source acknowledgement.</strong> Poppy’s Prize originates in <em>Jewel of the Indigo Isles</em>. This module provides an automation aid and reference; the original adventure remains the source for the game.</p><p><em>Created by Tatsu_Gamer using Manus AI</em></p>", "format": 1},
+    "sort": 0,
+    "ownership": {"default": 0},
+    "flags": {}
+  }]
 }
