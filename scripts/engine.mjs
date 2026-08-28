@@ -653,6 +653,47 @@ function resolveShowdown(state) {
   awardPot(state, winners);
 }
 
+export function disqualifyPoppyPlayer(state, playerId, reason = "Disqualified by the GM") {
+  const next = cloneState(state);
+  const player = playerById(next, playerId);
+  assert(player, "That actor is not participating in Poppy’s Prize.");
+  assert(!player.disqualified, "That participant is already disqualified.");
+  player.disqualified = true;
+  player.folded = true;
+  next.disqualifications ??= [];
+  next.disqualifications.push({ playerId, reason: String(reason), at: Date.now() });
+  log(next, `${player.name} is disqualified: ${reason}.`);
+
+  if (activePlayers(next).length === 1 && [PHASES.BETTING, PHASES.SELECT_COMMON, PHASES.PLUNDER, PHASES.TRANSFER].includes(next.phase)) {
+    resolveFoldWin(next);
+    return next;
+  }
+  if (next.phase === PHASES.SELECT_COMMON && !next.common.some((entry) => entry.playerId === playerId)) {
+    const fallback = player.hand.shift();
+    if (fallback) next.common.push({ seat: player.seat, playerId, name: player.name, card: fallback, revealed: false, dummy: false, disqualified: true });
+    if (allCommonsSelected(next)) advanceReveal(next);
+  }
+  if (next.phase === PHASES.BETTING && next.betting) {
+    next.betting.pending = next.betting.pending.filter((id) => id !== playerId);
+    if (!next.betting.pending.length) {
+      if (next.betting.stage === "final") resolveShowdown(next);
+      else if (next.round >= next.seatCount) beginPlunder(next);
+      else advanceReveal(next);
+    } else if (next.betting.turnSeat === player.seat) {
+      next.betting.turnSeat = nextActiveSeat(next, player.seat, next.betting.pending);
+    }
+  }
+  if (next.phase === PHASES.PLUNDER && next.plunder) {
+    next.plunder.queue = next.plunder.queue.filter((entry) => entry.playerId !== playerId);
+    next.plunder.index = Math.min(next.plunder.index, next.plunder.queue.length);
+    if (next.pendingPlunder?.targetId === playerId || next.plunder.queue[next.plunder.index]?.playerId === playerId) advancePlunder(next);
+  }
+  if (next.phase === PHASES.KEEP && next.keepers && Object.hasOwn(next.keepers, playerId)) {
+    next.keepers[playerId] = null;
+  }
+  return next;
+}
+
 export function showdown(state) {
   const next = cloneState(state);
   resolveShowdown(next);

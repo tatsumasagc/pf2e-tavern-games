@@ -11,7 +11,7 @@ const files = (await readdir(destination)).filter((name) => name.endsWith(".json
 assert.equal(files.length, 2, "The compiled JournalEntry pack should contain exactly two documents.");
 const journals = await Promise.all(files.map(async (file) => JSON.parse(await readFile(`${destination}/${file}`, "utf8"))));
 const byName = new Map(journals.map((journal) => [journal.name, journal]));
-for (const name of ["Poppy’s Prize — Rules Reference", "How to Use PF2e Tavern Games"]) {
+for (const name of ["PF2e Tavern Games — Rules Reference", "How to Use PF2e Tavern Games"]) {
   const journal = byName.get(name);
   assert.ok(journal, `Missing JournalEntry: ${name}`);
   assert.equal(journal.pages?.length, 1, `${name} should have one text page.`);

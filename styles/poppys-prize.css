@@ -835,3 +835,174 @@ button.pp-card:hover:not(:disabled),
 .pp-marked-common-pool {
   border-top: 2px solid #76528e;
 }
+
+/* PF2e Tavern Games multi-game library and tables */
+#pf2e-tavern-games-table .window-content,
+#pf2e-tavern-games-player .window-content {
+  min-height: 0;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.pf2e-tavern-games .tg-table,
+.pf2e-tavern-games .tg-library {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 0.75rem;
+  color: #f4f0e6;
+  background: linear-gradient(145deg, #102b33 0%, #0a1820 70%);
+}
+
+.pf2e-tavern-games .tg-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #b38a45;
+  border-radius: 0.35rem;
+  background: linear-gradient(90deg, #243a30, #365441);
+}
+
+.pf2e-tavern-games .tg-banner h2,
+.pf2e-tavern-games .tg-phase h3,
+.pf2e-tavern-games .tg-controls h3,
+.pf2e-tavern-games .tg-players h3,
+.pf2e-tavern-games .tg-hand h3,
+.pf2e-tavern-games .tg-marked h3,
+.pf2e-tavern-games .tg-log h3 {
+  margin: 0;
+  color: #fff5d6;
+  font-weight: 750;
+  text-shadow: 0 1px 2px #000;
+}
+
+.pf2e-tavern-games .tg-banner p,
+.pf2e-tavern-games .tg-phase p,
+.pf2e-tavern-games .tg-controls p,
+.pf2e-tavern-games .tg-player span {
+  margin: 0.2rem 0 0;
+  color: #e5e8dc;
+}
+
+.pf2e-tavern-games .tg-header-actions,
+.pf2e-tavern-games .tg-controls,
+.pf2e-tavern-games .tg-coins,
+.pf2e-tavern-games .tg-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.pf2e-tavern-games .tg-rules-link {
+  color: #fff0ba;
+  font-weight: 700;
+}
+
+.pf2e-tavern-games .tg-phase,
+.pf2e-tavern-games .tg-controls,
+.pf2e-tavern-games .tg-players,
+.pf2e-tavern-games .tg-hand,
+.pf2e-tavern-games .tg-marked,
+.pf2e-tavern-games .tg-log,
+.pf2e-tavern-games .tg-game-grid article {
+  margin-top: 0.65rem;
+  padding: 0.65rem;
+  border: 1px solid rgb(192 167 111 / 55%);
+  border-radius: 0.3rem;
+  background: rgb(0 0 0 / 28%);
+}
+
+.pf2e-tavern-games .tg-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.65rem;
+}
+
+.pf2e-tavern-games .tg-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgb(255 255 255 / 15%);
+}
+
+.pf2e-tavern-games .tg-player > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.pf2e-tavern-games .tg-player.inactive { opacity: 0.55; }
+.pf2e-tavern-games button.tiny { padding: 0.18rem 0.4rem; font-size: 0.78rem; }
+.pf2e-tavern-games button.danger { background: #812f29; color: #fff; }
+.pf2e-tavern-games .tg-controls button { min-height: 2rem; }
+
+.pf2e-tavern-games .tg-game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  gap: 0.65rem;
+}
+
+.pf2e-tavern-games .tg-game-grid h3 { margin: 0; color: #fff5d6; }
+.pf2e-tavern-games .tg-game-grid p { min-height: 3.1rem; color: #e5e8dc; }
+.pf2e-tavern-games .tg-game-grid button { width: 100%; }
+
+.pf2e-tavern-games .tg-coins {
+  margin: 0;
+  padding: 0.4rem;
+  border: 1px solid #90763f;
+  border-radius: 0.25rem;
+}
+.pf2e-tavern-games .tg-coins legend { color: #fff0ba; font-weight: 700; }
+.pf2e-tavern-games .tg-coins label { display: grid; gap: 0.15rem; color: #e5e8dc; text-transform: uppercase; font-size: 0.78rem; }
+.pf2e-tavern-games .tg-coins input { width: 4.25rem; }
+
+.pf2e-tavern-games .tg-hand > div { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.pf2e-tavern-games .tg-card { display: grid; gap: 0.12rem; width: 75px; padding: 0.2rem; border: 2px solid transparent; border-radius: 0.25rem; background: #16242a; color: #fff; }
+.pf2e-tavern-games .tg-card img { width: 100%; border-radius: 0.18rem; }
+.pf2e-tavern-games .tg-card.selectable { cursor: pointer; }
+.pf2e-tavern-games .tg-card.selected { border-color: #ffd25d; transform: translateY(-0.25rem); box-shadow: 0 0 0.5rem #ffd25d; }
+.pf2e-tavern-games .tg-card span { font-size: 0.75rem; }
+.pf2e-tavern-games .tg-marked h4 { margin: 0.7rem 0 0.2rem; color: #ffd25d; }
+.pf2e-tavern-games .tg-marked p { color: #fff5d6; }
+.pf2e-tavern-games .tg-log ol { margin: 0.4rem 0 0 1.15rem; }
+.pf2e-tavern-games .tg-hidden { display: none; }
+
+@media (max-width: 760px) {
+  .pf2e-tavern-games .tg-layout { grid-template-columns: 1fr; }
+  .pf2e-tavern-games .tg-banner { align-items: flex-start; flex-direction: column; }
+}
+
+.pf2e-tavern-games .tg-marked-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.pf2e-tavern-games .tg-marked-cards figure {
+  width: 58px;
+  margin: 0;
+}
+.pf2e-tavern-games .tg-marked-cards figcaption {
+  min-height: 2.5em;
+  color: #fff5d6;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.pf2e-tavern-games .tg-marked-cards img {
+  display: block;
+  width: 58px;
+  border: 1px solid #b38a45;
+  border-radius: 0.2rem;
+}
+
+.pp-player.disqualified {
+  opacity: 0.62;
+  border-left-color: #842c2c;
+  background: rgba(115, 30, 30, 0.12);
+}

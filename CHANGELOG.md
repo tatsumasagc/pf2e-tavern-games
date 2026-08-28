@@ -2,6 +2,18 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.0.0 — 28 August 2026
+
+PF2e Tavern Games is now a multi-game library. It adds **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest** alongside the existing Poppy’s Prize table. Each added game provides an authoritative GM table, actor-owned player controls, the shared activity log, and a GM **Disqualify** control. Poppy’s Prize now also exposes a confirmed GM disqualification control that safely removes a participant’s pending action.
+
+Golem implements its 52-card, three-to-six player poker game, including ante, amulet-led betting, discards into the golem hand, the house’s 5% share, continuation after a non-winning showdown, and amulet rotation. A Golem Dealer with `marked-playing-cards` can select two opening cards on the first hand and use private marked-card sight; the blind Palm an Object detection procedure mirrors Poppy’s Prize.
+
+Bounder implements Shooter points, optional double stakes, point/all-odd/all-even/three-of-a-kind bets, the dealer’s 3d6 total, bracketing d20 result, payouts, and Shooter rotation. A qualifying Shooter with `games-loaded-dice` can select either d20 result. Century implements 2–10 selections from 1–100, twenty distinct Dealer results, the official payout matrix, and Dealer loaded-dice result selection when the Dealer has `games-loaded-dice`.
+
+The Drinking Contest resolves a simultaneous round after every qualified actor has pressed Ready. The module posts blind-to-GM Performance and Fortitude checks, compares saves to the GM’s configured DC, applies or updates module-tracked PF2E conditions and timed effects for the six named stages, and eliminates contestants at Stage 6. Any contestant can cheat for an automatic Fortitude success; their blind Performance result is tested independently against every other contestant’s Perception DC, whispering only the GM and observers who detect the cheat.
+
+The bundled macro is now **Open PF2e Tavern Games**, and the Journals pack now contains a multi-game rules reference and expanded module-use guide. Golem, Bounder, and Century acknowledge *Pathfinder #159: All or Nothing* and [Archives of Nethys](https://2e.aonprd.com/Rules.aspx?ID=1452) as their source.
+
 ## 1.9.0 — 28 August 2026
 
 The Foundry package ID is now `pf2e-tavern-games`, matching the module and GitHub repository names. The release uses the matching `Data/modules/pf2e-tavern-games/` directory and a clean `pf2e-tavern-games.*` compendium namespace, eliminating the duplicate Rules Reference left behind by the former package. On its first GM load, the module copies legacy `poppys-prize` table state, public board data, and actor-owned player views into the new namespace; the retired module must not be enabled at the same time.

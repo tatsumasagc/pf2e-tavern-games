@@ -3,6 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 const moduleRoot = new URL("../", import.meta.url);
 const mainSource = readFileSync(new URL("scripts/main.mjs", moduleRoot), "utf8");
+const tavernSource = readFileSync(new URL("scripts/tavern-games.mjs", moduleRoot), "utf8");
+const tavernEngineSource = readFileSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot), "utf8");
 const cssSource = readFileSync(new URL("styles/poppys-prize.css", moduleRoot), "utf8");
 const manifest = JSON.parse(readFileSync(new URL("module.json", moduleRoot), "utf8"));
 const cardDirectory = new URL("assets/cards/", moduleRoot);
@@ -14,12 +16,23 @@ const journalPack = new URL("packs/pf2e-tavern-games-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "1.9.0", "The release version should be 1.9.0");
+assert.equal(manifest.version, "2.0.0", "The release version should be 2.0.0");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v1\.9\.0\/pf2e-tavern-games-v1\.9\.0\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.0\.0\/pf2e-tavern-games-v2\.0\.0\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
+assert.ok(manifest.esmodules.includes("scripts/tavern-games.mjs"), "The multi-game controller should be registered in the manifest.");
+assert.ok(existsSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot)), "The deterministic multi-game engine should be included.");
+for (const game of ["GOLEM", "BOUNDER", "CENTURY", "DRINKING"]) assert.match(tavernEngineSource, new RegExp(`TAVERN_GAME_IDS\\.${game}`), `The engine should support ${game}.`);
+assert.match(tavernEngineSource, /CENTURY_PAYOUTS/, "Century should use the published payout table.");
+assert.match(tavernEngineSource, /DRINKING_STAGES/, "The drinking contest should define its condition stages.");
+assert.match(tavernEngineSource, /disqualifyTavernPlayer/, "All new games should support GM disqualification.");
+assert.match(tavernSource, /marked-playing-cards/, "Golem should check marked-card eligibility.");
+assert.match(tavernSource, /games-loaded-dice/, "Bounder and Century should check loaded-dice eligibility.");
+assert.match(tavernSource, /messageMode: "blindroll"/, "Drinking and cheating checks should be blind to the GM.");
+assert.match(tavernSource, /applyDrinkingStage/, "The drinking contest should apply stage effects.");
+assert.match(tavernSource, /tg-disqualify/, "The GM table should expose a disqualification control.");
 assert.equal(manifest.authors?.[0]?.name, "Tatsu_Gamer", "The module manifest author should credit Tatsu_Gamer.");
 assert.ok(!Object.hasOwn(manifest, "system"), "Foundry v14 manifests must not include the unsupported top-level system key");
 assert.equal(manifest.relationships?.systems?.[0]?.id, "pf2e", "The supported PF2E relationship should be retained");
@@ -138,18 +151,19 @@ assert.ok(readdirSync(macroPack).some((name) => name.startsWith("MANIFEST-")), "
 assert.ok(!existsSync(new URL("packs/poppys-prize-macros/", moduleRoot)), "The retired Macro pack directory should not be distributed.");
 const macro = JSON.parse(readFileSync(macroSource, "utf8"));
 assert.equal(macro._key, "!macros!PPPrizeLaunch001", "The Macro source requires a compendium key so it is included in the compiled pack");
-assert.equal(macro.name, "Open Poppy’s Prize", "The compendium should provide the launch macro");
+assert.equal(macro.name, "Open PF2e Tavern Games", "The compendium should provide the multi-game library launch macro");
 assert.equal(macro.img, "modules/pf2e-tavern-games/assets/icons/poppys-prize-macro.webp", "The macro should use the included square icon from the new package path");
 assert.match(macro.command, /game\.modules\.get\("pf2e-tavern-games"\)/, "The macro should open the PF2e Tavern Games module");
 assert.ok(readdirSync(journalPack).some((name) => name.startsWith("MANIFEST-")), "The compiled LevelDB JournalEntry pack should be included");
 assert.ok(!existsSync(new URL("packs/poppys-prize-journals/", moduleRoot)), "The retired JournalEntry pack directory should not be distributed.");
 const journalSources = readdirSync(journalSourceDirectory).filter((name) => name.endsWith(".json")).map((name) => JSON.parse(readFileSync(new URL(name, journalSourceDirectory), "utf8")));
 assert.equal(journalSources.length, 2, "The module should provide rules and module-use JournalEntry sources.");
-for (const name of ["Poppy’s Prize — Rules Reference", "How to Use PF2e Tavern Games"]) {
+for (const name of ["PF2e Tavern Games — Rules Reference", "How to Use PF2e Tavern Games"]) {
   const journal = journalSources.find((entry) => entry.name === name);
   assert.ok(journal, `Missing JournalEntry source: ${name}`);
   assert.match(journal.pages?.[0]?.text?.content ?? "", /Created by Tatsu_Gamer using Manus AI/, `${name} should include the creator note.`);
   assert.match(journal.pages?.[0]?.text?.content ?? "", /Jewel of the Indigo Isles/, `${name} should acknowledge Poppy’s Prize’s source.`);
+  assert.match(journal.pages?.[0]?.text?.content ?? "", /Pathfinder #159: All or Nothing/, `${name} should acknowledge the Golem, Bounder, and Century source.`);
 }
 
-console.log("PF2e Tavern Games 1.9.0 revision validation passed.");
+console.log("PF2e Tavern Games 2.0.0 revision validation passed.");

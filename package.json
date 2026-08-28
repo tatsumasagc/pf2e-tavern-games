@@ -1,12 +1,12 @@
 {
   "name": "pf2e-tavern-games",
-  "version": "1.9.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "description": "Build tools for the PF2e Tavern Games Foundry VTT module.",
   "scripts": {
     "build:pack": "node tools/build-packs.mjs",
-    "test": "node tests/engine.test.mjs && node tests/revision-validation.mjs && node tools/inspect-macro-pack.mjs && node tools/inspect-journal-pack.mjs"
+    "test": "node tests/engine.test.mjs && node tests/tavern-games-engine.test.mjs && node tests/revision-validation.mjs && node tools/inspect-macro-pack.mjs && node tools/inspect-journal-pack.mjs"
   },
   "devDependencies": {
     "@foundryvtt/foundryvtt-cli": "^3.0.4"

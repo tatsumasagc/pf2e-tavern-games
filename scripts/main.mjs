@@ -11,6 +11,7 @@ import {
   createGame,
   dealNextGame,
   dealPreparedGame,
+  disqualifyPoppyPlayer,
   declinePlunder,
   formatCopper,
   getCurrentActor,
@@ -576,12 +577,12 @@ function renderPlayer(state, player, gm) {
   const waitingCommon = state.phase === PHASES.SELECT_COMMON && !state.common.some((entry) => entry.playerId === player.id);
   const showing = state.lastShowdown?.scores?.[player.id];
   const keep = state.keepers?.[player.id];
-  return `<section class="pp-player ${player.folded ? "folded" : ""} ${active ? "active" : ""}">
+  return `<section class="pp-player ${player.folded ? "folded" : ""} ${player.disqualified ? "disqualified" : ""} ${active ? "active" : ""}">
     <header>
       <div><strong>${escapeHTML(player.name)}</strong> ${player.seat === state.dealerSeat ? "<span class=\"pp-dealer\">Poppy</span>" : ""}</div>
-      <div class="pp-player-status">${player.folded ? "Folded" : active ? "To act" : waitingCommon ? "Choose common card" : "In game"}</div>
+      <div class="pp-player-status">${player.disqualified ? "Disqualified" : player.folded ? "Folded" : active ? "To act" : waitingCommon ? "Choose common card" : "In game"}</div>
     </header>
-    ${gm ? `<div class="pp-player-launch">${actionButton({ action: "open-player-panel", label: "Open player panel", css: "text", icon: "fa-solid fa-up-right-from-square", dataset: { actor: player.actorId } })}</div>` : ""}
+    ${gm ? `<div class="pp-player-launch">${actionButton({ action: "open-player-panel", label: "Open player panel", css: "text", icon: "fa-solid fa-up-right-from-square", dataset: { actor: player.actorId } })}${!player.disqualified ? actionButton({ action: "disqualify-player", label: "Disqualify", css: "danger", icon: "fa-solid fa-ban", dataset: { player: player.id } }) : ""}</div>` : ""}
     <div class="pp-player-meta"><span>Contributed: ${escapeHTML(formatCopper(player.contributionCp))}</span>${showing ? `<span>Showdown: ${escapeHTML(showing.name)}</span>` : ""}${keep ? "<span>Card kept</span>" : ""}</div>
     ${renderHand(state, player, gm)}
   </section>`;
@@ -629,6 +630,19 @@ function renderPlunderControls(state) {
       ${actionButton({ action: "skip-plunder", label: "Do not Plunder", dataset: { player: pirateId }, css: "muted" })}
     </div>
   </section>`;
+}
+
+async function disqualifyPoppyParticipant(playerId) {
+  const current = currentState();
+  const player = getPlayer(current, playerId);
+  if (!player) return;
+  const confirmed = await foundry.applications.api.DialogV2.confirm({
+    window: { title: "Disqualify participant" },
+    content: `<p>Disqualify <strong>${escapeHTML(player.name)}</strong> from this Poppy’s Prize game? Their pending action is removed and they cannot act again.</p>`,
+    yes: { label: "Disqualify", icon: "fa-solid fa-ban" },
+    no: { label: "Cancel" },
+  });
+  if (confirmed) await enact((state) => disqualifyPoppyPlayer(state, playerId));
 }
 
 function renderStartState() {
@@ -800,6 +814,7 @@ class PoppysPrizeApplication extends foundry.applications.api.ApplicationV2 {
     if (action === "new-game") return promptStartGame();
     if (action === "clear-game") return clearGame();
     if (action === "open-player-panel") return requestPlayerPanelOpen(button.dataset.actor);
+    if (action === "disqualify-player") return disqualifyPoppyParticipant(button.dataset.player);
     if (action === "deal-cards") return enact((state) => performDeal(state, dealRequestFromRoot(this.element)));
     if (action === "select-common") return enact((state) => selectCommon(state, button.dataset.player, button.dataset.card));
     if (action === "bet") return enact(async (state) => {
