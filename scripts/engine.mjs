@@ -34,6 +34,7 @@ export const PHASES = Object.freeze({
 
 export function cardLabel(card) {
   if (!card) return "Unknown card";
+  if (card.displayLabel) return card.displayLabel;
   if (card.pirate) return "Pirate";
   const suit = SUITS.find((entry) => entry.id === card.suit);
   const rank = RANKS.find((entry) => entry.rank === card.rank);
@@ -42,6 +43,7 @@ export function cardLabel(card) {
 
 export function compactCardLabel(card) {
   if (!card) return "?";
+  if (card.displayCompact) return card.displayCompact;
   if (card.pirate) return "Pirate";
   const suit = SUITS.find((entry) => entry.id === card.suit);
   return `${card.rank}${suit?.symbol ?? ""}`;

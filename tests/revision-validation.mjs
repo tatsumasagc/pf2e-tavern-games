@@ -8,6 +8,7 @@ const tavernEngineSource = readFileSync(new URL("scripts/tavern-games-engine.mjs
 const cssSource = readFileSync(new URL("styles/poppys-prize.css", moduleRoot), "utf8");
 const manifest = JSON.parse(readFileSync(new URL("module.json", moduleRoot), "utf8"));
 const cardDirectory = new URL("assets/cards/", moduleRoot);
+const golemCardDirectory = new URL("assets/golem-cards/", moduleRoot);
 const icon = new URL("assets/icons/poppys-prize-macro.webp", moduleRoot);
 const macroSource = new URL("src/packs/pf2e-tavern-games-macros/Macro_Open_Poppys_Prize_PPPrizeLaunch001.json", moduleRoot);
 const macroPack = new URL("packs/pf2e-tavern-games-macros/", moduleRoot);
@@ -15,12 +16,14 @@ const journalSourceDirectory = new URL("src/packs/pf2e-tavern-games-journals/", 
 const journalPack = new URL("packs/pf2e-tavern-games-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
+const golemCards = readdirSync(golemCardDirectory).filter((name) => name.endsWith(".webp"));
+const golemPlayableCards = golemCards.filter((name) => name !== "back.webp");
 
-assert.equal(manifest.version, "2.1.3", "The release version should be 2.1.3");
+assert.equal(manifest.version, "2.1.4", "The release version should be 2.1.4");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.3\/pf2e-tavern-games-v2\.1\.3\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.4\/pf2e-tavern-games-v2\.1\.4\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.ok(manifest.esmodules.includes("scripts/tavern-games.mjs"), "The multi-game controller should be registered in the manifest.");
 assert.ok(existsSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot)), "The deterministic multi-game engine should be included.");
@@ -28,6 +31,14 @@ for (const game of ["GOLEM", "BOUNDER", "CENTURY", "DRINKING"]) assert.match(tav
 assert.match(tavernEngineSource, /CENTURY_PAYOUTS/, "Century should use the published payout table.");
 assert.match(tavernEngineSource, /DRINKING_STAGES/, "The drinking contest should define its condition stages.");
 assert.match(tavernEngineSource, /disqualifyTavernPlayer/, "All new games should support GM disqualification.");
+assert.match(tavernEngineSource, /GOLEM_SUIT_ART/, "Golem should provide an explicit mapping from its logical suits to the supplied dark-gold card assets.");
+assert.match(tavernEngineSource, /assets\/golem-cards\//, "Golem should resolve supplied face artwork from its dedicated asset directory.");
+assert.match(tavernSource, /assets\/golem-cards\/back\.webp/, "Golem concealed cards should use the supplied dark-gold card back.");
+assert.match(tavernSource, /renderGolemCardTable/, "The GM Golem table should render the supplied card faces.");
+assert.equal(golemCards.length, 53, "Golem should bundle 52 card faces plus one card back.");
+assert.equal(golemPlayableCards.length, 52, "Only 52 dark-gold card faces should be playable in Golem.");
+assert.ok(golemCards.includes("back.webp"), "Golem should include the supplied dark-gold card back.");
+assert.ok(!golemCards.includes("joker.webp"), "The supplied joker must be excluded from the Golem module assets.");
 assert.match(tavernSource, /hasMarkedCards\(actor\(dealer\.actorId\)\)/, "Golem should offer marked cards only to a deck owner with the item in their inventory.");
 assert.match(tavernSource, /choices\.canMarked \?/, "The Golem player panel should gate marked-card controls by actor eligibility.");
 assert.match(tavernSource, /entry\.id === current\.shooterId && hasLoadedDice\(entryActor\)/, "Bounder should offer loaded-dice choices only to an eligible Shooter.");
@@ -198,4 +209,4 @@ assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipm
 assert.match(moduleGuide.pages[0].text.content, /Dealer social cheating/, "The guide should document the universal dealer social-cheating workflow.");
 assert.match(moduleGuide.pages[0].text.content, /Cheat and choose my hand/, "The guide should explain dealer-selected-hand cheating.");
 
-console.log("PF2e Tavern Games 2.1.3 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.4 revision validation passed.");

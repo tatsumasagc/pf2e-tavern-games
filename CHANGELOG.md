@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.4 — 28 August 2026
+
+Golem now renders every dealt card in both the GM table and player hand with the supplied dark-gold standard-card artwork. Concealed Golem cards, including the deck owner’s marked-card sight, use the matching supplied `back.webp` image. The unused `joker.webp` is excluded from the module’s Golem assets and cannot enter the 52-card Golem deck.
+
 ## 2.1.3 — 28 August 2026
 
 The module-use Journal Entry and README now include a dedicated, step-by-step **Dealer social cheating** guide. It distinguishes universal Poppy and Golem Dealer hand selection from item-gated marked-card sight, explains the blind Performance or Deception — Create a Diversion roll, and documents the observer-specific detection and whisper outcome.

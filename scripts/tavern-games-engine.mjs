@@ -95,8 +95,33 @@ function randomInteger(minimum, maximum, rng = Math.random) {
   return Math.floor(rng() * (maximum - minimum + 1)) + minimum;
 }
 
+const GOLEM_SUIT_ART = Object.freeze({
+  trees: { file: "clubs", label: "Clubs", symbol: "♣" },
+  ships: { file: "spades", label: "Spades", symbol: "♠" },
+  gems: { file: "diamonds", label: "Diamonds", symbol: "♦" },
+  parrots: { file: "hearts", label: "Hearts", symbol: "♥" },
+});
+
+function golemRankFile(rank) {
+  if (rank === "A") return "ace";
+  if (rank === "J") return "jack";
+  if (rank === "Q") return "queen";
+  if (rank === "K") return "king";
+  return String(rank).padStart(2, "0");
+}
+
 function cardDeckForGolem() {
-  return createDeck().filter((card) => !card.pirate).map((card) => ({ ...card, rank: card.rank === "A" ? "1" : card.rank }));
+  return createDeck().filter((card) => !card.pirate).map((card) => {
+    const art = GOLEM_SUIT_ART[card.suit];
+    const rankLabel = card.rank === "A" ? "Ace" : card.rank === "J" ? "Jack" : card.rank === "Q" ? "Queen" : card.rank === "K" ? "King" : card.rank;
+    return {
+      ...card,
+      rank: card.rank === "A" ? "1" : card.rank,
+      image: `assets/golem-cards/${art.file}-${golemRankFile(card.rank)}.webp`,
+      displayLabel: `${rankLabel} of ${art.label}`,
+      displayCompact: `${card.rank === "A" ? "A" : card.rank}${art.symbol}`,
+    };
+  });
 }
 
 function golemScore(cards) {

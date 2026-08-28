@@ -1067,3 +1067,39 @@ button.pp-card:hover:not(:disabled),
   font-size: 0.82rem;
   font-weight: 600;
 }
+
+/* Golem’s supplied dark-gold deck: compact GM card table. */
+.tg-golem-gm-cards {
+  margin-top: 0.75rem;
+  padding: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--color-border-light-primary) 80%, #b18a32);
+  border-radius: 0.45rem;
+  background: rgb(8 10 14 / 38%);
+}
+.tg-golem-gm-cards h3,
+.tg-golem-gm-cards h4 {
+  margin: 0 0 0.35rem;
+}
+.tg-golem-gm-hands {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.55rem;
+}
+.tg-golem-gm-hand {
+  min-width: 0;
+  padding: 0.45rem;
+  border-radius: 0.35rem;
+  background: rgb(0 0 0 / 23%);
+}
+.tg-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.tg-golem-gm-cards .tg-card {
+  width: 3.65rem;
+}
+.tg-golem-gm-cards .tg-card img {
+  height: 5.45rem;
+  object-fit: cover;
+}

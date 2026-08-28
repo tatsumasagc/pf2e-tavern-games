@@ -1,18 +1,18 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.2 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.4 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
 ## Installation
 
-Download `pf2e-tavern-games-v2.1.2.zip` from the latest release and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download `pf2e-tavern-games-v2.1.4.zip` from the latest release and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.2 uses the `pf2e-tavern-games` package ID. It retains a one-time GM migration for table state and actor-owned player views created under the retired `poppys-prize` package ID. Disable the retired module after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.4 uses the `pf2e-tavern-games` package ID. It retains a one-time GM migration for table state and actor-owned player views created under the retired `poppys-prize` package ID. Disable the retired module after the new package has loaded successfully.
 
 ## Open the game library
 
@@ -25,6 +25,10 @@ A GM can open the library from the dice control in the Token Controls, from the 
 | **Bounder** | 2+ | A Shooter’s two d20 results attempt to bracket the Dealer’s 3d6 total; players may make point or side bets. |
 | **Century** | 2+ | Players select 2–10 numbers from 1–100; the Dealer draws twenty unique two-d10 results and applies the official payout table. |
 | **Drinking Contest** | 2+ | Every contestant presses Ready each round; blind Performance and Fortitude rolls drive a six-stage condition track. |
+
+## Golem card art
+
+Golem uses the supplied dark-gold 52-card deck artwork in the GM card table and each participant’s private hand. The matching `back.webp` is used wherever a Golem card must remain concealed, including the deck owner’s marked-card sight. The supplied `joker.webp` is intentionally unused: it is not in Golem’s playable deck and is not included in the module’s Golem card assets.
 
 ## GM oversight and player panels
 
