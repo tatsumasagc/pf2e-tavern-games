@@ -173,18 +173,22 @@ export function createGolemGame({ participants, dealerId, anteCp = 5, markedCard
   };
 }
 
-export function dealGolem(state, { markedCardIds = [] } = {}) {
+export function dealGolem(state, { markedCardIds = [], dealerHandCardIds = [] } = {}) {
   assert(state?.game === TAVERN_GAME_IDS.GOLEM && state.phase === "golem-deal", "Golem is not ready to deal.");
   const next = clone(state);
   const dealer = player(next, next.dealerId);
-  const selected = [...new Set(markedCardIds)];
-  assert(selected.length === 0 || (next.gameNumber === 1 && selected.length === 2), "Marked-card selection requires exactly two cards and is available only for Golem’s first hand.");
+  const markedChoices = [...new Set(markedCardIds.filter(Boolean))];
+  const handChoices = [...new Set(dealerHandCardIds.filter(Boolean))];
+  assert(!markedChoices.length || !handChoices.length, "Use either marked-card selection or a social cheating hand selection, not both.");
+  assert(markedChoices.length === 0 || (next.gameNumber === 1 && markedChoices.length === 2), "Marked-card selection requires exactly two cards and is available only for Golem’s first hand.");
+  assert(handChoices.length === 0 || handChoices.length === Math.max(0, 5 - dealer.hand.length), "A cheating Dealer must choose every card needed to complete their hand.");
+  const selected = handChoices.length ? handChoices : markedChoices;
   const chosen = selected.map((id) => next.deck.find((card) => card.id === id));
   assert(chosen.every(Boolean), "Choose cards that remain in the deck.");
   if (chosen.length) {
     next.deck = next.deck.filter((card) => !selected.includes(card.id));
     dealer.hand.push(...chosen);
-    next.cheatingDealerId = dealer.id;
+    if (markedChoices.length) next.cheatingDealerId = dealer.id;
   }
   for (const entry of next.players) {
     while (entry.hand.length < 5) entry.hand.push(next.deck.shift());

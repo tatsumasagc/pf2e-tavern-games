@@ -456,25 +456,29 @@ export function createGame({ participants, anteCp, dealerId, rng = Math.random }
   return state;
 }
 
-export function dealPreparedGame(state, { markedCardIds = [], markedCardSight = false, rng = Math.random } = {}) {
+export function dealPreparedGame(state, { markedCardIds = [], dealerHandCardIds = [], markedCardSight = false, rng = Math.random } = {}) {
   const next = cloneState(state);
   assert(next.phase === PHASES.DEAL, "Cards can only be dealt while the table is waiting for Poppy.");
   const dealer = playerById(next, memberBySeat(next, next.dealerSeat)?.id);
   assert(dealer, "The current Poppy is missing from the table.");
-  const choices = Array.isArray(markedCardIds) ? markedCardIds.filter(Boolean) : [];
-  assert(new Set(choices).size === choices.length, "Choose each marked card only once.");
-  assert(next.gameNumber !== 1 || choices.length <= 2, "Poppy can choose at most two marked cards for the first game.");
-  assert(choices.length === 0 || choices.length === 2, "Marked playing cards must select exactly two cards.");
-  assert(next.gameNumber === 1 || choices.length === 0, "Marked-card choices are available only for the first game.");
+  const markedChoices = Array.isArray(markedCardIds) ? markedCardIds.filter(Boolean) : [];
+  const handChoices = Array.isArray(dealerHandCardIds) ? dealerHandCardIds.filter(Boolean) : [];
+  assert(new Set(markedChoices).size === markedChoices.length && new Set(handChoices).size === handChoices.length, "Choose each card only once.");
+  assert(!markedChoices.length || !handChoices.length, "Use either marked-card selection or a social cheating hand selection, not both.");
+  assert(next.gameNumber !== 1 || markedChoices.length <= 2, "Poppy can choose at most two marked cards for the first game.");
+  assert(markedChoices.length === 0 || markedChoices.length === 2, "Marked playing cards must select exactly two cards.");
+  assert(next.gameNumber === 1 || markedChoices.length === 0, "Marked-card choices are available only for the first game.");
+  assert(handChoices.length === 0 || handChoices.length === Math.max(0, 5 - dealer.hand.length), "A cheating dealer must choose every card needed to complete their hand.");
   assert(typeof markedCardSight === "boolean", "Marked-card sight must be a true or false choice.");
-  const marked = choices.map((cardId) => {
+  const selectedIds = handChoices.length ? handChoices : markedChoices;
+  const selected = selectedIds.map((cardId) => {
     const index = next.deck.findIndex((card) => card.id === cardId);
-    assert(index >= 0, "A chosen marked card is not available in the deck.");
+    assert(index >= 0, "A chosen card is not available in the deck.");
     return next.deck.splice(index, 1)[0];
   });
   next.deck = shuffle(next.deck, rng);
-  next.cheatingDealerId = markedCardSight || marked.length === 2 ? dealer.id : null;
-  dealer.hand.push(...marked);
+  next.cheatingDealerId = markedCardSight || markedChoices.length === 2 ? dealer.id : null;
+  dealer.hand.push(...selected);
   for (const seat of orderedSeats(next)) {
     const member = memberBySeat(next, seat);
     if (!member || member.dummy) continue;

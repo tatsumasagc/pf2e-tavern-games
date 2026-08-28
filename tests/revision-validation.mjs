@@ -16,11 +16,11 @@ const journalPack = new URL("packs/pf2e-tavern-games-journals/", moduleRoot);
 const cards = readdirSync(cardDirectory).filter((name) => name.endsWith(".webp"));
 const playableCards = cards.filter((name) => name !== "card_back.webp");
 
-assert.equal(manifest.version, "2.1.1", "The release version should be 2.1.1");
+assert.equal(manifest.version, "2.1.2", "The release version should be 2.1.2");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.1\/pf2e-tavern-games-v2\.1\.1\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.2\/pf2e-tavern-games-v2\.1\.2\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.ok(manifest.esmodules.includes("scripts/tavern-games.mjs"), "The multi-game controller should be registered in the manifest.");
 assert.ok(existsSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot)), "The deterministic multi-game engine should be included.");
@@ -113,13 +113,17 @@ assert.match(blindRollSource, /action:create-a-diversion/, "Poppy’s Prize shou
 assert.match(mainSource, /renderCheatMethodControls\("pp-cheat-method"\)/, "Poppy’s Prize should let an eligible deck owner choose Performance or Deception.");
 assert.match(tavernSource, /function rollConcealmentCheck/, "Golem and Drinking Contest should share a selectable concealment roll helper.");
 assert.match(tavernSource, /action: "create-a-diversion"/, "The multi-game Deception cheat option should use Create a Diversion.");
-assert.match(tavernSource, /tg-golem-cheat-method/, "Golem should provide a concealment-method choice to an eligible deck owner.");
+assert.match(tavernSource, /tg-golem-cheat-method/, "Golem should provide a concealment-method choice to every Dealer.");
+assert.match(tavernSource, /tg-golem-social-cheat/, "Every Golem Dealer should be able to declare social cheating.");
+assert.match(tavernSource, /dealerHandCardIds/, "A socially cheating Golem Dealer should be able to select their hand.");
 assert.match(tavernSource, /tg-drink-cheat-method/, "Drinking Contest should provide a concealment-method choice to any cheating participant.");
 assert.match(mainSource, /state\.cheatingDealerId === player\.id/, "Only the recorded marked-card dealer should receive marked-card vision");
 assert.match(mainSource, /canUseMarkedCards: canDeal && hasMarkedPlayingCards/, "Any active Poppy with marked-playing-cards should be eligible for marked-card sight");
 assert.match(mainSource, /id="pp-marked-sight"/, "Later-game Poppies should be able to elect marked-card sight");
 assert.match(mainSource, /const useMarkedCardSight = root\.querySelector\("#pp-marked-sight"\)\?\.checked === true/, "The deal request should recognise the later-game marked-card sight choice.");
-assert.match(mainSource, /const cheating = selectOpeningCards \|\| useMarkedCardSight/, "The later-game marked-card sight choice should be treated as cheating.");
+assert.match(mainSource, /const cheating = selectOpeningCards \|\| useMarkedCardSight \|\| socialCheat/, "Marked-card and social cheating choices should be treated as cheating.");
+assert.match(mainSource, /id="pp-social-cheat"/, "Every Poppy should be able to declare social cheating without marked cards.");
+assert.match(mainSource, /dealerHandCardIds/, "A socially cheating Poppy should be able to select their hand.");
 assert.match(mainSource, /markedCardSight: Boolean\(markedCardSight\)/, "The GM should pass the validated marked-card sight choice to the engine");
 assert.match(mainSource, /state\.gameNumber === 1 && canUseMarkedCards/, "Only the first game should expose two-card marked selection");
 assert.match(mainSource, /markedCardVision/, "Marked-card vision should be stored in the actor-owned player view");
@@ -133,8 +137,9 @@ assert.match(mainSource, /Your marked playing cards reveal the text identity/, "
 assert.match(mainSource, /cardMarkup\(entry\.card, \{ faceDown: true \}\)/, "Marked-card vision should retain the concealed card-back artwork");
 const engineSource = readFileSync(new URL("scripts/engine.mjs", moduleRoot), "utf8");
 assert.match(engineSource, /markedCardSight = false/, "The engine should accept a separate marked-card sight choice");
-assert.match(engineSource, /next\.cheatingDealerId = markedCardSight \|\| marked\.length === 2/, "Marked-card sight should apply without a later-game card choice");
-assert.match(engineSource, /next\.gameNumber === 1 \|\| choices\.length === 0/, "Two-card marked selection must remain first-game-only");
+assert.match(engineSource, /next\.cheatingDealerId = markedCardSight \|\| markedChoices\.length === 2/, "Marked-card sight should apply without a later-game card choice");
+assert.match(engineSource, /dealerHandCardIds = \[\]/, "The engine should accept a separately selected cheating dealer hand.");
+assert.match(engineSource, /next\.gameNumber === 1 \|\| markedChoices\.length === 0/, "Two-card marked selection must remain first-game-only");
 assert.doesNotMatch(mainSource.slice(mainSource.indexOf("function buildPublicBoard"), mainSource.indexOf("function buildPlayerView")), /cheatingDealerId|markedCardVision/, "Public board data must not contain marked-card cheating information");
 assert.match(mainSource, /coinFieldMarkup\("pp-ante"/, "The ante should use separate denomination fields");
 assert.match(mainSource, /coinFieldMarkup\("pp-raise"/, "GM raises should use separate denomination fields");
@@ -189,4 +194,4 @@ const moduleGuide = journalSources.find((entry) => entry.name === "How to Use PF
 assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Marked Playing Cards\}/, "The guide should contain the requested Marked Playing Cards UUID link.");
 assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipment-srd\.Item\.Q4KkKGGXq4bNGHh2\]\{Loaded Dice\}/, "The guide should contain the requested Loaded Dice UUID link.");
 
-console.log("PF2e Tavern Games 2.1.1 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.2 revision validation passed.");

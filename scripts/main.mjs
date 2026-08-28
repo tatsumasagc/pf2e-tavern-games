@@ -395,6 +395,8 @@ function buildPlayerView(state, player) {
       canUseMarkedCards: canDeal && hasMarkedPlayingCards(getActor(player.actorId)),
       canCheatDeal: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)),
       markedCardOptions: canDeal && state.gameNumber === 1 && hasMarkedPlayingCards(getActor(player.actorId)) ? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
+      dealerHandOptions: canDeal ? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) })) : [],
+      dealerHandCardsNeeded: canDeal ? Math.max(0, 5 - player.hand.length) : 0,
       canSelectCommon,
       canBet,
       canPlunder,
@@ -658,15 +660,19 @@ function renderDealControls(state, choices = {}) {
   const canUseMarkedCards = choices.canUseMarkedCards ?? hasMarkedPlayingCards(dealerActor);
   const canCheat = choices.canCheatDeal ?? (state.gameNumber === 1 && canUseMarkedCards);
   const cardOptions = choices.markedCardOptions ?? state.deck.map((card) => ({ id: card.id, label: cardLabel(card) }));
+  const handOptions = choices.dealerHandOptions ?? cardOptions;
+  const handCardsNeeded = choices.dealerHandCardsNeeded ?? Math.max(0, 5 - (dealer?.hand?.length ?? 0));
   const optionMarkup = `<option value="">Choose a card</option>${cardOptions.map((card) => `<option value="${escapeHTML(card.id)}">${escapeHTML(card.label)}</option>`).join("")}`;
   const markedControls = canCheat
-    ? `<label class="pp-currency-choice"><input id="pp-cheat-deal" type="checkbox"> Use marked playing cards to choose two cards</label><div class="pp-marked-card-fields"><label>First card <select id="pp-marked-card-1">${optionMarkup}</select></label><label>Second card <select id="pp-marked-card-2">${optionMarkup}</select></label></div>${renderCheatMethodControls("pp-cheat-method")}<p class="pp-help">A blind Performance or Deception (Create a Diversion) check will be compared privately with the other players’ Perception DCs.</p>`
+    ? `<label class="pp-currency-choice"><input id="pp-cheat-deal" type="checkbox"> Use marked playing cards to choose two cards</label><div class="pp-marked-card-fields"><label>First card <select id="pp-marked-card-1">${optionMarkup}</select></label><label>Second card <select id="pp-marked-card-2">${optionMarkup}</select></label></div>`
     : canUseMarkedCards
-      ? `<label class="pp-currency-choice"><input id="pp-marked-sight" type="checkbox"> Use marked playing cards to read face-down cards</label>${renderCheatMethodControls("pp-cheat-method")}<p class="pp-help">The cards are still dealt randomly. A blind Performance or Deception (Create a Diversion) check is compared privately with the other players’ Perception DCs. Marked-card sight reveals the other hands and unrevealed common pool only to this Poppy.</p>`
-      : `<p class="pp-help">This Poppy does not have marked playing cards. The next deal is fair.</p>`;
+      ? `<label class="pp-currency-choice"><input id="pp-marked-sight" type="checkbox"> Use marked playing cards to read face-down cards</label><p class="pp-help">The cards are still dealt randomly. Marked-card sight reveals the other hands and unrevealed common pool only to this Poppy.</p>`
+      : `<p class="pp-help">This Poppy does not have marked playing cards; marked-card sight and opening-card selection are unavailable.</p>`;
+  const socialCheatControls = `<label class="pp-currency-choice"><input id="pp-social-cheat" type="checkbox"> Cheat and choose your hand</label>${renderCheatMethodControls("pp-cheat-method")}${dealerHandSelectors("pp-dealer-hand", handOptions, handCardsNeeded)}<p class="pp-help">Any Poppy can choose their hand while cheating with a blind Performance or Deception (Create a Diversion) check. It is compared privately with the other players’ Perception DCs; this option does not grant marked-card sight.</p>`;
   return `<section class="pp-control-panel pp-deal-panel"><h3>${escapeHTML(dealer?.name ?? "Poppy")} deals the cards</h3>
     <p>Cards and antes are applied only after Poppy uses <strong>Deal cards</strong>. ${state.gameNumber === 1 ? "The first Poppy may choose two cards only by cheating with marked playing cards." : "The winner of the previous game is the new Poppy."}</p>
     ${markedControls}
+    ${socialCheatControls}
     <div class="pp-action-row">${actionButton({ action: dealAction, label: "Deal cards", icon: "fa-solid fa-clone" })}${isGM() ? actionButton({ action: "open-player-panel", label: "Open Poppy’s player panel", css: "muted", dataset: { actor: dealer?.actorId ?? "" } }) : ""}</div>
   </section>`;
 }
@@ -1027,27 +1033,37 @@ function renderCheatMethodControls(name) {
   return `<fieldset class="pp-cheat-method"><legend>Conceal the cheat with</legend><label><input type="radio" name="${escapeHTML(name)}" value="performance" checked> Performance</label><label><input type="radio" name="${escapeHTML(name)}" value="deception"> Deception — Create a Diversion</label></fieldset>`;
 }
 
+function dealerHandSelectors(prefix, cards, count) {
+  if (count <= 0) return "<p class=\"pp-help\">Your carried card already completes this hand.</p>";
+  const options = `<option value="">Choose a card</option>${cards.map((card) => `<option value="${escapeHTML(card.id)}">${escapeHTML(card.label ?? cardLabel(card))}</option>`).join("")}`;
+  return `<div class="pp-dealer-hand-fields"><p>Choose the ${count} card${count === 1 ? "" : "s"} needed to complete your hand.</p>${Array.from({ length: count }, (_entry, index) => `<label>Hand card ${index + 1}<select data-dealer-hand="${index}">${options}</select></label>`).join("")}</div>`;
+}
+
 function dealRequestFromRoot(root) {
   const selectOpeningCards = root.querySelector("#pp-cheat-deal")?.checked === true;
   const useMarkedCardSight = root.querySelector("#pp-marked-sight")?.checked === true;
-  const cheating = selectOpeningCards || useMarkedCardSight;
-  const markedCardSight = cheating;
+  const socialCheat = root.querySelector("#pp-social-cheat")?.checked === true;
+  const cheating = selectOpeningCards || useMarkedCardSight || socialCheat;
+  const markedCardSight = selectOpeningCards || useMarkedCardSight;
   const markedCardIds = selectOpeningCards ? [root.querySelector("#pp-marked-card-1")?.value, root.querySelector("#pp-marked-card-2")?.value].filter(Boolean) : [];
+  const dealerHandCardIds = socialCheat ? [...root.querySelectorAll("[data-dealer-hand]")].map((select) => select.value).filter(Boolean) : [];
+  const expectedHandCards = root.querySelectorAll("[data-dealer-hand]").length;
   const concealment = root.querySelector('input[name="pp-cheat-method"]:checked')?.value === "deception" ? "deception" : "performance";
   if (selectOpeningCards && markedCardIds.length !== 2) throw new Error("Choose two distinct cards before using marked playing cards.");
-  return { cheating, markedCardSight, markedCardIds, concealment };
+  if (socialCheat && dealerHandCardIds.length !== expectedHandCards) throw new Error("Choose every card needed to complete the dealer’s hand when cheating.");
+  return { cheating, socialCheat, markedCardSight, markedCardIds, dealerHandCardIds, concealment };
 }
 
-async function performDeal(state, { cheating = false, markedCardSight = false, markedCardIds = [], concealment = "performance" } = {}) {
+async function performDeal(state, { cheating = false, socialCheat = false, markedCardSight = false, markedCardIds = [], dealerHandCardIds = [], concealment = "performance" } = {}) {
   if (!state || state.phase !== PHASES.DEAL) throw new Error("The deck is not waiting to be dealt.");
   const dealer = state.players.find((player) => player.seat === state.dealerSeat);
   const dealerActor = getActor(dealer?.actorId);
   const canUseMarkedCards = hasMarkedPlayingCards(dealerActor);
   const canSelectOpeningCards = state.gameNumber === 1 && canUseMarkedCards;
   if (markedCardIds.length && !canSelectOpeningCards) throw new Error("Only the first Poppy with marked-playing-cards may choose two cards.");
-  if (cheating && !canUseMarkedCards) throw new Error("Only a Poppy with marked-playing-cards may cheat with marked-card sight.");
   if (markedCardSight && !canUseMarkedCards) throw new Error("Only a Poppy with marked-playing-cards may use marked-card sight.");
-  const next = dealPreparedGame(state, { markedCardIds: markedCardIds.length ? markedCardIds : [], markedCardSight: Boolean(markedCardSight) });
+  if (socialCheat && dealerHandCardIds.length !== Math.max(0, 5 - dealer.hand.length)) throw new Error("Choose every card needed to complete the dealer’s hand when cheating.");
+  const next = dealPreparedGame(state, { markedCardIds: markedCardIds.length ? markedCardIds : [], dealerHandCardIds: socialCheat ? dealerHandCardIds : [], markedCardSight: Boolean(markedCardSight) });
   await debitAntes(next, `game ${next.gameNumber} ante`);
   await rollDeckCheatCheck(next, cheating, concealment);
   return next;

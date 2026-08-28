@@ -47,6 +47,12 @@ assert.ok(markedCardIds.every((id) => state.players.find((player) => player.id =
 assert.equal(state.cheatingDealerId, "b", "Only the dealer who used marked cards is recorded as cheating");
 assert.equal(state.common.length, 0, "Four real players need no dummy common cards");
 
+const socialState = createGame({ participants, anteCp: 500, dealerId: "b", rng: () => 0.42 });
+const selectedHand = socialState.deck.slice(0, 5).map((card) => card.id);
+const sociallyCheated = dealPreparedGame(socialState, { dealerHandCardIds: selectedHand, rng: () => 0.42 });
+assert.ok(selectedHand.every((id) => sociallyCheated.players.find((player) => player.id === "b").hand.some((card) => card.id === id)), "A cheating Poppy may choose every card in their hand");
+assert.equal(sociallyCheated.cheatingDealerId, null, "Social cheating does not grant marked-card sight");
+
 for (const player of state.players) state = selectCommon(state, player.id, player.hand[0].id);
 assert.equal(state.phase, PHASES.BETTING, "The dealer reveals a common card after all selections");
 assert.equal(state.round, 1);

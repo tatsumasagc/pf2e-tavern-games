@@ -2,6 +2,12 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.2 — 28 August 2026
+
+Any active **Poppy’s Prize Poppy** or **Golem Dealer** can now elect to cheat by selecting every card needed to complete their own hand and choosing a blind **Performance** or **Deception — Create a Diversion** concealment check. The selected hand remains subject to the existing observer-by-observer Perception DC comparison and failure-only GM/observer whispers.
+
+The item requirement remains strictly scoped to the additional equipment benefits: `marked-playing-cards` is still required for marked-card sight and the special two-card first-hand choice, while `games-loaded-dice` remains required for Bounder and Century result selection.
+
 ## 2.1.1 — 28 August 2026
 
 Equipment-based cheating is now strictly offered only to the role-holder who possesses the corresponding inventory item. **Marked-card sight** and opening-card selection appear only for the current Poppy or Golem Dealer/deck owner with `marked-playing-cards`; **Bounder** result selection appears only for the qualifying Shooter with `games-loaded-dice`; and **Century** result selection appears only for the qualifying Dealer with `games-loaded-dice`.
