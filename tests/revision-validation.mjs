@@ -6,6 +6,7 @@ const mainSource = readFileSync(new URL("scripts/main.mjs", moduleRoot), "utf8")
 const tavernSource = readFileSync(new URL("scripts/tavern-games.mjs", moduleRoot), "utf8");
 const tavernEngineSource = readFileSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot), "utf8");
 const cssSource = readFileSync(new URL("styles/poppys-prize.css", moduleRoot), "utf8");
+const readmeSource = readFileSync(new URL("README.md", moduleRoot), "utf8");
 const manifest = JSON.parse(readFileSync(new URL("module.json", moduleRoot), "utf8"));
 const cardDirectory = new URL("assets/cards/", moduleRoot);
 const golemCardDirectory = new URL("assets/golem-cards/", moduleRoot);
@@ -19,12 +20,17 @@ const playableCards = cards.filter((name) => name !== "card_back.webp");
 const golemCards = readdirSync(golemCardDirectory).filter((name) => name.endsWith(".webp"));
 const golemPlayableCards = golemCards.filter((name) => name !== "back.webp");
 
-assert.equal(manifest.version, "2.1.4", "The release version should be 2.1.4");
+assert.equal(manifest.version, "2.1.5", "The release version should be 2.1.5");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.4\/pf2e-tavern-games-v2\.1\.4\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.5\/pf2e-tavern-games-v2\.1\.5\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
+assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
+assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
+assert.match(readmeSource, /Add-on Modules/, "The README should tell users where to start installation in Foundry.");
+assert.match(readmeSource, /Manifest URL/, "The README should instruct users to paste the URL into Foundry’s Manifest URL field.");
+assert.match(readmeSource, /Private repository note/, "The README should disclose the private-repository limitation and manual installation fallback.");
 assert.ok(manifest.esmodules.includes("scripts/tavern-games.mjs"), "The multi-game controller should be registered in the manifest.");
 assert.ok(existsSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot)), "The deterministic multi-game engine should be included.");
 for (const game of ["GOLEM", "BOUNDER", "CENTURY", "DRINKING"]) assert.match(tavernEngineSource, new RegExp(`TAVERN_GAME_IDS\\.${game}`), `The engine should support ${game}.`);
@@ -209,4 +215,4 @@ assert.match(moduleGuide.pages[0].text.content, /@UUID\[Compendium\.pf2e\.equipm
 assert.match(moduleGuide.pages[0].text.content, /Dealer social cheating/, "The guide should document the universal dealer social-cheating workflow.");
 assert.match(moduleGuide.pages[0].text.content, /Cheat and choose my hand/, "The guide should explain dealer-selected-hand cheating.");
 
-console.log("PF2e Tavern Games 2.1.4 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.5 revision validation passed.");

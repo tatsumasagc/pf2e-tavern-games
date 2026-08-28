@@ -1,6 +1,6 @@
 {
   "name": "pf2e-tavern-games",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "private": true,
   "type": "module",
   "description": "Build tools for the PF2e Tavern Games Foundry VTT module.",

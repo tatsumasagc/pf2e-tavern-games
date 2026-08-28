@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.5 — 28 August 2026
+
+The GitHub README now includes a dedicated Foundry **Install Module** walkthrough using the canonical manifest URL. It explains the Game Worlds → Add-on Modules → Install Module flow, where to paste the Manifest URL, world enablement, the legacy package migration, and manual ZIP installation when the private GitHub repository is not reachable by the Foundry server.
+
 ## 2.1.4 — 28 August 2026
 
 Golem now renders every dealt card in both the GM table and player hand with the supplied dark-gold standard-card artwork. Concealed Golem cards, including the deck owner’s marked-card sight, use the matching supplied `back.webp` image. The unused `joker.webp` is excluded from the module’s Golem assets and cannot enter the 52-card Golem deck.

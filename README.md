@@ -1,18 +1,38 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.4 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.5 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
 ## Installation
 
-Download `pf2e-tavern-games-v2.1.4.zip` from the latest release and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+### Recommended: install from the manifest URL
+
+Install PF2e Tavern Games directly from Foundry’s **Add-on Modules** setup screen:
+
+1. From Foundry’s main **Game Worlds** setup screen, select **Add-on Modules** in the left navigation.
+2. Select **Install Module**.
+3. Paste the following URL into the **Manifest URL** field:
+
+   ```text
+   https://github.com/tatsumasagc/pf2e-tavern-games/releases/latest/download/module.json
+   ```
+
+4. Select **Install** and wait for Foundry to download the module.
+5. Launch the target PF2E world. Open **Manage Modules**, enable **PF2e Tavern Games**, and save the module configuration.
+6. Reload the world once. A GM should load the world first when updating from the retired `poppys-prize` package so the one-time table-state and actor-view migration can complete.
+
+> **Private repository note.** Foundry’s installer can fetch the manifest URL only when the release is publicly reachable by the Foundry server. While this GitHub repository remains private, use the manual ZIP installation below or make the repository/release public before using the manifest option.
+
+### Manual ZIP installation
+
+Download the latest `pf2e-tavern-games-v2.1.5.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.4 uses the `pf2e-tavern-games` package ID. It retains a one-time GM migration for table state and actor-owned player views created under the retired `poppys-prize` package ID. Disable the retired module after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.5 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Open the game library
 
