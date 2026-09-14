@@ -19,6 +19,7 @@ import {
   plunder,
   selectCommon,
 } from "./engine.mjs";
+import { findSceneControl } from "./scene-controls.mjs";
 
 const MODULE_ID = "pf2e-tavern-games";
 const LEGACY_MODULE_ID = "poppys-prize";
@@ -1223,7 +1224,7 @@ Hooks.once("ready", () => {
   Hooks.on("getNPCSheetPF2eHeaderButtons", addActorSheetPrizeButton);
   Hooks.on("getApplicationHeaderButtons", addActorSheetPrizeButton);
   Hooks.on("getSceneControlButtons", (controls) => {
-    const tokenControls = controls.find((control) => control.name === "token");
+    const tokenControls = findSceneControl(controls, "token");
     if (!tokenControls || tokenControls.tools.some((tool) => tool.name === "poppys-prize")) return;
     tokenControls.tools.push({
       name: "poppys-prize",

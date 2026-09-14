@@ -29,6 +29,7 @@ import {
   gameSummary,
 } from "./tavern-games-engine.mjs";
 import { cardLabel, compactCardLabel, copperToCoins, coinsToCopper, formatCopper, sortCardsForSelection } from "./engine.mjs";
+import { findSceneControl } from "./scene-controls.mjs";
 
 const MODULE_ID = "pf2e-tavern-games";
 const LEGACY_MODULE_ID = "poppys-prize";
@@ -746,7 +747,7 @@ Hooks.once("ready", () => {
   Hooks.on("getCharacterSheetPF2eHeaderButtons", addTavernGamesSheetButton);
   Hooks.on("getNPCSheetPF2eHeaderButtons", addTavernGamesSheetButton);
   Hooks.on("getSceneControlButtons", (controls) => {
-    const token = controls.find((entry) => entry.name === "token");
+    const token = findSceneControl(controls, "token");
     if (!token || token.tools.some((tool) => tool.name === "pf2e-tavern-games")) return;
     token.tools.push({ name: "pf2e-tavern-games", title: isGM() ? "PF2e Tavern Games" : "PF2e Tavern Games — Your Game", icon: "fa-solid fa-dice", button: true, visible: true, onClick: () => isGM() ? openTavernGames() : openTavernPlayer() });
   });

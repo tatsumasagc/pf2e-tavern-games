@@ -21,11 +21,11 @@ const golemAssetNames = readdirSync(golemCardDirectory);
 const golemCards = golemAssetNames.filter((name) => name.endsWith(".png"));
 const golemPlayableCards = golemCards.filter((name) => name !== "golem_card_back.png");
 
-assert.equal(manifest.version, "2.1.8", "The release version should be 2.1.8");
+assert.equal(manifest.version, "2.1.9", "The release version should be 2.1.9");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.8\/pf2e-tavern-games-v2\.1\.8\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.9\/pf2e-tavern-games-v2\.1\.9\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
 assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
@@ -99,6 +99,11 @@ assert.match(mainSource, /processPlayerRequest/, "Player requests should be proc
 assert.match(mainSource, /RULES_JOURNAL_UUID = "JournalEntry\.pJeEYJAnY1JQi44e"/, "The supplied Poppy’s Prize rules journal UUID should be included");
 assert.match(mainSource, /@UUID\[JournalEntry\.pJeEYJAnY1JQi44e\]\{Poppy's Prize\}/, "The supplied Poppy’s Prize journal reference should be retained");
 assert.match(mainSource, /const MODULE_ID = "pf2e-tavern-games"/, "The runtime namespace should use the requested package ID.");
+assert.match(mainSource, /findSceneControl\(controls, "token"\)/, "Poppy’s Prize should use the Scene Control compatibility helper.");
+assert.match(tavernSource, /findSceneControl\(controls, "token"\)/, "PF2e Tavern Games should use the Scene Control compatibility helper.");
+assert.doesNotMatch(mainSource, /controls\.find\(/, "Poppy’s Prize should not call array-only find on Scene Control input.");
+assert.doesNotMatch(tavernSource, /controls\.find\(/, "PF2e Tavern Games should not call array-only find on Scene Control input.");
+assert.match(readFileSync(new URL("scripts/scene-controls.mjs", moduleRoot), "utf8"), /Array\.isArray\(controls\)/, "The Scene Control helper should retain legacy array compatibility.");
 assert.match(mainSource, /const LEGACY_MODULE_ID = "poppys-prize"/, "The former package ID should be retained only for migration.");
 assert.match(mainSource, /function migrateLegacyNamespace/, "The module should migrate legacy saved state into the new package namespace.");
 assert.match(mainSource, /function migrateLegacyCompendiumFolder/, "The module should migrate the former compendium layout without touching unrelated packs.");
@@ -239,4 +244,4 @@ assert.match(moduleGuide.pages[0].text.content, /ordered by suit and then numeri
 assert.match(moduleGuide.pages[0].text.content, /Drinking Contest parent effect/, "The guide should document the Drinking Contest parent effect.");
 assert.match(moduleGuide.pages[0].text.content, /removes those linked conditions together/, "The guide should explain parent-effect cascade cleanup.");
 
-console.log("PF2e Tavern Games 2.1.8 revision validation passed.");
+console.log("PF2e Tavern Games 2.1.9 revision validation passed.");

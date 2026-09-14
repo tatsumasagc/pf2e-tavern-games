@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.8 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.9 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -26,13 +26,17 @@ Install PF2e Tavern Games directly from Foundry’s **Add-on Modules** setup scr
 
 ### Manual ZIP installation
 
-Download the latest `pf2e-tavern-games-v2.1.8.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download the latest `pf2e-tavern-games-v2.1.9.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.8 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.9 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+
+## Foundry v14 scene controls
+
+Version 2.1.9 supports Foundry v14’s keyed `getSceneControlButtons` data shape while retaining compatibility with older array-style inputs. The Token Controls buttons for PF2e Tavern Games and Poppy’s Prize are now inserted without the `controls.find is not a function` console error.
 
 ## Open the game library
 

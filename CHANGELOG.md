@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.9 — 28 August 2026
+
+Fixed Foundry v14 scene-control compatibility in both the Poppy’s Prize and PF2e Tavern Games controllers. The module now resolves the Token Controls entry through a shared helper that supports Foundry v14 keyed controls as well as legacy arrays and Map-like collections, eliminating the `controls.find is not a function` console errors.
+
 ## 2.1.8 — 28 August 2026
 
 Each Drinking Contest stage now creates a single, module-owned parent effect that uses a new overflowing-tankard icon. The parent uses canonical PF2E `GrantItem` rules to grant every required stage condition as a linked child. Removing the parent effect manually, on expiry, during a stage change, or during contest cleanup now cascade-removes all linked conditions while preserving unrelated pre-existing conditions.
