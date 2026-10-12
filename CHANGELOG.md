@@ -2,6 +2,10 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.1.10 — 12 October 2026
+
+Fixed the Golem player panel layout. Foundry v14 button defaults could allow card images to paint outside their flex items, causing the five-card hand to overlap the betting controls. Golem cards now reserve intrinsic portrait space, and the hand/control boundary is explicitly contained.
+
 ## 2.1.9 — 28 August 2026
 
 Fixed Foundry v14 scene-control compatibility in both the Poppy’s Prize and PF2e Tavern Games controllers. The module now resolves the Token Controls entry through a shared helper that supports Foundry v14 keyed controls as well as legacy arrays and Map-like collections, eliminating the `controls.find is not a function` console errors.

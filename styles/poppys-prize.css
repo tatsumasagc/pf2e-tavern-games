@@ -968,6 +968,34 @@ button.pp-card:hover:not(:disabled),
 .pf2e-tavern-games .tg-card.selectable { cursor: pointer; }
 .pf2e-tavern-games .tg-card.selected { border-color: #ffd25d; transform: translateY(-0.25rem); box-shadow: 0 0 0.5rem #ffd25d; }
 .pf2e-tavern-games .tg-card span { font-size: 0.75rem; }
+.pf2e-tavern-games .tg-hand > div {
+  align-items: flex-start;
+  min-height: 0;
+  overflow: visible;
+}
+.pf2e-tavern-games .tg-card {
+  box-sizing: border-box;
+  flex: 0 0 75px;
+  height: auto !important;
+  min-height: 0 !important;
+  align-self: flex-start;
+  line-height: 1.1;
+}
+.pf2e-tavern-games .tg-card img {
+  display: block;
+  height: auto !important;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+}
+.pf2e-tavern-games .tg-player-table .tg-hand {
+  overflow: visible;
+  isolation: isolate;
+}
+.pf2e-tavern-games .tg-player-table > .tg-controls {
+  position: relative;
+  z-index: 1;
+  clear: both;
+}
 .pf2e-tavern-games .tg-marked h4 { margin: 0.7rem 0 0.2rem; color: #ffd25d; }
 .pf2e-tavern-games .tg-marked p { color: #fff5d6; }
 .pf2e-tavern-games .tg-log ol { margin: 0.4rem 0 0 1.15rem; }
