@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.6.3 — 9 November 2026
+Drinking Contest setup now allows exactly two contestants. Additional players can spectate and place bets without becoming contestants.
+
 ## 2.6.2 — 9 November 2026
 Removed ability statistics from the suggested winner-purse calculation. The purse now uses the 1 sp baseline plus 5 sp per average participant level, multiplied by 2, with the existing Slapping title-bout multiplier and minimum safeguard preserved.
 

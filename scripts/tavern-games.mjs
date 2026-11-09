@@ -719,7 +719,7 @@ function openTavernPlayer(entryActor = null) {
 
 function participantLimits(gameId) {
   if (gameId === TAVERN_GAME_IDS.GOLEM) return { minimum: 3, maximum: 6 };
-  if ([TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId)) return { minimum: 2, maximum: 2 };
+  if ([TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING, TAVERN_GAME_IDS.DRINKING].includes(gameId)) return { minimum: 2, maximum: 2 };
   return { minimum: 2, maximum: 20 };
 }
 
@@ -727,7 +727,7 @@ function promptTavernGame(gameId) {
   const label = TAVERN_GAME_NAMES[gameId];
   if (!label) return;
   const { minimum, maximum } = participantLimits(gameId);
-  const content = `<form class="tg-start tg-participant-count"><p>Choose how many actors will play ${escapeHTML(label)}. You will select each actor individually on the next screen.</p><label>Number of participants <input name="participantCount" type="number" min="${minimum}" max="${maximum}" value="${minimum}" required></label><p class="notes">${escapeHTML(label)} supports ${minimum}–${maximum} PC or NPC participants.</p></form>`;
+  const content = `<form class="tg-start tg-participant-count"><p>Choose how many actors will play ${escapeHTML(label)}. You will select each actor individually on the next screen.</p><label>Number of participants <input name="participantCount" type="number" min="${minimum}" max="${maximum}" value="${minimum}" required></label><p class="notes">${escapeHTML(label)} supports ${minimum}–${maximum} PC or NPC participants${gameId === TAVERN_GAME_IDS.DRINKING ? "; additional players can join as spectators and place bets" : ""}.</p></form>`;
   new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — ${label} participants` }, content, buttons: [{ action: "next", label: "Choose participants", default: true, callback: (_event, button) => Number(button.form.elements.participantCount.value) }], submit: (count) => { if (!Number.isInteger(count) || count < minimum || count > maximum) return ui.notifications.warn(`Choose between ${minimum} and ${maximum} participants.`); return promptTavernParticipantSelection(gameId, count); } }).render({ force: true });
 }
 
