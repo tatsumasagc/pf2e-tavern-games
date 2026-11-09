@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.1.9 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, and a configurable **Drinking Contest**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.2.0 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -26,13 +26,13 @@ Install PF2e Tavern Games directly from Foundry’s **Add-on Modules** setup scr
 
 ### Manual ZIP installation
 
-Download the latest `pf2e-tavern-games-v2.1.9.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
+Download the latest `pf2e-tavern-games-v2.2.0.zip` release asset and extract it into Foundry’s `Data/modules/` directory. The manifest must be located at:
 
 ```text
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.1.9 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.2.0 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -49,6 +49,12 @@ A GM can open the library from the dice control in the Token Controls, from the 
 | **Bounder** | 2+ | A Shooter’s two d20 results attempt to bracket the Dealer’s 3d6 total; players may make point or side bets. |
 | **Century** | 2+ | Players select 2–10 numbers from 1–100; the Dealer draws twenty unique two-d10 results and applies the official payout table. |
 | **Drinking Contest** | 2+ | Every contestant presses Ready each round; blind Performance and Fortitude rolls drive a six-stage condition track. |
+| **Arm Wrestling** | 2 | Opposed blind Athletics checks award grip points; first to three pins the opponent. |
+
+## Arm Wrestling
+Arm Wrestling is a two-person contest resolved in repeated rounds. Both wrestlers press **Ready** in their private player panels; the GM then resolves one blind Athletics check for each wrestler at the same time. Compare the two totals for that round. A difference of 10 or more is a critical success for the higher result and a critical failure for the lower result; any smaller positive difference is a success for the higher result and a failure for the lower result; equal totals are a failure for both. Natural 20s and natural 1s adjust the result by one degree where applicable.
+
+A critical success gains 2 grip points, a success gains 1, a failure gains none, and a critical failure gives the opponent 2 grip points. Grip points never go below 0. The first wrestler to reach 3 grip points wins and pins the opponent. The GM may disqualify either wrestler at any time.
 
 ## Drinking Contest effect lifecycle
 
@@ -102,7 +108,7 @@ Starting another contest or closing a drinking table removes only the conditions
 
 ## Compendiums
 
-The **PF2e Tavern Games** compendium folder includes the **PF2e Tavern Games Macros** pack and a player-readable **PF2e Tavern Games Journals** pack. The pack contains six distinct entries: a rules reference for Poppy’s Prize, Golem, Bounder, Century, and the Drinking Contest, plus a module-use guide. Each carries creator and source acknowledgement where applicable.
+The **PF2e Tavern Games** compendium folder includes the **PF2e Tavern Games Macros** pack and a player-readable **PF2e Tavern Games Journals** pack. The pack contains seven distinct entries: a rules reference for Poppy’s Prize, Golem, Bounder, Century, the Drinking Contest, and Arm Wrestling, plus a module-use guide. Each carries creator and source acknowledgement where applicable.
 
 ## Sources and content boundary
 

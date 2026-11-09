@@ -21,11 +21,11 @@ const golemAssetNames = readdirSync(golemCardDirectory);
 const golemCards = golemAssetNames.filter((name) => name.endsWith(".png"));
 const golemPlayableCards = golemCards.filter((name) => name !== "golem_card_back.png");
 
-assert.equal(manifest.version, "2.1.10", "The release version should be 2.1.10");
+assert.equal(manifest.version, "2.2.0", "The release version should be 2.2.0");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.1\.10\/pf2e-tavern-games-v2\.1\.10\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.2\.0\/pf2e-tavern-games-v2\.2\.0\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
 assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
@@ -36,7 +36,7 @@ assert.match(readmeSource, /golem_card_back\.png/, "The README should identify t
 assert.match(readmeSource, /Flesh, Clay, Stone, and Iron/, "The README should identify all supplied numbered Golem material suits.");
 assert.ok(manifest.esmodules.includes("scripts/tavern-games.mjs"), "The multi-game controller should be registered in the manifest.");
 assert.ok(existsSync(new URL("scripts/tavern-games-engine.mjs", moduleRoot)), "The deterministic multi-game engine should be included.");
-for (const game of ["GOLEM", "BOUNDER", "CENTURY", "DRINKING"]) assert.match(tavernEngineSource, new RegExp(`TAVERN_GAME_IDS\\.${game}`), `The engine should support ${game}.`);
+for (const game of ["GOLEM", "BOUNDER", "CENTURY", "DRINKING", "ARM_WRESTLING"]) assert.match(tavernEngineSource, new RegExp(`TAVERN_GAME_IDS\\.${game}`), `The engine should support ${game}.`);
 assert.match(tavernEngineSource, /CENTURY_PAYOUTS/, "Century should use the published payout table.");
 assert.match(tavernEngineSource, /DRINKING_STAGES/, "The drinking contest should define its condition stages.");
 assert.match(tavernEngineSource, /disqualifyTavernPlayer/, "All new games should support GM disqualification.");
@@ -58,6 +58,9 @@ assert.match(tavernSource, /messageMode: "blindroll"/, "Drinking and cheating ch
 assert.match(tavernSource, /export async function applyDrinkingStage/, "The drinking contest should expose its PF2E stage-effect lifecycle for integration testing.");
 assert.match(tavernSource, /export async function clearDrinkingEffects/, "The drinking contest should expose its cleanup lifecycle for integration testing.");
 assert.ok(existsSync(new URL("tests/drinking-stage-effects.test.mjs", moduleRoot)), "The module should include automated Drinking Contest stage-condition integration tests.");
+assert.match(tavernEngineSource, /createArmWrestlingGame|ARM_WRESTLING/, "The engine should support Arm Wrestling.");
+assert.match(tavernSource, /tg-player-arm-wrestling-ready|tg-arm-wrestling-resolve/, "Arm Wrestling should provide player readiness and GM resolution controls.");
+assert.match(tavernSource, /rollStatisticBlind\(actor\(wrestler.actorId\), "athletics"/, "Arm Wrestling should roll blind Athletics checks.");
 assert.match(tavernSource, /tg-disqualify/, "The GM table should expose a disqualification control.");
 assert.match(tavernSource, /function participantLimits\(gameId\)/, "Added games should define count limits before participant selection.");
 assert.match(tavernSource, /Number of participants/, "Added-game setup should ask for a participant count first.");
@@ -219,7 +222,7 @@ assert.match(macro.command, /game\.modules\.get\("pf2e-tavern-games"\)/, "The ma
 assert.ok(readdirSync(journalPack).some((name) => name.startsWith("MANIFEST-")), "The compiled LevelDB JournalEntry pack should be included");
 assert.ok(!existsSync(new URL("packs/poppys-prize-journals/", moduleRoot)), "The retired JournalEntry pack directory should not be distributed.");
 const journalSources = readdirSync(journalSourceDirectory).filter((name) => name.endsWith(".json")).map((name) => JSON.parse(readFileSync(new URL(name, journalSourceDirectory), "utf8")));
-const expectedJournals = ["Poppy’s Prize — Rules Reference", "Golem — Rules Reference", "Bounder — Rules Reference", "Century — Rules Reference", "Drinking Contest — Rules Reference", "How to Use PF2e Tavern Games"];
+const expectedJournals = ["Poppy’s Prize — Rules Reference", "Golem — Rules Reference", "Bounder — Rules Reference", "Century — Rules Reference", "Drinking Contest — Rules Reference", "Arm Wrestling — Rules Reference", "How to Use PF2e Tavern Games"];
 assert.equal(journalSources.length, expectedJournals.length, "The module should provide one rules reference per game and a module-use JournalEntry.");
 assert.equal(new Set(journalSources.map((entry) => entry.name)).size, expectedJournals.length, "Journal sources must not share a display name.");
 for (const name of expectedJournals) {
@@ -244,7 +247,8 @@ assert.match(moduleGuide.pages[0].text.content, /ordered by suit and then numeri
 assert.match(moduleGuide.pages[0].text.content, /Drinking Contest parent effect/, "The guide should document the Drinking Contest parent effect.");
 assert.match(moduleGuide.pages[0].text.content, /removes those linked conditions together/, "The guide should explain parent-effect cascade cleanup.");
 
-console.log("PF2e Tavern Games 2.1.10 revision validation passed.");
+assert.match(journalSources.find((entry) => entry.name === "Arm Wrestling — Rules Reference").pages[0].text.content, /first wrestler to reach 3 grip points/i, "Arm Wrestling rules should document the win condition.");
+console.log("PF2e Tavern Games 2.2.0 revision validation passed.");
 assert.match(cssSource, /\.tg-hand > div \{\s+align-items: flex-start;/, "Golem player hands should align cards without allowing image overflow to collapse the hand row");
 assert.match(cssSource, /\.tg-card \{\s+box-sizing: border-box;\s+flex: 0 0 75px;\s+height: auto !important;/, "Golem cards should reserve intrinsic space before player controls");
 assert.match(cssSource, /\.tg-card img \{\s+display: block;\s+height: auto !important;\s+aspect-ratio: 2 \/ 3;/, "Golem card images should stay inside their card boxes");

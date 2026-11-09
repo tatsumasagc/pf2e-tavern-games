@@ -5,6 +5,7 @@ export const TAVERN_GAME_IDS = Object.freeze({
   BOUNDER: "bounder",
   CENTURY: "century",
   DRINKING: "drinking",
+  ARM_WRESTLING: "arm-wrestling",
 });
 
 export const TAVERN_GAME_NAMES = Object.freeze({
@@ -12,7 +13,10 @@ export const TAVERN_GAME_NAMES = Object.freeze({
   [TAVERN_GAME_IDS.BOUNDER]: "Bounder",
   [TAVERN_GAME_IDS.CENTURY]: "Century",
   [TAVERN_GAME_IDS.DRINKING]: "Drinking Contest",
+  [TAVERN_GAME_IDS.ARM_WRESTLING]: "Arm Wrestling",
 });
+
+export const ARM_WRESTLING_TARGET = 3;
 
 export const DRINKING_STAGES = Object.freeze([
   { stage: 0, name: "Clear-Headed", duration: null, conditions: [], effect: "No drinking-contest effect." },
@@ -554,6 +558,60 @@ export function resolveDrinkingRound(state, resolutions) {
   next.phase = remaining.length <= 1 ? "drinking-complete" : "drinking-ready";
   if (next.phase === "drinking-ready") next.round += 1;
   next.log.push(`Drinking round ${state.round} resolved.`);
+  return next;
+}
+
+export function createArmWrestlingGame({ participants } = {}) {
+  const players = validParticipants(participants, { minimum: 2, maximum: 2 }).map((entry) => ({ ...entry, grip: 0, ready: false, result: null }));
+  return { version: 1, game: TAVERN_GAME_IDS.ARM_WRESTLING, gameNumber: 1, round: 1, phase: "arm-wrestling-ready", players, target: ARM_WRESTLING_TARGET, result: null, log: [`Arm Wrestling is ready. First to ${ARM_WRESTLING_TARGET} grip points wins.`] };
+}
+
+export function setArmWrestlingReady(state, playerId, ready = true) {
+  assert(state?.game === TAVERN_GAME_IDS.ARM_WRESTLING && state.phase === "arm-wrestling-ready", "Arm Wrestling is not waiting for readiness.");
+  const next = clone(state);
+  const wrestler = qualified(next, playerId);
+  wrestler.ready = Boolean(ready);
+  if (qualifiedPlayers(next).every((entry) => entry.ready)) next.phase = "arm-wrestling-resolve";
+  return next;
+}
+
+export function armWrestlingAdjustment(degree) {
+  if (degree === "criticalSuccess") return { self: 2, opponent: 0 };
+  if (degree === "success") return { self: 1, opponent: 0 };
+  if (degree === "failure") return { self: 0, opponent: 0 };
+  if (degree === "criticalFailure") return { self: 0, opponent: 2 };
+  throw new Error("An Arm Wrestling Athletics result must be criticalSuccess, success, failure, or criticalFailure.");
+}
+
+export function resolveArmWrestlingRound(state, resolutions) {
+  assert(state?.game === TAVERN_GAME_IDS.ARM_WRESTLING && state.phase === "arm-wrestling-resolve", "Arm Wrestling is not ready to resolve.");
+  const next = clone(state);
+  const active = qualifiedPlayers(next);
+  assert(active.length === 2, "Arm Wrestling requires two qualified wrestlers.");
+  const resultByPlayer = new Map((resolutions ?? []).map((entry) => [entry.playerId, entry]));
+  for (const wrestler of active) assert(resultByPlayer.has(wrestler.id), `Missing Arm Wrestling result for ${wrestler.name}.`);
+  const first = active[0];
+  const second = active[1];
+  const firstResult = resultByPlayer.get(first.id);
+  const secondResult = resultByPlayer.get(second.id);
+  const firstAdjustment = armWrestlingAdjustment(firstResult.degree);
+  const secondAdjustment = armWrestlingAdjustment(secondResult.degree);
+  first.grip = Math.min(next.target, Math.max(0, first.grip + firstAdjustment.self + secondAdjustment.opponent));
+  second.grip = Math.min(next.target, Math.max(0, second.grip + secondAdjustment.self + firstAdjustment.opponent));
+  first.ready = false;
+  second.ready = false;
+  first.result = { total: firstResult.total ?? null, degree: firstResult.degree, grip: first.grip };
+  second.result = { total: secondResult.total ?? null, degree: secondResult.degree, grip: second.grip };
+  const winner = [first, second].find((entry) => entry.grip >= next.target);
+  next.result = { winnerId: winner?.id ?? null, winnerName: winner?.name ?? null, round: next.round, wrestlers: active.map((entry) => ({ playerId: entry.id, name: entry.name, grip: entry.grip, degree: entry.result.degree })) };
+  if (winner) {
+    next.phase = "arm-wrestling-complete";
+    next.log.push(`${winner.name} wins Arm Wrestling with ${winner.grip} grip points.`);
+  } else {
+    next.phase = "arm-wrestling-ready";
+    next.round += 1;
+    next.log.push(`Arm Wrestling round ${next.round - 1} resolved: ${first.name} ${first.grip}, ${second.name} ${second.grip} grip points.`);
+  }
   return next;
 }
 

@@ -21,6 +21,9 @@ import {
   disqualifyTavernPlayer,
   loadedDiceEligible,
   markedCardsEligible,
+  createArmWrestlingGame,
+  setArmWrestlingReady,
+  resolveArmWrestlingRound,
 } from "../scripts/tavern-games-engine.mjs";
 import { sortCardsForSelection } from "../scripts/engine.mjs";
 const participants = [
@@ -85,6 +88,22 @@ assert.equal(century.result.find((entry) => entry.playerId === "a").multiplier, 
 assert.equal(century.result.find((entry) => entry.playerId === "a").payoutCp, 50);
 assert.equal(century.result.find((entry) => entry.playerId === "b").multiplier, CENTURY_PAYOUTS[2][3]);
 assert.throws(() => centuryDraw({ ...century, phase: "century-draw" }, Array(20).fill(1)), /twenty distinct/i);
+
+// Arm Wrestling: simultaneous readiness, opposed degree-to-grip scoring, and first-to-three victory.
+let arm = createArmWrestlingGame({ participants: participants.slice(0, 2) });
+assert.equal(arm.game, TAVERN_GAME_IDS.ARM_WRESTLING);
+arm = setArmWrestlingReady(arm, "a");
+assert.equal(arm.phase, "arm-wrestling-ready");
+arm = setArmWrestlingReady(arm, "b");
+assert.equal(arm.phase, "arm-wrestling-resolve");
+arm = resolveArmWrestlingRound(arm, [
+  { playerId: "a", total: 25, degree: "criticalSuccess" },
+  { playerId: "b", total: 15, degree: "criticalFailure" },
+]);
+assert.equal(arm.players.find((entry) => entry.id === "a").grip, 3);
+assert.equal(arm.players.find((entry) => entry.id === "b").grip, 0);
+assert.equal(arm.phase, "arm-wrestling-complete");
+assert.equal(arm.result.winnerId, "a");
 
 // Drinking contest: readiness, all three degree adjustments, named stages, loss at Stage 6, and disqualification.
 let drinks = createDrinkingGame({ participants: participants.slice(0, 3), fortitudeDC: 20 });

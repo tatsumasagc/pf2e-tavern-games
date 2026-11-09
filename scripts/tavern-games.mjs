@@ -22,6 +22,9 @@ import {
   createDrinkingGame,
   setDrinkingReady,
   resolveDrinkingRound,
+  createArmWrestlingGame,
+  setArmWrestlingReady,
+  resolveArmWrestlingRound,
   disqualifyTavernPlayer,
   drinkStage,
   loadedDiceEligible,
@@ -144,6 +147,9 @@ function phaseTitle(current) {
     "drinking-ready": "Drinking Contest — Ready the round",
     "drinking-resolve": "Drinking Contest — Resolve drinks",
     "drinking-complete": "Drinking Contest — Complete",
+    "arm-wrestling-ready": "Arm Wrestling — Ready for the round",
+    "arm-wrestling-resolve": "Arm Wrestling — Resolve the struggle",
+    "arm-wrestling-complete": "Arm Wrestling — Match complete",
   };
   return names[current?.phase] ?? "Tavern Game";
 }
@@ -170,6 +176,11 @@ function phaseInstructions(current, playerId = null) {
     if (current.phase === "century-select") return player?.predictions?.length >= 2 ? "Your Century selection is locked. Wait for the other selections." : "Choose two to ten distinct numbers from 1 to 100 and set your stake.";
     if (current.phase === "century-draw") return player?.id === current.dealerId ? "You are the dealer. Generate twenty unique numbers; loaded dice may choose them if your actor qualifies." : "Wait for the Century dealer’s twenty-number draw.";
     return "Century is complete. Compare your predictions to the twenty drawn numbers.";
+  }
+  if (current.game === TAVERN_GAME_IDS.ARM_WRESTLING) {
+    if (current.phase === "arm-wrestling-ready") return player?.ready ? "You are ready. Wait for your opponent." : "Press Ready when you are prepared. Both wrestlers make blind Athletics checks together.";
+    if (current.phase === "arm-wrestling-resolve") return "Both wrestlers are ready. The GM is resolving the opposed Athletics checks.";
+    return `${current.result?.winnerName ?? "The winner"} has pinned the opponent. The match is complete.`;
   }
   if (current.phase === "drinking-ready") return player?.ready ? "You are ready. Wait for all eligible drinkers to ready themselves." : "Choose Ready for this round. You can also elect to cheat, which treats your Fortitude result as a success but risks detection.";
   if (current.phase === "drinking-resolve") return "All participants are ready. The GM is resolving blind Performance checks and blind Fortitude saves.";
@@ -225,6 +236,7 @@ function playerGameView(current, entry) {
   }
   if (current.game === TAVERN_GAME_IDS.BOUNDER) return { ...base, choices: { shooterFirst: current.phase === "bounder-first-roll" && entry.id === current.shooterId, shooterSecond: current.phase === "bounder-second-roll" && entry.id === current.shooterId, canBet: current.phase === "bounder-bets", canDouble: current.phase === "bounder-bets" && entry.id === current.shooterId, loadedDice: entry.id === current.shooterId && hasLoadedDice(entryActor) }, };
   if (current.game === TAVERN_GAME_IDS.CENTURY) return { ...base, player: { ...base.player, predictions: entry.predictions, stakeCp: entry.stakeCp }, choices: { canChoose: current.phase === "century-select" && entry.predictions.length < 2, canDraw: current.phase === "century-draw" && entry.id === current.dealerId, loadedDice: entry.id === current.dealerId && hasLoadedDice(entryActor) } };
+  if (current.game === TAVERN_GAME_IDS.ARM_WRESTLING) return { ...base, player: { ...base.player, grip: entry.grip }, choices: { canReady: current.phase === "arm-wrestling-ready" && !entry.ready && !entry.out && !entry.disqualified } };
   return { ...base, choices: { canReady: current.phase === "drinking-ready" && !entry.ready && !entry.out && !entry.disqualified } };
 }
 
@@ -453,6 +465,11 @@ function renderCenturyGM(current) {
   return `<section class="tg-controls"><h3>Century results</h3><p>Numbers drawn: ${current.drawn.join(", ")}</p><ul>${(current.result ?? []).map((entry) => `<li>${escapeHTML(playerById(current, entry.playerId)?.name ?? "Unknown")}: ${entry.matches} match(es), ×${entry.multiplier}, ${escapeHTML(formatCopper(entry.payoutCp))}</li>`).join("")}</ul></section>`;
 }
 
+function renderArmWrestlingGM(current) {
+  if (current.phase === "arm-wrestling-ready") return `<section class="tg-controls"><h3>Round ${current.round}</h3><p>Both wrestlers press Ready in their private panels. Each makes a blind Athletics check.</p>${current.players.filter((entry) => qualified(current, entry) && !entry.ready).map((entry) => `<button data-action="tg-arm-wrestling-ready" data-player="${entry.id}">Ready ${escapeHTML(entry.name)}</button>`).join(" ")}</section>`;
+  if (current.phase === "arm-wrestling-resolve") return `<section class="tg-controls"><h3>Resolve the struggle</h3><p>Roll one blind Athletics check for each wrestler. Critical Success gains 2 grip points, Success gains 1, Failure gains none, and Critical Failure gives the opponent 2.</p><button data-action="tg-arm-wrestling-resolve">Resolve opposed Athletics checks</button></section>`;
+  return `<section class="tg-controls"><h3>Match complete</h3><p>${escapeHTML(current.result?.winnerName ?? "No winner") } wins with ${current.players.find((entry) => entry.id === current.result?.winnerId)?.grip ?? 0} grip points.</p></section>`;
+}
 function renderDrinkingGM(current) {
   if (current.phase === "drinking-ready") return `<section class="tg-controls"><h3>Round ${current.round} readiness</h3><p>Each eligible participant presses Ready in their player panel. The GM may ready a participant if needed.</p>${current.players.filter((entry) => qualified(current, entry) && !entry.ready).map((entry) => `<button data-action="tg-drink-ready" data-player="${entry.id}">Ready ${escapeHTML(entry.name)}</button>`).join(" ")}</section>`;
   if (current.phase === "drinking-resolve") return `<section class="tg-controls"><h3>Resolving drinks</h3><p>Every qualified contestant is ready. Blind Performance and Fortitude checks are resolving now against Fortitude DC <strong>${current.fortitudeDC}</strong>.</p><button data-action="tg-drink-resolve" class="tiny">Retry resolution if a check error interrupted the round</button></section>`;
@@ -461,12 +478,12 @@ function renderDrinkingGM(current) {
 }
 
 function renderGMGame(current) {
-  const controls = current.game === TAVERN_GAME_IDS.GOLEM ? renderGolemGM(current) : current.game === TAVERN_GAME_IDS.BOUNDER ? renderBounderGM(current) : current.game === TAVERN_GAME_IDS.CENTURY ? renderCenturyGM(current) : renderDrinkingGM(current);
+  const controls = current.game === TAVERN_GAME_IDS.GOLEM ? renderGolemGM(current) : current.game === TAVERN_GAME_IDS.BOUNDER ? renderBounderGM(current) : current.game === TAVERN_GAME_IDS.CENTURY ? renderCenturyGM(current) : current.game === TAVERN_GAME_IDS.DRINKING ? renderDrinkingGM(current) : renderArmWrestlingGM(current);
   return `<div class="tg-table tg-gm-table">${renderGameHeader(current)}<section class="tg-phase"><h3>${escapeHTML(phaseTitle(current))}</h3><p>${escapeHTML(phaseInstructions(current))}</p></section><div class="tg-layout">${renderPlayers(current, { gm: true })}<main>${controls}${renderGolemCardTable(current)}<section class="tg-log"><h3>Table log</h3><ol>${(current.log ?? []).slice(-8).map((entry) => `<li>${escapeHTML(entry)}</li>`).join("")}</ol></section></main></div></div>`;
 }
 
 function renderLibrary() {
-  return `<div class="tg-library"><header class="tg-banner"><div><h2>PF2e Tavern Games</h2><p>Choose a table to open. Poppy’s Prize keeps its dedicated card-table interface.</p></div></header><section class="tg-game-grid"><article><h3>Poppy’s Prize</h3><p>Four-seat pirate poker with Pirates, Plunder, and marked cards.</p><button data-action="tg-open-poppy">Open Poppy’s Prize</button></article><article><h3>Golem</h3><p>Five-card draw against the central golem hand.</p><button data-action="tg-start" data-game="golem">Start Golem</button></article><article><h3>Bounder</h3><p>Bracket a dealer’s 3d6 total with two d20s.</p><button data-action="tg-start" data-game="bounder">Start Bounder</button></article><article><h3>Century</h3><p>Pick numbers and seek matches among twenty draws.</p><button data-action="tg-start" data-game="century">Start Century</button></article><article><h3>Drinking Contest</h3><p>Ready each round, survive the Fortitude DC, and remain standing.</p><button data-action="tg-start" data-game="drinking">Start Drinking Contest</button></article></section>${gameRulesLink()}</div>`;
+  return `<div class="tg-library"><header class="tg-banner"><div><h2>PF2e Tavern Games</h2><p>Choose a table to open. Poppy’s Prize keeps its dedicated card-table interface.</p></div></header><section class="tg-game-grid"><article><h3>Poppy’s Prize</h3><p>Four-seat pirate poker with Pirates, Plunder, and marked cards.</p><button data-action="tg-open-poppy">Open Poppy’s Prize</button></article><article><h3>Golem</h3><p>Five-card draw against the central golem hand.</p><button data-action="tg-start" data-game="golem">Start Golem</button></article><article><h3>Bounder</h3><p>Bracket a dealer’s 3d6 total with two d20s.</p><button data-action="tg-start" data-game="bounder">Start Bounder</button></article><article><h3>Century</h3><p>Pick numbers and seek matches among twenty draws.</p><button data-action="tg-start" data-game="century">Start Century</button></article><article><h3>Drinking Contest</h3><p>Ready each round, survive the Fortitude DC, and remain standing.</p><button data-action="tg-start" data-game="drinking">Start Drinking Contest</button></article><article><h3>Arm Wrestling</h3><p>Opposed Athletics checks, grip points, and a first-to-three pin.</p><button data-action="tg-start" data-game="arm-wrestling">Start Arm Wrestling</button></article></section>${gameRulesLink()}</div>`;
 }
 
 function renderPlayerGame(view) {
@@ -493,6 +510,10 @@ function renderPlayerGame(view) {
     if (choices.canChoose) controls = `<label>Numbers (comma-separated, 2–10 from 1–100)<input id="tg-century-numbers" type="text" placeholder="4, 17, 42"></label>${coinFields("tg-century-stake", board.minimumStakeCp, "Stake")}<button data-action="tg-player-century-select">Lock selection</button>`;
     else if (choices.canDraw) controls = choices.loadedDice ? `<label>Twenty unique numbers (comma-separated)<textarea id="tg-century-loaded" rows="3" placeholder="1, 5, 12, ..."></textarea></label><button data-action="tg-player-century-draw">Set loaded-dice draw</button>` : `<button data-action="tg-player-century-draw">Draw 20 numbers</button>`;
     return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Century</h2><p>${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><p>${escapeHTML(phaseInstructions(current, player.id))}</p></section>${player.predictions?.length ? `<p>Your numbers: <strong>${player.predictions.join(", ")}</strong></p>` : ""}<section class="tg-controls">${controls}</section></div>`;
+  }
+  if (board.game === TAVERN_GAME_IDS.ARM_WRESTLING) {
+    if (choices.canReady) controls = `<p>Ready for round ${board.round}. First to ${board.target} grip points pins the opponent.</p><button data-action="tg-player-arm-wrestling-ready">Ready for round ${board.round}</button>`;
+    return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Arm Wrestling</h2><p>${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><p>${escapeHTML(phaseInstructions(current, player.id))}</p></section><section class="tg-controls"><p>Your grip: <strong>${player.grip ?? 0}</strong> / ${board.target}</p>${controls}</section></div>`;
   }
   if (choices.canReady) controls = `<label class="tg-check"><input id="tg-drink-cheat" type="checkbox"> Cheat (your Fortitude save is treated as a success)</label>${cheatMethodControls("tg-drink-cheat-method")}<p class="tg-muted">A blind Performance or Deception (Create a Diversion) check is compared privately with the other contestants’ Perception DCs.</p><button data-action="tg-player-drink-ready">Ready for round ${board.round}</button>`;
   return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Drinking Contest</h2><p>Round ${board.round} · ${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><h3>${escapeHTML(drinkStage(player.stage ?? 0).name)} — Stage ${player.stage ?? 0}</h3><p>${escapeHTML(drinkStage(player.stage ?? 0).effect)} ${escapeHTML(phaseInstructions(current, player.id))}</p></section><section class="tg-controls">${controls}</section></div>`;
@@ -533,6 +554,7 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
     if (action === "tg-player-century-select") { payload.numbers = (root.querySelector("#tg-century-numbers")?.value ?? "").split(/[,\s]+/).filter(Boolean).map(Number); payload.stakeCp = coinsFrom(root, "tg-century-stake"); }
     if (action === "tg-player-century-draw") payload.numbers = (root.querySelector("#tg-century-loaded")?.value ?? "").split(/[,\s]+/).filter(Boolean).map(Number);
     if (action === "tg-player-drink-ready") { payload.cheat = root.querySelector("#tg-drink-cheat")?.checked === true; payload.concealment = selectedCheatMethod(root, "tg-drink-cheat-method"); }
+    if (action === "tg-player-arm-wrestling-ready") payload.ready = true;
     if (action === "tg-player-golem-deal") { payload.marked = root.querySelector("#tg-player-golem-marked")?.checked === true; payload.socialCheat = root.querySelector("#tg-player-golem-social-cheat")?.checked === true; payload.markedCardIds = payload.marked ? [root.querySelector("#tg-player-golem-card-one")?.value, root.querySelector("#tg-player-golem-card-two")?.value].filter(Boolean) : []; payload.dealerHandCardIds = payload.socialCheat ? [...root.querySelectorAll('[data-dealer-hand^="tg-player-golem-dealer-hand-"]')].map((select) => select.value).filter(Boolean) : []; payload.concealment = selectedCheatMethod(root, "tg-player-golem-cheat-method"); }
     submitPlayerAction(action, payload);
   }
@@ -554,7 +576,9 @@ function openTavernPlayer(entryActor = null) {
 }
 
 function participantLimits(gameId) {
-  return gameId === TAVERN_GAME_IDS.GOLEM ? { minimum: 3, maximum: 6 } : { minimum: 2, maximum: 20 };
+  if (gameId === TAVERN_GAME_IDS.GOLEM) return { minimum: 3, maximum: 6 };
+  if (gameId === TAVERN_GAME_IDS.ARM_WRESTLING) return { minimum: 2, maximum: 2 };
+  return { minimum: 2, maximum: 20 };
 }
 
 function promptTavernGame(gameId) {
@@ -569,8 +593,8 @@ function promptTavernParticipantSelection(gameId, count) {
   const label = TAVERN_GAME_NAMES[gameId];
   const actorOptions = participantOptions();
   const dealerOptions = participantOptions({ includeDummy: false });
-  const dealerLabel = gameId === TAVERN_GAME_IDS.BOUNDER ? "First Shooter" : gameId === TAVERN_GAME_IDS.DRINKING ? null : "Dealer / deck owner";
-  const specific = gameId === TAVERN_GAME_IDS.DRINKING ? `<label>Fortitude DC <input name="dc" type="number" min="0" value="15" required></label>` : coinFields("tg-start-stake", 5, gameId === TAVERN_GAME_IDS.CENTURY ? "Minimum stake" : gameId === TAVERN_GAME_IDS.BOUNDER ? "Shooter stake" : "Ante");
+  const dealerLabel = [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING].includes(gameId) ? null : gameId === TAVERN_GAME_IDS.BOUNDER ? "First Shooter" : "Dealer / deck owner";
+  const specific = gameId === TAVERN_GAME_IDS.DRINKING ? `<label>Fortitude DC <input name="dc" type="number" min="0" value="15" required></label>` : gameId === TAVERN_GAME_IDS.ARM_WRESTLING ? `<p class="notes">Arm Wrestling uses two participants and opposed Athletics checks; no stake is required.</p>` : coinFields("tg-start-stake", 5, gameId === TAVERN_GAME_IDS.CENTURY ? "Minimum stake" : gameId === TAVERN_GAME_IDS.BOUNDER ? "Shooter stake" : "Ante");
   const selectors = Array.from({ length: count }, (_entry, index) => `<label>Character ${index + 1}<select name="participant-${index + 1}" data-participant required>${actorOptions}</select></label>`).join("");
   const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
   new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — Set up ${label}` }, content, buttons: [{ action: "start", label: `Start ${label}`, default: true, callback: (_event, button) => { const form = button.form; return { actorIds: [...form.querySelectorAll("[data-participant]")].map((select) => select.value), dealerId: form.elements.dealer?.value ?? null, stakeCp: gameId === TAVERN_GAME_IDS.DRINKING ? null : coinsFrom(form, "tg-start-stake"), dc: Number(form.elements.dc?.value ?? 15) }; } }], submit: (result) => startTavernGame(gameId, result) }).render({ force: true });
@@ -587,6 +611,7 @@ async function startTavernGame(gameId, result) {
     if (gameId === TAVERN_GAME_IDS.GOLEM) next = createGolemGame({ participants, dealerId: result.dealerId, anteCp: result.stakeCp });
     else if (gameId === TAVERN_GAME_IDS.BOUNDER) next = createBounderGame({ participants, shooterId: result.dealerId, stakeCp: result.stakeCp });
     else if (gameId === TAVERN_GAME_IDS.CENTURY) next = createCenturyGame({ participants, dealerId: result.dealerId, minimumStakeCp: result.stakeCp });
+    else if (gameId === TAVERN_GAME_IDS.ARM_WRESTLING) next = createArmWrestlingGame({ participants });
     else next = createDrinkingGame({ participants, fortitudeDC: result.dc });
     await saveGame(next);
     openTavernGames();
@@ -645,6 +670,8 @@ async function gmAction(action, playerId, root) {
   else if (action === "tg-bounder-next") next = nextBounderGame(current);
   else if (action === "tg-century-draw") next = centuryDraw(current);
   else if (action === "tg-drink-ready") { next = setDrinkingReady(current, playerId, true); if (next.phase === "drinking-resolve") next = await resolveDrinks(next); }
+  else if (action === "tg-arm-wrestling-ready") next = setArmWrestlingReady(current, playerId, true);
+  else if (action === "tg-arm-wrestling-resolve") next = await resolveArmWrestling(current);
   else if (action === "tg-drink-resolve") next = await resolveDrinks(current);
   else if (action === "tg-drink-clear-effects") { for (const entrant of current.players) await clearDrinkingEffects(actor(entrant.actorId)); return; }
   if (next?.state) next = next.state;
@@ -657,6 +684,28 @@ async function markedCardCheck(current, cheater, cheating, concealment = "perfor
   const check = await rollConcealmentCheck(entryActor, concealment, "Golem cheating");
   await detectCheating(current, cheater, check.roll, "Golem");
   return check;
+}
+
+function opposedAthleticsDegrees(first, second) {
+  const difference = Number(first.total ?? 0) - Number(second.total ?? 0);
+  if (difference === 0) return ["failure", "failure"];
+  const firstNatural = Number(first.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
+  const secondNatural = Number(second.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
+  let firstDegree = difference >= 10 ? "criticalSuccess" : "success";
+  let secondDegree = difference <= -10 ? "criticalSuccess" : "success";
+  if (difference < 0) firstDegree = Math.abs(difference) >= 10 ? "criticalFailure" : "failure";
+  if (difference > 0) secondDegree = Math.abs(difference) >= 10 ? "criticalFailure" : "failure";
+  if (firstNatural === 20) firstDegree = firstDegree === "success" ? "criticalSuccess" : firstDegree;
+  if (firstNatural === 1) firstDegree = firstDegree === "failure" ? "criticalFailure" : firstDegree;
+  if (secondNatural === 20) secondDegree = secondDegree === "success" ? "criticalSuccess" : secondDegree;
+  if (secondNatural === 1) secondDegree = secondDegree === "failure" ? "criticalFailure" : secondDegree;
+  return [firstDegree, secondDegree];
+}
+async function resolveArmWrestling(current) {
+  const wrestlers = current.players.filter((entry) => qualified(current, entry));
+  const attempts = await Promise.all(wrestlers.map(async (wrestler) => ({ playerId: wrestler.id, ...(await rollStatisticBlind(actor(wrestler.actorId), "athletics", { label: "Arm Wrestling Athletics" })) })));
+  const [firstDegree, secondDegree] = opposedAthleticsDegrees(attempts[0], attempts[1]);
+  return resolveArmWrestlingRound(current, attempts.map((attempt, index) => ({ playerId: attempt.playerId, total: attempt.total, degree: index === 0 ? firstDegree : secondDegree })));
 }
 
 async function resolveDrinks(current) {
@@ -718,6 +767,7 @@ async function processPlayerAction(entryActor, request, userId) {
     else if (request.action === "tg-player-century-select") next = centuryChooseNumbers(current, entrant.id, payload.numbers, payload.stakeCp);
     else if (request.action === "tg-player-century-draw" && entrant.id === current.dealerId) next = centuryDraw(current, hasLoadedDice(entryActor) && payload.numbers?.length ? payload.numbers : null);
     else if (request.action === "tg-player-drink-ready") { next = setDrinkingReady(current, entrant.id, true); next.drinkingCheats ??= {}; next.drinkingCheats[entrant.id] = { cheated: payload.cheat === true, concealment: payload.concealment === "deception" ? "deception" : "performance" }; if (next.phase === "drinking-resolve") next = await resolveDrinks(next); }
+    else if (request.action === "tg-player-arm-wrestling-ready") next = setArmWrestlingReady(current, entrant.id, true);
     else throw new Error("That player action is not legal at the current tavern-game phase.");
     await entryActor.unsetFlag(MODULE_ID, REQUEST_FLAG);
     await entryActor.setFlag(MODULE_ID, STATUS_FLAG, { kind: "accepted", message: "The GM accepted your action." });

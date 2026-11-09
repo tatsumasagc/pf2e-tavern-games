@@ -1,0 +1,32 @@
+{
+  "_key": "!journal!TGArmWrestlingRules001",
+  "_id": "TGArmWrestlingRules001",
+  "name": "Arm Wrestling \u2014 Rules Reference",
+  "folder": null,
+  "sort": 500000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "pf2e-tavern-games": {
+      "content": "arm-wrestling-rules"
+    }
+  },
+  "pages": [
+    {
+      "_key": "!journal.pages!TGArmWrestlingRules001.TGArmWrestlingRulesP01",
+      "_id": "TGArmWrestlingRulesP01",
+      "name": "Arm Wrestling rules",
+      "type": "text",
+      "text": {
+        "content": "<h1>Arm Wrestling</h1><p>Arm Wrestling is a two-person contest. Both wrestlers press <strong>Ready</strong> in their private panels. The GM then resolves one blind Athletics check for each wrestler at the same time.</p><h2>Opposed checks</h2><p>Compare the two totals. A difference of 10 or more is a critical success for the higher result and a critical failure for the lower result. Any smaller positive difference is a success for the higher result and a failure for the lower result. Equal totals are a failure for both. Natural 20s and natural 1s adjust the result by one degree where applicable.</p><h2>Grip points</h2><table><thead><tr><th>Result</th><th>Grip change</th></tr></thead><tbody><tr><td>Critical Success</td><td>Gain 2 grip points</td></tr><tr><td>Success</td><td>Gain 1 grip point</td></tr><tr><td>Failure</td><td>Gain no grip points</td></tr><tr><td>Critical Failure</td><td>The opponent gains 2 grip points</td></tr></tbody></table><p>Grip points cannot go below 0. The first wrestler to reach 3 grip points pins the opponent and wins the match. The GM may disqualify either wrestler at any time.</p><hr><p><strong>Source acknowledgement.</strong> These Arm Wrestling rules are a table rule supplied for PF2e Tavern Games.</p><p><em>Created by Tatsu_Gamer using Manus AI</em></p>",
+        "format": 1
+      },
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {}
+    }
+  ]
+}
