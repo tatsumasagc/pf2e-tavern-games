@@ -21,11 +21,11 @@ const golemAssetNames = readdirSync(golemCardDirectory);
 const golemCards = golemAssetNames.filter((name) => name.endsWith(".png"));
 const golemPlayableCards = golemCards.filter((name) => name !== "golem_card_back.png");
 
-assert.equal(manifest.version, "2.4.4", "The release version should be 2.4.4");
+assert.equal(manifest.version, "2.5.0", "The release version should be 2.5.0");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.4\.4\/pf2e-tavern-games-v2\.4\.4\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.5\.0\/pf2e-tavern-games-v2\.5\.0\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
 assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
@@ -64,6 +64,9 @@ assert.match(tavernSource, /tg-player-arm-wrestling-roll/, "Arm Wrestling should
 assert.match(tavernEngineSource, /createSlappingGame|SLAPPING/, "The engine should support Slapping.");
 assert.match(tavernSource, /tg-player-slapping-roll|tg-slapping-resolve/, "Slapping should provide owner roll and GM resolution controls.");
 assert.match(tavernSource, /tg-spectator-bet|competitiveOdds|suggestedCompetitivePrize/, "Competitive games should provide spectator betting and prize calculations.");
+assert.match(tavernSource, /DRINKING].includes\(current\?\.game\)|winner purse|purseSp/, "Drinking Contest should support the shared betting and prize system.");
+assert.match(tavernSource, /entryActor\.type !== "character" && !entrant/, "Participants should be allowed to wager while NPC spectators remain restricted.");
+assert.match(tavernSource, /winner purse/, "Completed competitive contests should announce the winner purse.");
 assert.match(tavernSource, /tg-update-competitive-odds/, "The GM should be able to nudge competitive-game odds.");
 assert.match(tavernSource, /Silver is the everyday unit|purseSp/, "Winner purses should use a silver-based economy.");
 assert.match(tavernSource, /const dealerLabel = \[TAVERN_GAME_IDS\.DRINKING, TAVERN_GAME_IDS\.ARM_WRESTLING, TAVERN_GAME_IDS\.SLAPPING\]\.includes\(gameId\) \? null/, "Slapping should not request a dealer or deck owner.");
@@ -261,7 +264,7 @@ assert.match(moduleGuide.pages[0].text.content, /removes those linked conditions
 
 assert.match(journalSources.find((entry) => entry.name === "Arm Wrestling — Rules Reference").pages[0].text.content, /first wrestler to reach 5 grip points/i, "Arm Wrestling rules should document the win condition.");
 assert.match(journalSources.find((entry) => entry.name === "Slapping — Rules Reference").pages[0].text.content, /standard.*three rounds|title.*five rounds/i, "Slapping rules should document bout lengths.");
-console.log("PF2e Tavern Games 2.4.4 revision validation passed.");
+console.log("PF2e Tavern Games 2.5.0 revision validation passed.");
 assert.match(cssSource, /\.tg-hand > div \{\s+align-items: flex-start;/, "Golem player hands should align cards without allowing image overflow to collapse the hand row");
 assert.match(cssSource, /\.tg-card \{\s+box-sizing: border-box;\s+flex: 0 0 75px;\s+height: auto !important;/, "Golem cards should reserve intrinsic space before player controls");
 assert.match(cssSource, /\.tg-card img \{\s+display: block;\s+height: auto !important;\s+aspect-ratio: 2 \/ 3;/, "Golem card images should stay inside their card boxes");

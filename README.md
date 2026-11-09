@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.2.1 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.5.0 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, and GM disqualification controls.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.4.4 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.5.0 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -49,13 +49,14 @@ A GM can open the library from the dice control in the Token Controls, from the 
 | **Bounder** | 2+ | A Shooter’s two d20 results attempt to bracket the Dealer’s 3d6 total; players may make point or side bets. |
 | **Century** | 2+ | Players select 2–10 numbers from 1–100; the Dealer draws twenty unique two-d10 results and applies the official payout table. |
 | **Drinking Contest** | 2+ | Every contestant presses Ready each round; blind Performance and Fortitude rolls drive a six-stage condition track. |
-| **Arm Wrestling** | 2 | Opposed blind Athletics checks award grip points; first to ten pins the opponent. When a wrestler is a PC, the module requests the Athletics roll from an active actor owner and sends the result privately to the GM; NPC wrestlers are rolled automatically. |
+| **Arm Wrestling** | 2 | Opposed blind Athletics checks award grip points; first to five pins the opponent. When a wrestler is a PC, the module requests the Athletics roll from an active actor owner and sends the result privately to the GM; NPC wrestlers are rolled automatically. |
 | **Slapping** | 2 | Power Slap-inspired standard or title bouts with a coin toss, alternating strikes, owner-requested PC checks, automatic NPC checks, judge points, knockouts, and extra-round decisions. |
 
-## Spectator betting and winner prizes
-Arm Wrestling and Slapping support a shared spectator betting board. A player opens the PF2e Tavern Games panel from an owned PC actor that is not a participant. The module rates each competitor from actor level and relevant statistics, shows fixed odds, and allows one wager per spectator actor. The first wager locks the odds, but additional spectators may continue to bet until the bout ends. Participants cannot wager on their own bout.
+## Betting and winner prizes
 
-The GM may apply a -5 to +5 odds nudge to either competitor before betting begins. Use this for narrative factors such as recent wins, a reputation boost, or a character exaggerating their ability. The setup dialog also calculates a suggested winner purse in silver: it starts from the 1 sp unskilled / 5 sp skilled daily-wage baseline, then adds modest level, relevant-statistic, and title-bout premiums. The GM may edit the purse. Winning bets pay their locked fixed odds, draws refund all wagers, and the winner purse is separate from the betting pool. Automatic currency transfers are optional.
+Arm Wrestling, Slapping, and Drinking Contest support a shared betting board. A player opens the PF2e Tavern Games panel from an owned PC actor; participants may wager as well as spectators. The module rates competitors from actor level and relevant statistics, shows fixed odds, and allows one wager per actor. The first wager locks the odds, but additional players may continue to bet until the contest ends. Participants may bet on any eligible competitor, including themselves.
+
+The GM may apply a -5 to +5 odds nudge before betting begins. Use this for narrative factors such as recent wins, a reputation boost, or a character exaggerating their ability. The setup dialog calculates a suggested winner purse in silver: it starts from the 1 sp unskilled / 5 sp skilled daily-wage baseline, adds level and relevant-statistic premiums, and increases the previous value by 250% (350% of the previous value), with at least a 1 sp increase. The GM may edit the purse. Winning bets pay their locked fixed odds, draws refund all wagers, and the winner purse is separate from the betting pool. When a contest ends, the winner and purse amount are announced in chat. Automatic currency transfers are optional.
 
 ## Slapping
 Slapping is a two-competitor, Power Slap-inspired game. The GM chooses a standard three-round bout or a title five-round bout. A coin toss determines the opening striker. Each round alternates the striker and receiver. The striker has 60 seconds to deliver an open-handed slap below the eye and above the chin; the receiver has 60 seconds to recover before returning to position.

@@ -555,8 +555,8 @@ export function resolveDrinkingRound(state, resolutions) {
     contestant.ready = false;
     contestant.result = { performanceTotal: result.performanceTotal ?? null, fortitudeTotal: result.fortitudeTotal ?? null, fortitudeDegree: degree, cheated: result.cheated === true, stage: contestant.stage };
   }
-  next.result = qualifiedPlayers(next).map((entry) => ({ playerId: entry.id, stage: entry.stage, stageName: drinkStage(entry.stage).name, out: entry.out }));
   const remaining = qualifiedPlayers(next);
+  next.result = { winnerId: remaining.length === 1 ? remaining[0].id : null, winnerName: remaining.length === 1 ? remaining[0].name : null, standings: next.players.map((entry) => ({ playerId: entry.id, stage: entry.stage, stageName: drinkStage(entry.stage).name, out: entry.out })) };
   next.phase = remaining.length <= 1 ? "drinking-complete" : "drinking-ready";
   if (next.phase === "drinking-ready") next.round += 1;
   next.log.push(`Drinking round ${state.round} resolved.`);

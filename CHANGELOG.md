@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.5.0 — 9 November 2026
+Added betting to Drinking Contest and allowed Arm Wrestling and Slapping participants to wager. Increased the suggested winner purses by 250% over the previous values, with at least a 1 sp increase, and added chat announcements identifying the winner and purse amount.
+
 ## 2.4.4 — 9 November 2026
 Changed Arm Wrestling from first to 10 grip points to first to 5 grip points, making matches shorter while retaining the same opposed Athletics and grip-change rules.
 
