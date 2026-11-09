@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.2.2 — 9 November 2026
+Changed the Arm Wrestling victory goal from 3 to 10 grip points so matches last longer. Updated the player and GM displays, detailed table-log winner text, README, Journal rules reference, and automated tests.
+
 ## 2.2.1 — 9 November 2026
 Expanded the Arm Wrestling table log. Each resolved round now records both Athletics totals, opposed degrees, raw and applied grip changes, the running grip score, and the final pin/winner details.
 

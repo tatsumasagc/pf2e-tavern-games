@@ -89,25 +89,26 @@ assert.equal(century.result.find((entry) => entry.playerId === "a").payoutCp, 50
 assert.equal(century.result.find((entry) => entry.playerId === "b").multiplier, CENTURY_PAYOUTS[2][3]);
 assert.throws(() => centuryDraw({ ...century, phase: "century-draw" }, Array(20).fill(1)), /twenty distinct/i);
 
-// Arm Wrestling: simultaneous readiness, opposed degree-to-grip scoring, and first-to-three victory.
+// Arm Wrestling: simultaneous readiness, opposed degree-to-grip scoring, and first-to-ten victory.
 let arm = createArmWrestlingGame({ participants: participants.slice(0, 2) });
 assert.equal(arm.game, TAVERN_GAME_IDS.ARM_WRESTLING);
 arm = setArmWrestlingReady(arm, "a");
 assert.equal(arm.phase, "arm-wrestling-ready");
 arm = setArmWrestlingReady(arm, "b");
 assert.equal(arm.phase, "arm-wrestling-resolve");
+arm.players.find((entry) => entry.id === "a").grip = 8;
 arm = resolveArmWrestlingRound(arm, [
   { playerId: "a", total: 25, degree: "criticalSuccess" },
   { playerId: "b", total: 15, degree: "criticalFailure" },
 ]);
-assert.equal(arm.players.find((entry) => entry.id === "a").grip, 3);
+assert.equal(arm.players.find((entry) => entry.id === "a").grip, 10);
 assert.equal(arm.players.find((entry) => entry.id === "b").grip, 0);
 assert.equal(arm.phase, "arm-wrestling-complete");
 assert.equal(arm.result.winnerId, "a");
-assert.deepEqual(arm.result.wrestlers.find((entry) => entry.playerId === "a"), { playerId: "a", name: "Aster", total: 25, gripBefore: 0, gripChange: 3, grip: 3, degree: "criticalSuccess" });
+assert.deepEqual(arm.result.wrestlers.find((entry) => entry.playerId === "a"), { playerId: "a", name: "Aster", total: 25, gripBefore: 8, gripChange: 2, grip: 10, degree: "criticalSuccess" });
 assert.match(arm.log.at(-3), /Aster rolled 25 \(Critical Success\)/);
-assert.match(arm.log.at(-2), /Grip changes: Aster: 0 \+3 → 3; Beryl: 0 \+0 → 0/);
-assert.match(arm.log.at(-1), /Aster wins Arm Wrestling in round 1 with 3\/3 grip points; Aster pins Beryl/);
+assert.match(arm.log.at(-2), /Grip changes: Aster: 8 \+2 → 10; Beryl: 0 \+0 → 0/);
+assert.match(arm.log.at(-1), /Aster wins Arm Wrestling in round 1 with 10\/10 grip points; Aster pins Beryl/);
 
 // Drinking contest: readiness, all three degree adjustments, named stages, loss at Stage 6, and disqualification.
 let drinks = createDrinkingGame({ participants: participants.slice(0, 3), fortitudeDC: 20 });
