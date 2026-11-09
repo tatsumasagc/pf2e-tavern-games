@@ -236,7 +236,7 @@ function playerGameView(current, entry) {
   }
   if (current.game === TAVERN_GAME_IDS.BOUNDER) return { ...base, choices: { shooterFirst: current.phase === "bounder-first-roll" && entry.id === current.shooterId, shooterSecond: current.phase === "bounder-second-roll" && entry.id === current.shooterId, canBet: current.phase === "bounder-bets", canDouble: current.phase === "bounder-bets" && entry.id === current.shooterId, loadedDice: entry.id === current.shooterId && hasLoadedDice(entryActor) }, };
   if (current.game === TAVERN_GAME_IDS.CENTURY) return { ...base, player: { ...base.player, predictions: entry.predictions, stakeCp: entry.stakeCp }, choices: { canChoose: current.phase === "century-select" && entry.predictions.length < 2, canDraw: current.phase === "century-draw" && entry.id === current.dealerId, loadedDice: entry.id === current.dealerId && hasLoadedDice(entryActor) } };
-  if (current.game === TAVERN_GAME_IDS.ARM_WRESTLING) return { ...base, player: { ...base.player, grip: entry.grip }, choices: { canReady: current.phase === "arm-wrestling-ready" && !entry.ready && !entry.out && !entry.disqualified } };
+  if (current.game === TAVERN_GAME_IDS.ARM_WRESTLING) return { ...base, player: { ...base.player, grip: entry.grip, rollSubmitted: Boolean(current.armWrestlingRolls?.[entry.id]) }, choices: { canReady: current.phase === "arm-wrestling-ready" && !entry.ready && !entry.out && !entry.disqualified, canRoll: current.phase === "arm-wrestling-resolve" && entryActor?.type === "character" && !current.armWrestlingRolls?.[entry.id] && !entry.out && !entry.disqualified } };
   return { ...base, choices: { canReady: current.phase === "drinking-ready" && !entry.ready && !entry.out && !entry.disqualified } };
 }
 
@@ -467,7 +467,11 @@ function renderCenturyGM(current) {
 
 function renderArmWrestlingGM(current) {
   if (current.phase === "arm-wrestling-ready") return `<section class="tg-controls"><h3>Round ${current.round}</h3><p>Both wrestlers press Ready in their private panels. Each makes a blind Athletics check.</p>${current.players.filter((entry) => qualified(current, entry) && !entry.ready).map((entry) => `<button data-action="tg-arm-wrestling-ready" data-player="${entry.id}">Ready ${escapeHTML(entry.name)}</button>`).join(" ")}</section>`;
-  if (current.phase === "arm-wrestling-resolve") return `<section class="tg-controls"><h3>Resolve the struggle</h3><p>Roll one blind Athletics check for each wrestler. Critical Success gains 2 grip points, Success gains 1, Failure gains none, and Critical Failure gives the opponent 2.</p><button data-action="tg-arm-wrestling-resolve">Resolve opposed Athletics checks</button></section>`;
+  if (current.phase === "arm-wrestling-resolve") {
+    const pending = current.players.filter((entry) => qualified(current, entry) && actor(entry.actorId)?.type === "character" && !current.armWrestlingRolls?.[entry.id]);
+    const submitted = current.players.filter((entry) => qualified(current, entry) && current.armWrestlingRolls?.[entry.id]);
+    return `<section class="tg-controls"><h3>Resolve the struggle</h3><p>PC wrestlers receive a private request to roll Athletics from their actor-owner. NPC wrestlers roll automatically for the GM.</p>${submitted.length ? `<p>Submitted: ${submitted.map((entry) => escapeHTML(entry.name)).join(", ")}</p>` : ""}${pending.length ? `<p>Waiting for owner rolls: <strong>${pending.map((entry) => escapeHTML(entry.name)).join(", ")}</strong></p>` : "<p>All required results are available.</p>"}<button data-action="tg-arm-wrestling-resolve">Request PC rolls / roll NPCs</button></section>`;
+  }
   return `<section class="tg-controls"><h3>Match complete</h3><p>${escapeHTML(current.result?.winnerName ?? "No winner") } wins with ${current.players.find((entry) => entry.id === current.result?.winnerId)?.grip ?? 0} grip points.</p></section>`;
 }
 function renderDrinkingGM(current) {
@@ -513,6 +517,8 @@ function renderPlayerGame(view) {
   }
   if (board.game === TAVERN_GAME_IDS.ARM_WRESTLING) {
     if (choices.canReady) controls = `<p>Ready for round ${board.round}. First to ${board.target} grip points pins the opponent.</p><button data-action="tg-player-arm-wrestling-ready">Ready for round ${board.round}</button>`;
+    else if (choices.canRoll) controls = `<p>The GM requested your Athletics check for round ${board.round}. Your result is sent privately to the GM.</p><button data-action="tg-player-arm-wrestling-roll">Roll Athletics</button>`;
+    else if (current.phase === "arm-wrestling-resolve" && player.rollSubmitted) controls = "<p>Your Athletics result was submitted. Wait for the other wrestler and the GM to resolve the round.</p>";
     return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Arm Wrestling</h2><p>${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><p>${escapeHTML(phaseInstructions(current, player.id))}</p></section><section class="tg-controls"><p>Your grip: <strong>${player.grip ?? 0}</strong> / ${board.target}</p>${controls}</section></div>`;
   }
   if (choices.canReady) controls = `<label class="tg-check"><input id="tg-drink-cheat" type="checkbox"> Cheat (your Fortitude save is treated as a success)</label>${cheatMethodControls("tg-drink-cheat-method")}<p class="tg-muted">A blind Performance or Deception (Create a Diversion) check is compared privately with the other contestants’ Perception DCs.</p><button data-action="tg-player-drink-ready">Ready for round ${board.round}</button>`;
@@ -542,11 +548,24 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
   async _renderHTML() { const element = document.createElement("div"); element.innerHTML = renderPlayerGame(currentPlayerActor()?.getFlag(MODULE_ID, VIEW_FLAG)); return element; }
   _replaceHTML(result, content) { content.replaceChildren(result); }
   _onRender(context, options) { super._onRender(context, options); this.element.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", (event) => this.#act(event))); this.element.querySelectorAll(".tg-card.selectable").forEach((card) => card.addEventListener("click", () => card.classList.toggle("selected"))); const marked = this.element.querySelector("#tg-player-golem-marked"); marked?.addEventListener("change", () => this.element.querySelector("#tg-player-golem-marked-options")?.classList.toggle("tg-hidden", !marked.checked)); }
-  #act(event) {
+  async #act(event) {
     event.preventDefault();
     const action = event.currentTarget.dataset.action;
     const root = this.element;
     const payload = {};
+    if (action === "tg-player-arm-wrestling-roll") {
+      const entryActor = currentPlayerActor();
+      try {
+        const target = entryActor?.skills?.athletics;
+        if (!target?.check?.roll) throw new Error(`${entryActor?.name ?? "This actor"} does not have an Athletics statistic to roll.`);
+        const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", extraRollOptions: ["tavern-game:athletics"], label: "Arm Wrestling Athletics" });
+        const natural = Number(roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
+        await submitPlayerAction(action, { total: Number(roll?.total ?? 0), natural });
+      } catch (error) {
+        ui.notifications.error(error.message ?? "The Athletics check could not be rolled.");
+      }
+      return;
+    }
     if (action === "tg-player-golem-raise") payload.totalCp = coinsFrom(root, "tg-player-golem-raise");
     if (action === "tg-player-golem-discard") payload.cardIds = [...root.querySelectorAll(".tg-card.selected")].map((card) => card.dataset.card);
     if (action === "tg-player-bounder-first" || action === "tg-player-bounder-second") payload.result = root.querySelector("#tg-bounder-player-die")?.value ?? null;
@@ -689,8 +708,8 @@ async function markedCardCheck(current, cheater, cheating, concealment = "perfor
 function opposedAthleticsDegrees(first, second) {
   const difference = Number(first.total ?? 0) - Number(second.total ?? 0);
   if (difference === 0) return ["failure", "failure"];
-  const firstNatural = Number(first.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
-  const secondNatural = Number(second.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
+  const firstNatural = Number(first.natural ?? first.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
+  const secondNatural = Number(second.natural ?? second.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
   let firstDegree = difference >= 10 ? "criticalSuccess" : "success";
   let secondDegree = difference <= -10 ? "criticalSuccess" : "success";
   if (difference < 0) firstDegree = Math.abs(difference) >= 10 ? "criticalFailure" : "failure";
@@ -702,10 +721,25 @@ function opposedAthleticsDegrees(first, second) {
   return [firstDegree, secondDegree];
 }
 async function resolveArmWrestling(current) {
+  if (current.game !== TAVERN_GAME_IDS.ARM_WRESTLING || current.phase !== "arm-wrestling-resolve") return current;
   const wrestlers = current.players.filter((entry) => qualified(current, entry));
-  const attempts = await Promise.all(wrestlers.map(async (wrestler) => ({ playerId: wrestler.id, ...(await rollStatisticBlind(actor(wrestler.actorId), "athletics", { label: "Arm Wrestling Athletics" })) })));
+  const rolls = { ...(current.armWrestlingRolls ?? {}) };
+  for (const wrestler of wrestlers) {
+    if (rolls[wrestler.id]) continue;
+    const entryActor = actor(wrestler.actorId);
+    if (entryActor?.type === "character") continue;
+    const check = await rollStatisticBlind(entryActor, "athletics", { label: "Arm Wrestling Athletics" });
+    rolls[wrestler.id] = { total: check.total, natural: Number(check.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0), source: "gm-npc" };
+  }
+  const waiting = wrestlers.filter((wrestler) => !rolls[wrestler.id]);
+  const next = { ...current, armWrestlingRolls: rolls };
+  if (waiting.length) {
+    next.log = [...(current.log ?? []), `Arm Wrestling round ${current.round} is waiting for Athletics rolls from: ${waiting.map((entry) => entry.name).join(", ")}.`];
+    return next;
+  }
+  const attempts = wrestlers.map((wrestler) => ({ playerId: wrestler.id, ...rolls[wrestler.id] }));
   const [firstDegree, secondDegree] = opposedAthleticsDegrees(attempts[0], attempts[1]);
-  return resolveArmWrestlingRound(current, attempts.map((attempt, index) => ({ playerId: attempt.playerId, total: attempt.total, degree: index === 0 ? firstDegree : secondDegree })));
+  return resolveArmWrestlingRound(next, attempts.map((attempt, index) => ({ playerId: attempt.playerId, total: attempt.total, natural: attempt.natural, degree: index === 0 ? firstDegree : secondDegree })));
 }
 
 async function resolveDrinks(current) {
@@ -768,6 +802,16 @@ async function processPlayerAction(entryActor, request, userId) {
     else if (request.action === "tg-player-century-draw" && entrant.id === current.dealerId) next = centuryDraw(current, hasLoadedDice(entryActor) && payload.numbers?.length ? payload.numbers : null);
     else if (request.action === "tg-player-drink-ready") { next = setDrinkingReady(current, entrant.id, true); next.drinkingCheats ??= {}; next.drinkingCheats[entrant.id] = { cheated: payload.cheat === true, concealment: payload.concealment === "deception" ? "deception" : "performance" }; if (next.phase === "drinking-resolve") next = await resolveDrinks(next); }
     else if (request.action === "tg-player-arm-wrestling-ready") next = setArmWrestlingReady(current, entrant.id, true);
+    else if (request.action === "tg-player-arm-wrestling-roll") {
+      if (current.game !== TAVERN_GAME_IDS.ARM_WRESTLING || current.phase !== "arm-wrestling-resolve") throw new Error("Arm Wrestling is not waiting for Athletics checks.");
+      if (entryActor.type !== "character") throw new Error("NPC Athletics checks are rolled automatically by the GM.");
+      if (current.armWrestlingRolls?.[entrant.id]) throw new Error("This wrestler has already submitted an Athletics check.");
+      const total = Number(payload.total);
+      const natural = Number(payload.natural);
+      if (!Number.isFinite(total) || !Number.isInteger(natural) || natural < 1 || natural > 20) throw new Error("The submitted Athletics result was invalid.");
+      next = { ...current, armWrestlingRolls: { ...(current.armWrestlingRolls ?? {}), [entrant.id]: { total, natural, source: "owner" } } };
+      if (next.players.filter((entry) => qualified(next, entry)).every((entry) => next.armWrestlingRolls?.[entry.id])) next = await resolveArmWrestling(next);
+    }
     else throw new Error("That player action is not legal at the current tavern-game phase.");
     await entryActor.unsetFlag(MODULE_ID, REQUEST_FLAG);
     await entryActor.setFlag(MODULE_ID, STATUS_FLAG, { kind: "accepted", message: "The GM accepted your action." });

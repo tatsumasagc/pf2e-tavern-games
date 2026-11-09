@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.2.3 — 9 November 2026
+Arm Wrestling now requests Athletics rolls from active owners for PC wrestlers instead of rolling them automatically. NPC wrestlers continue to be rolled automatically by the GM. The GM table shows submitted and waiting wrestlers, and the detailed round log remains authoritative.
+
 ## 2.2.2 — 9 November 2026
 Changed the Arm Wrestling victory goal from 3 to 10 grip points so matches last longer. Updated the player and GM displays, detailed table-log winner text, README, Journal rules reference, and automated tests.
 

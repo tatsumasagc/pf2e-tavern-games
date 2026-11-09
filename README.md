@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.2.2 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.2.3 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -49,7 +49,7 @@ A GM can open the library from the dice control in the Token Controls, from the 
 | **Bounder** | 2+ | A Shooter’s two d20 results attempt to bracket the Dealer’s 3d6 total; players may make point or side bets. |
 | **Century** | 2+ | Players select 2–10 numbers from 1–100; the Dealer draws twenty unique two-d10 results and applies the official payout table. |
 | **Drinking Contest** | 2+ | Every contestant presses Ready each round; blind Performance and Fortitude rolls drive a six-stage condition track. |
-| **Arm Wrestling** | 2 | Opposed blind Athletics checks award grip points; first to ten pins the opponent. |
+| **Arm Wrestling** | 2 | Opposed blind Athletics checks award grip points; first to ten pins the opponent. When a wrestler is a PC, the module requests the Athletics roll from an active actor owner and sends the result privately to the GM; NPC wrestlers are rolled automatically. |
 
 ## Arm Wrestling
 Arm Wrestling is a two-person contest resolved in repeated rounds. Both wrestlers press **Ready** in their private player panels; the GM then resolves one blind Athletics check for each wrestler at the same time. Compare the two totals for that round. A difference of 10 or more is a critical success for the higher result and a critical failure for the lower result; any smaller positive difference is a success for the higher result and a failure for the lower result; equal totals are a failure for both. Natural 20s and natural 1s adjust the result by one degree where applicable.

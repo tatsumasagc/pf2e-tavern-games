@@ -563,7 +563,7 @@ export function resolveDrinkingRound(state, resolutions) {
 
 export function createArmWrestlingGame({ participants } = {}) {
   const players = validParticipants(participants, { minimum: 2, maximum: 2 }).map((entry) => ({ ...entry, grip: 0, ready: false, result: null }));
-  return { version: 1, game: TAVERN_GAME_IDS.ARM_WRESTLING, gameNumber: 1, round: 1, phase: "arm-wrestling-ready", players, target: ARM_WRESTLING_TARGET, result: null, log: [`Arm Wrestling is ready. First to ${ARM_WRESTLING_TARGET} grip points wins.`] };
+  return { version: 1, game: TAVERN_GAME_IDS.ARM_WRESTLING, gameNumber: 1, round: 1, phase: "arm-wrestling-ready", players, target: ARM_WRESTLING_TARGET, armWrestlingRolls: {}, result: null, log: [`Arm Wrestling is ready. First to ${ARM_WRESTLING_TARGET} grip points wins.`] };
 }
 
 export function setArmWrestlingReady(state, playerId, ready = true) {
@@ -607,6 +607,7 @@ export function resolveArmWrestlingRound(state, resolutions) {
   first.result = { total: firstResult.total ?? null, degree: firstResult.degree, grip: first.grip, gripBefore: firstBefore, gripChange: first.grip - firstBefore };
   second.result = { total: secondResult.total ?? null, degree: secondResult.degree, grip: second.grip, gripBefore: secondBefore, gripChange: second.grip - secondBefore };
   const winner = [first, second].find((entry) => entry.grip >= next.target);
+  next.armWrestlingRolls = {};
   next.result = { winnerId: winner?.id ?? null, winnerName: winner?.name ?? null, round: next.round, wrestlers: active.map((entry) => ({ playerId: entry.id, name: entry.name, total: entry.result.total, gripBefore: entry.result.gripBefore, gripChange: entry.result.gripChange, grip: entry.grip, degree: entry.result.degree })) };
   const degreeLabel = (degree) => ({ criticalSuccess: "Critical Success", success: "Success", failure: "Failure", criticalFailure: "Critical Failure" })[degree] ?? degree;
   const signed = (value) => value >= 0 ? `+${value}` : String(value);
