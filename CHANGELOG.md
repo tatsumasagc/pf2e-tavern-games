@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.4.1 — 9 November 2026
+Adjusted the Arm Wrestling and Slapping suggested winner purses to use silver as the everyday currency. The calculator now anchors its baseline at 1 sp for unskilled work and 5 sp for skilled work, then adds modest level, relevant-statistic, and title-bout premiums.
+
 ## 2.4.0 — 9 November 2026
 Added spectator betting and winner prize calculators to Arm Wrestling and Slapping. Spectators can wager with owned PC actors, odds are based on actor level and relevant statistics, GM odds nudges apply before the first wager, odds then lock, winning bets pay fixed odds, draws refund wagers, and the GM can configure a separate winner purse with optional automatic PF2E currency transfers.
 

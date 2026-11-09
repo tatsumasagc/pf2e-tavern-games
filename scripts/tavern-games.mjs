@@ -83,9 +83,18 @@ function competitiveRating(entryActor, game) {
 function suggestedCompetitivePrize(current) {
   const levels = current.players.map((entry) => actorLevel(actor(entry.actorId)));
   const averageLevel = levels.reduce((sum, value) => sum + value, 0) / Math.max(1, levels.length);
-  const rounds = current.roundLimit ?? 1;
+  const relevantStats = current.players.map((entry) => {
+    const entryActor = actor(entry.actorId);
+    const athletics = statisticModifier(entryActor, "athletics");
+    const fortitude = statisticModifier(entryActor, "fortitude");
+    return current.game === TAVERN_GAME_IDS.SLAPPING ? (athletics + fortitude) / 2 : athletics;
+  });
+  const averageRelevantStat = relevantStats.reduce((sum, value) => sum + value, 0) / Math.max(1, relevantStats.length);
+  // Silver is the everyday unit: 1 sp for unskilled daily work, 5 sp for skilled work.
+  // Each level adds 5 sp of reputation, while positive relevant skill adds a modest premium.
+  const purseSp = 1 + Math.round(averageLevel * 5) + Math.max(0, Math.round(averageRelevantStat));
   const boutMultiplier = current.game === TAVERN_GAME_IDS.SLAPPING && current.boutType === "title" ? 2 : 1;
-  return Math.max(500, Math.round((1000 + averageLevel * 500 + rounds * 250) * boutMultiplier));
+  return Math.max(10, purseSp * boutMultiplier);
 }
 function competitiveOdds(current, modifiers = current.betting?.oddsModifiers ?? {}) {
   const ratings = current.players.map((entry) => ({ entry, rating: competitiveRating(actor(entry.actorId), current.game) + Number(modifiers[entry.id] ?? 0) * 2 }));
@@ -722,7 +731,7 @@ function promptTavernParticipantSelection(gameId, count) {
   const dealerLabel = [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING].includes(gameId) ? null : gameId === TAVERN_GAME_IDS.BOUNDER ? "First Shooter" : "Dealer / deck owner";
   const specific = gameId === TAVERN_GAME_IDS.DRINKING ? `<label>Fortitude DC <input name="dc" type="number" min="0" value="15" required></label>` : gameId === TAVERN_GAME_IDS.ARM_WRESTLING ? `<p class="notes">Arm Wrestling uses two participants and opposed Athletics checks; no stake is required.</p>` : gameId === TAVERN_GAME_IDS.SLAPPING ? `<label>Bout type <select name="boutType"><option value="standard">Standard bout — 3 rounds</option><option value="title">Title bout — 5 rounds</option></select></label>` : coinFields("tg-start-stake", 5, gameId === TAVERN_GAME_IDS.CENTURY ? "Minimum stake" : gameId === TAVERN_GAME_IDS.BOUNDER ? "Shooter stake" : "Ante");
   const selectors = Array.from({ length: count }, (_entry, index) => `<label>Character ${index + 1}<select name="participant-${index + 1}" data-participant required>${actorOptions}</select></label>`).join("");
-  const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}${[TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? `${coinFields("tg-prize", 0, "Winner purse (leave 0 for suggested)")}<label class="tg-check"><input name="autoCurrency" type="checkbox"> Automatically transfer spectator wagers and winner purse</label><p class="notes">The suggested purse is calculated from actor level, bout length, and the relevant statistics; you may edit it.</p>` : ""}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
+  const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}${[TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? `${coinFields("tg-prize", 0, "Winner purse (leave 0 for suggested)")}<label class="tg-check"><input name="autoCurrency" type="checkbox"> Automatically transfer spectator wagers and winner purse</label><p class="notes">The suggested purse uses silver as the common unit: 1 sp for an unskilled baseline, 5 sp for a skilled baseline, plus level, relevant-statistic, and title-bout premiums; you may edit it; you may edit it.</p>` : ""}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
   new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — Set up ${label}` }, content, buttons: [{ action: "start", label: `Start ${label}`, default: true, callback: (_event, button) => { const form = button.form; return { actorIds: [...form.querySelectorAll("[data-participant]")].map((select) => select.value), dealerId: form.elements.dealer?.value ?? null, stakeCp: [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? null : coinsFrom(form, "tg-start-stake"), boutType: form.elements.boutType?.value ?? null, prizeCp: [TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? coinsFrom(form, "tg-prize") : null, autoCurrency: form.elements.autoCurrency?.checked === true, dc: Number(form.elements.dc?.value ?? 15) }; } }], submit: (result) => startTavernGame(gameId, result) }).render({ force: true });
 }
 
