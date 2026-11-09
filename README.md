@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.4.2 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.4.3 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -81,7 +81,7 @@ Whenever a Poppy or Golem Dealer can choose cards from a dropdown—whether for 
 
 ## GM oversight and player panels
 
-The GM creates and controls every table. For Golem, Bounder, Century, and the Drinking Contest, the GM first chooses the number of participants, then selects every participant from an individual dropdown. Each selector begins with **- Dummy**, followed by Party Members and then other eligible actors in alphabetical order; after a count is chosen, every selector must name a different actor. The player panel reveals only a participant’s own hand or legal choices. The GM may use **Open player panel** to prompt an actor’s active Owner to open it remotely. The player interface has an independent scroll area and highlights the current turn. Every tavern-game table provides **Disqualify** beside each active participant; a disqualified actor cannot submit further actions.
+Control the desired actors’ tokens before opening participant setup to preselect them. The GM creates and controls every table. For Golem, Bounder, Century, and the Drinking Contest, the GM first chooses the number of participants, then selects every participant from an individual dropdown. Each selector begins with **- Dummy**, followed by Party Members and then other eligible actors in alphabetical order; after a count is chosen, every selector must name a different actor. The player panel reveals only a participant’s own hand or legal choices. The GM may use **Open player panel** to prompt an actor’s active Owner to open it remotely. The player interface has an independent scroll area and highlights the current turn. Every tavern-game table provides **Disqualify** beside each active participant; a disqualified actor cannot submit further actions.
 
 ## Cheating
 

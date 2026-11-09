@@ -21,11 +21,11 @@ const golemAssetNames = readdirSync(golemCardDirectory);
 const golemCards = golemAssetNames.filter((name) => name.endsWith(".png"));
 const golemPlayableCards = golemCards.filter((name) => name !== "golem_card_back.png");
 
-assert.equal(manifest.version, "2.4.2", "The release version should be 2.4.2");
+assert.equal(manifest.version, "2.4.3", "The release version should be 2.4.3");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.4\.2\/pf2e-tavern-games-v2\.4\.2\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.4\.3\/pf2e-tavern-games-v2\.4\.3\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
 assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
@@ -73,6 +73,7 @@ assert.match(tavernSource, /source: "gm-npc"/, "Arm Wrestling should automatical
 assert.match(tavernSource, /rollStatisticBlind\(entryActor, "athletics"/, "Arm Wrestling should roll blind Athletics checks.");
 assert.match(tavernSource, /tg-disqualify/, "The GM table should expose a disqualification control.");
 assert.match(tavernSource, /function participantLimits\(gameId\)/, "Added games should define count limits before participant selection.");
+assert.match(tavernSource, /controlledTokenActorIds|canvas\?\.tokens\?\.controlled/, "Added-game participants should support controlled token actor selection.");
 assert.match(tavernSource, /Number of participants/, "Added-game setup should ask for a participant count first.");
 assert.match(tavernSource, /promptTavernParticipantSelection\(gameId, count\)/, "Added-game setup should show individual selectors after the count is chosen.");
 assert.match(tavernSource, /data-participant/, "Each chosen participant should use an individual selector.");
@@ -94,6 +95,7 @@ assert.match(mainSource, /<optgroup label="Party Members">/, "Party members shou
 assert.match(mainSource, /<optgroup label="Other Actors">/, "Remaining eligible actors should follow the Party group");
 assert.match(mainSource, /localeCompare\(right\.name, game\.i18n\.lang\)/, "Actor names should be sorted alphabetically within each group");
 assert.match(mainSource, /select\[data-seat\]/, "The setup dialogue should read all four seat selectors");
+assert.match(mainSource, /controlledTokenActorIds|canvas\?\.tokens\?\.controlled/, "Poppy’s Prize participants should support controlled token actor selection.");
 assert.match(mainSource, /name=\"automaticCurrency\" type=\"checkbox\"/, "Automatic currency should be configured in the setup dialogue");
 assert.match(mainSource, /state\.autoCurrency = result\.autoCurrency === true/, "The setup choice should persist with the active game");
 assert.doesNotMatch(mainSource, /AUTO_CURRENCY_SETTING/, "The former world-level currency setting should be removed");
@@ -259,7 +261,7 @@ assert.match(moduleGuide.pages[0].text.content, /removes those linked conditions
 
 assert.match(journalSources.find((entry) => entry.name === "Arm Wrestling — Rules Reference").pages[0].text.content, /first wrestler to reach 10 grip points/i, "Arm Wrestling rules should document the win condition.");
 assert.match(journalSources.find((entry) => entry.name === "Slapping — Rules Reference").pages[0].text.content, /standard.*three rounds|title.*five rounds/i, "Slapping rules should document bout lengths.");
-console.log("PF2e Tavern Games 2.4.2 revision validation passed.");
+console.log("PF2e Tavern Games 2.4.3 revision validation passed.");
 assert.match(cssSource, /\.tg-hand > div \{\s+align-items: flex-start;/, "Golem player hands should align cards without allowing image overflow to collapse the hand row");
 assert.match(cssSource, /\.tg-card \{\s+box-sizing: border-box;\s+flex: 0 0 75px;\s+height: auto !important;/, "Golem cards should reserve intrinsic space before player controls");
 assert.match(cssSource, /\.tg-card img \{\s+display: block;\s+height: auto !important;\s+aspect-ratio: 2 \/ 3;/, "Golem card images should stay inside their card boxes");

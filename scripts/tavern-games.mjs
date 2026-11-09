@@ -138,10 +138,13 @@ function gameActorList() {
   return [...partyMembers, ...otherActors];
 }
 
-function participantOptions({ includeDummy = true } = {}) {
+function controlledTokenActorIds() {
+  return [...new Set((canvas?.tokens?.controlled ?? []).map((token) => token.actor?.id).filter((id) => id && actor(id)))];
+}
+function participantOptions({ includeDummy = true, selectedId = null } = {}) {
   const { partyMembers, otherActors } = gameActorGroups();
-  const buildOptions = (entries) => entries.map((entry) => `<option value="${escapeHTML(entry.id)}">${escapeHTML(entry.name)}</option>`).join("");
-  return `${includeDummy ? '<option value="" selected>- Dummy</option>' : '<option value="">- Choose a participant -</option>'}${partyMembers.length ? `<optgroup label="Party Members">${buildOptions(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${buildOptions(otherActors)}</optgroup>` : ""}`;
+  const buildOptions = (entries) => entries.map((entry) => `<option value="${escapeHTML(entry.id)}" ${entry.id === selectedId ? "selected" : ""}>${escapeHTML(entry.name)}</option>`).join("");
+  return `${includeDummy ? `<option value="" ${selectedId ? "" : "selected"}>- Dummy</option>` : `<option value="" ${selectedId ? "" : "selected"}>- Choose a participant -</option>`}${partyMembers.length ? `<optgroup label="Party Members">${buildOptions(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${buildOptions(otherActors)}</optgroup>` : ""}`;
 }
 
 function updateQueue(work) {
@@ -726,12 +729,14 @@ function promptTavernGame(gameId) {
 
 function promptTavernParticipantSelection(gameId, count) {
   const label = TAVERN_GAME_NAMES[gameId];
+  const controlledIds = controlledTokenActorIds();
   const actorOptions = participantOptions();
-  const dealerOptions = participantOptions({ includeDummy: false });
+  const dealerOptions = participantOptions({ includeDummy: false, selectedId: controlledIds[0] ?? null });
   const dealerLabel = [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? null : gameId === TAVERN_GAME_IDS.BOUNDER ? "First Shooter" : "Dealer / deck owner";
   const specific = gameId === TAVERN_GAME_IDS.DRINKING ? `<label>Fortitude DC <input name="dc" type="number" min="0" value="15" required></label>` : gameId === TAVERN_GAME_IDS.ARM_WRESTLING ? `<p class="notes">Arm Wrestling uses two participants and opposed Athletics checks; no stake is required.</p>` : gameId === TAVERN_GAME_IDS.SLAPPING ? `<label>Bout type <select name="boutType"><option value="standard">Standard bout — 3 rounds</option><option value="title">Title bout — 5 rounds</option></select></label>` : coinFields("tg-start-stake", 5, gameId === TAVERN_GAME_IDS.CENTURY ? "Minimum stake" : gameId === TAVERN_GAME_IDS.BOUNDER ? "Shooter stake" : "Ante");
-  const selectors = Array.from({ length: count }, (_entry, index) => `<label>Character ${index + 1}<select name="participant-${index + 1}" data-participant required>${actorOptions}</select></label>`).join("");
-  const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}${[TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? `${coinFields("tg-prize", 0, "Winner purse (leave 0 for suggested)")}<label class="tg-check"><input name="autoCurrency" type="checkbox"> Automatically transfer spectator wagers and winner purse</label><p class="notes">The suggested purse uses silver as the common unit: 1 sp for an unskilled baseline, 5 sp for a skilled baseline, plus level, relevant-statistic, and title-bout premiums; you may edit it; you may edit it.</p>` : ""}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
+  const selectors = Array.from({ length: count }, (_entry, index) => `<label>Character ${index + 1}<select name="participant-${index + 1}" data-participant required>${participantOptions({ selectedId: controlledIds[index] ?? null })}</select></label>`).join("");
+  const tokenNote = controlledIds.length ? `<p class="notes">${controlledIds.length} controlled token actor${controlledIds.length === 1 ? " is" : "s are"} preselected. You can change any selection before starting.</p>` : '<p class="notes">Control tokens on the canvas before opening this dialog to preselect their actors.</p>';
+  const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${tokenNote}${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}${[TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? `${coinFields("tg-prize", 0, "Winner purse (leave 0 for suggested)")}<label class="tg-check"><input name="autoCurrency" type="checkbox"> Automatically transfer spectator wagers and winner purse</label><p class="notes">The suggested purse uses silver as the common unit: 1 sp for an unskilled baseline, 5 sp for a skilled baseline, plus level, relevant-statistic, and title-bout premiums; you may edit it; you may edit it.</p>` : ""}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
   new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — Set up ${label}` }, content, buttons: [{ action: "start", label: `Start ${label}`, default: true, callback: (_event, button) => { const form = button.form; return { actorIds: [...form.querySelectorAll("[data-participant]")].map((select) => select.value), dealerId: form.elements.dealer?.value ?? null, stakeCp: [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? null : coinsFrom(form, "tg-start-stake"), boutType: form.elements.boutType?.value ?? null, prizeCp: [TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? coinsFrom(form, "tg-prize") : null, autoCurrency: form.elements.autoCurrency?.checked === true, dc: Number(form.elements.dc?.value ?? 15) }; } }], submit: (result) => startTavernGame(gameId, result) }).render({ force: true });
 }
 

@@ -151,6 +151,10 @@ function sortActorsByName(actors) {
   return [...actors].sort((left, right) => left.name.localeCompare(right.name, game.i18n.lang));
 }
 
+function controlledTokenActorIds() {
+  return [...new Set((canvas?.tokens?.controlled ?? []).map((token) => token.actor?.id).filter((id) => id && getActor(id)))];
+}
+
 function getParticipantActorGroups() {
   const eligible = game.actors.filter((actor) => ["character", "npc"].includes(actor.type));
   const partyMemberIds = new Set((game.actors.party?.members ?? []).map((member) => member.id));
@@ -1084,12 +1088,19 @@ function promptStartGame() {
   if (actors.length < 2) return notify("warn", "Create or import at least two PF2E PC or NPC actors before starting Poppy’s Prize.");
   const { partyMembers, otherActors } = getParticipantActorGroups();
   const optionsFor = (entries) => entries.map((actor) => `<option value="${escapeHTML(actor.id)}">${escapeHTML(actor.name)}</option>`).join("");
-  const actorOptions = `<option value="" selected>- Dummy</option>${partyMembers.length ? `<optgroup label="Party Members">${optionsFor(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${optionsFor(otherActors)}</optgroup>` : ""}`;
+  const controlledIds = controlledTokenActorIds();
+  const actorOptionsFor = (selectedId = null) => {
+    const option = (entry) => `<option value="${escapeHTML(entry.id)}" ${entry.id === selectedId ? "selected" : ""}>${escapeHTML(entry.name)}</option>`;
+    return `<option value="" ${selectedId ? "" : "selected"}>- Dummy</option>${partyMembers.length ? `<optgroup label="Party Members">${partyMembers.map(option).join("")}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${otherActors.map(option).join("")}</optgroup>` : ""}`;
+  };
+  const actorOptions = actorOptionsFor();
   const deckOwnerOptions = `<option value="" selected>- Choose a participating character -</option>${partyMembers.length ? `<optgroup label="Party Members">${optionsFor(partyMembers)}</optgroup>` : ""}${otherActors.length ? `<optgroup label="Other Actors">${optionsFor(otherActors)}</optgroup>` : ""}`;
-  const seats = Array.from({ length: 4 }, (_entry, index) => `<label>Character ${index + 1}<select name="seat-${index + 1}" data-seat>${actorOptions}</select></label>`).join("");
+  const seats = Array.from({ length: 4 }, (_entry, index) => `<label>Character ${index + 1}<select name="seat-${index + 1}" data-seat>${actorOptionsFor(controlledIds[index] ?? null)}</select></label>`).join("");
+  const tokenNote = controlledIds.length ? `<p class="notes">${controlledIds.length} controlled token actor${controlledIds.length === 1 ? " is" : "s are"} preselected. You can change any selection before starting.</p>` : '<p class="notes">Control tokens on the canvas before opening this dialog to preselect their actors.</p>';
   const content = `<form class="pp-start-form">
     <p>Choose an actor for each of the four seats. Any seat left as <strong>- Dummy</strong> supplies only a common card.</p>
     <div class="pp-seat-selectors">${seats}</div>
+    ${tokenNote}
     <label class="pp-deck-owner-choice">Deck owner and first Poppy <select name="deckOwner">${deckOwnerOptions}</select></label>
     <p class="notes">The deck owner must be one of the selected characters. They are the first Poppy/Dealer and must use the Deal cards control to begin the first game.</p>
     <div class="pp-start-stakes">${coinFieldMarkup("pp-ante", 500, { label: "Ante per player (pp, gp, sp, cp)" })}</div>

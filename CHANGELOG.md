@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.4.3 — 9 November 2026
+Participant selectors now prefill from controlled canvas tokens in Poppy’s Prize and the other tavern games. The controlled token actors remain editable before the table starts.
+
 ## 2.4.2 — 9 November 2026
 Removed the unused dealer/deck-owner selector from Slapping setup. Slapping now requests only the two competitors, bout type, and purse settings.
 
