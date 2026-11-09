@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.6.4 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, GM disqualification controls, and token-name output for NPCs.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.7.0 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, GM disqualification controls, and token-name output for NPCs.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.6.4 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.7.0 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -104,7 +104,7 @@ A failure or critical failure against an observer whispers a suspicion message t
 
 ## Drinking Contest stages
 
-The GM sets the base Fortitude DC when starting a contest. The DC used for each round is the base DC plus the round number minus one. Once all qualified contestants are Ready, the module submits each Performance and Fortitude check together as blind-to-GM rolls. A critical success decreases stage by 1; success leaves it unchanged; failure increases it by 1; and critical failure increases it by 2. The module applies the stated PF2E conditions and a timed effect for the fear-save bonus. Stage 6 eliminates the contestant.
+The GM sets the base Fortitude DC when starting a contest. The GM can also mark an NPC contestant as cheating and choose Performance or Deception — Create a Diversion for its concealment check. The DC used for each round is the base DC plus the round number minus one. Once all qualified contestants are Ready, the module submits each Performance and Fortitude check together as blind-to-GM rolls. A critical success decreases stage by 1; success leaves it unchanged; failure increases it by 1; and critical failure increases it by 2. The module applies the stated PF2E conditions and a timed effect for the fear-save bonus. Stage 6 eliminates the contestant.
 
 | Stage | Name | Automated effect |
 |---:|---|---|

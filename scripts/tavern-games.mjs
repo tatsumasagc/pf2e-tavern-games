@@ -255,7 +255,7 @@ function phaseInstructions(current, playerId = null) {
     return current.result?.winnerName ? `${current.result.winnerName} wins the Slapping bout by ${current.result.finish}.` : "The Slapping bout is an official draw.";
   }
   if (current.phase === "drinking-ready") return player?.ready ? "You are ready. Wait for all eligible drinkers to ready themselves." : "Choose Ready for this round. You can also elect to cheat, which treats your Fortitude result as a success but risks detection.";
-  if (current.phase === "drinking-resolve") return "All participants are ready. The GM is resolving blind Performance checks and blind Fortitude saves.";
+  if (current.phase === "drinking-resolve") return player?.rollSubmitted ? "Your drinking checks were submitted. Wait for the other contestant and the GM." : player?.cheated ? "The GM requested your blind concealment check. Roll it to resolve this round." : "The GM requested your blind Performance and Fortitude checks. Roll both to resolve this round.";
   return "The drinking contest has ended. Passed-out and disqualified participants lose; the final qualified participant wins.";
 }
 
@@ -313,7 +313,7 @@ function playerGameView(current, entry) {
   if (current.game === TAVERN_GAME_IDS.CENTURY) return { ...base, player: { ...base.player, predictions: entry.predictions, stakeCp: entry.stakeCp }, choices: { canChoose: current.phase === "century-select" && entry.predictions.length < 2, canDraw: current.phase === "century-draw" && entry.id === current.dealerId, loadedDice: entry.id === current.dealerId && hasLoadedDice(entryActor) } };
   if (current.game === TAVERN_GAME_IDS.ARM_WRESTLING) return { ...base, player: { ...base.player, grip: entry.grip, rollSubmitted: Boolean(current.armWrestlingRolls?.[entry.id]) }, choices: { canReady: current.phase === "arm-wrestling-ready" && !entry.ready && !entry.out && !entry.disqualified, canRoll: current.phase === "arm-wrestling-resolve" && entryActor?.type === "character" && !current.armWrestlingRolls?.[entry.id] && !entry.out && !entry.disqualified } };
   if (current.game === TAVERN_GAME_IDS.SLAPPING) return { ...base, player: { ...base.player, score: entry.score, role: entry.role, rollSubmitted: Boolean(current.slappingRolls?.[entry.id]) }, choices: { canRoll: current.phase === "slapping-round" && entryActor?.type === "character" && !current.slappingRolls?.[entry.id] && !entry.out && !entry.disqualified } };
-  return { ...base, choices: { canReady: current.phase === "drinking-ready" && !entry.ready && !entry.out && !entry.disqualified } };
+  return { ...base, player: { ...base.player, cheated: current.drinkingCheats?.[entry.id]?.cheated === true, concealment: current.drinkingCheats?.[entry.id]?.concealment ?? "performance", rollSubmitted: Boolean(current.drinkingRolls?.[entry.id]) }, choices: { canReady: current.phase === "drinking-ready" && !entry.ready && !entry.out && !entry.disqualified, canRoll: current.phase === "drinking-resolve" && entryActor?.type === "character" && !current.drinkingRolls?.[entry.id] && !entry.out && !entry.disqualified } };
 }
 
 async function syncGameViews(current) {
@@ -565,7 +565,7 @@ function renderSlappingGM(current) {
   return `<section class="tg-controls"><h3>Bout complete</h3>${winner}<p>Final scores: ${current.players.map((entry) => `${escapeHTML(entry.name)} ${entry.score}`).join(", ")}.</p></section>`;
 }
 function renderDrinkingGM(current) {
-  if (current.phase === "drinking-ready") return `<section class="tg-controls"><h3>Round ${current.round} readiness</h3><p>Each eligible participant presses Ready in their player panel. The GM may ready a participant if needed.</p>${current.players.filter((entry) => qualified(current, entry) && !entry.ready).map((entry) => `<button data-action="tg-drink-ready" data-player="${entry.id}">Ready ${escapeHTML(entry.name)}</button>`).join(" ")}</section>`;
+  if (current.phase === "drinking-ready") return `<section class="tg-controls"><h3>Round ${current.round} readiness</h3><p>Each eligible participant presses Ready in their player panel. The GM may ready a participant if needed. NPCs can be marked as cheating here; cheating treats their Fortitude result as a success and uses the selected concealment skill for detection.</p>${current.players.filter((entry) => qualified(current, entry) && !entry.ready).map((entry) => { const entryActor = actor(entry.actorId); const npcCheat = entryActor?.type === "npc"; return `<div class="tg-drink-ready-row">${npcCheat ? `<label class="tg-check"><input type="checkbox" data-drink-cheat="${entry.id}"> NPC cheats</label><select data-drink-method="${entry.id}"><option value="performance">Performance</option><option value="deception">Deception — Create a Diversion</option></select>` : ""}<button data-action="tg-drink-ready" data-player="${entry.id}">Ready ${escapeHTML(entry.name)}</button></div>`; }).join("")}</section>`;
   if (current.phase === "drinking-resolve") return `<section class="tg-controls"><h3>Resolving drinks</h3><p>Every qualified contestant is ready. Blind Performance and Fortitude checks are resolving now against Fortitude DC <strong>${Number(current.fortitudeDC ?? 0) + Math.max(0, Number(current.round ?? 1) - 1)}</strong> (base ${current.fortitudeDC}).</p><button data-action="tg-drink-resolve" class="tiny">Retry resolution if a check error interrupted the round</button></section>`;
   const winner = current.players.find((entry) => qualified(current, entry));
   return `<section class="tg-controls"><h3>Contest complete</h3><p>${winner ? `${escapeHTML(winner.name)} wins the drinking contest.` : "No participant remained standing."}</p><button data-action="tg-drink-clear-effects">Clear module drinking effects</button></section>`;
@@ -634,6 +634,8 @@ function renderPlayerGame(view) {
     return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Arm Wrestling</h2><p>${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><p>${escapeHTML(phaseInstructions(current, player.id))}</p></section><section class="tg-controls"><p>Your grip: <strong>${player.grip ?? 0}</strong> / ${board.target}</p>${controls}</section>${renderBettingControls(current, view.actorId)}</div>`;
   }
   if (choices.canReady) controls = `<label class="tg-check"><input id="tg-drink-cheat" type="checkbox"> Cheat (your Fortitude save is treated as a success)</label>${cheatMethodControls("tg-drink-cheat-method")}<p class="tg-muted">A blind Performance or Deception (Create a Diversion) check is compared privately with the other contestants’ Perception DCs.</p><button data-action="tg-player-drink-ready">Ready for round ${board.round}</button>`;
+  else if (choices.canRoll) controls = choices.cheated ? `<p>The GM requested your blind ${player.concealment === "deception" ? "Deception (Create a Diversion)" : "Performance"} concealment check. Your Fortitude save is automatic for this cheat.</p><button data-action="tg-player-drink-roll">Roll concealment check</button>` : `<p>The GM requested your blind Performance and Fortitude checks for round ${board.round}. The Fortitude DC is ${Number(board.fortitudeDC ?? 0) + Math.max(0, Number(board.round ?? 1) - 1)}.</p><button data-action="tg-player-drink-roll">Roll Performance and Fortitude</button>`;
+  else if (current.phase === "drinking-resolve" && player.rollSubmitted) controls = "<p>Your drinking results were submitted. Wait for the other contestant and the GM to resolve the round.</p>";
   return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>Drinking Contest</h2><p>Round ${board.round} · ${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><h3>${escapeHTML(drinkStage(player.stage ?? 0).name)} — Stage ${player.stage ?? 0}</h3><p>${escapeHTML(drinkStage(player.stage ?? 0).effect)} ${escapeHTML(phaseInstructions(current, player.id))}</p></section><section class="tg-controls">${controls}</section>${renderBettingControls(current, view.actorId)}</div>`;
 }
 
@@ -679,6 +681,24 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
       } catch (error) {
         ui.notifications.error(error.message ?? "The Slapping check could not be rolled.");
       }
+      return;
+    }
+    if (action === "tg-player-drink-roll") {
+      const entryActor = currentPlayerActor();
+      const view = entryActor?.getFlag(MODULE_ID, VIEW_FLAG);
+      try {
+        const cheat = view?.player?.cheated === true;
+        const concealment = view?.player?.concealment === "deception" ? "deception" : "performance";
+        const performanceTarget = concealment === "deception" ? entryActor?.skills?.deception : entryActor?.skills?.performance;
+        if (!performanceTarget?.check?.roll) throw new Error(`${entryActor?.name ?? "This actor"} does not have the required concealment statistic.`);
+        const concealmentRoll = await performanceTarget.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", ...(concealment === "deception" ? { action: "create-a-diversion", slug: "create-a-diversion" } : {}), extraRollOptions: ["tavern-game:drinking", ...(concealment === "deception" ? ["action:create-a-diversion", "trait:action:create-a-diversion"] : ["action:performance"])], label: `Drinking Contest ${concealment === "deception" ? "Create a Diversion" : "Performance"}`, ...rollSpeakerOptions(entryActor, view?.player?.name, view?.player?.tokenId) });
+        const concealmentPayload = { performanceTotal: Number(concealmentRoll.total ?? 0), performanceNatural: Number(concealmentRoll.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0), concealmentTotal: Number(concealmentRoll.total ?? 0), concealmentNatural: Number(concealmentRoll.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0) };
+        if (cheat) await submitPlayerAction(action, concealmentPayload);
+        else {
+          const fortitude = await entryActor.saves.fortitude.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", dc: { value: Number(view.board.fortitudeDC ?? 0) + Math.max(0, Number(view.board.round ?? 1) - 1) }, extraRollOptions: ["tavern-game:fortitude"], label: `Drinking Contest Fortitude (DC ${Number(view.board.fortitudeDC ?? 0) + Math.max(0, Number(view.board.round ?? 1) - 1)})`, ...rollSpeakerOptions(entryActor, view?.player?.name, view?.player?.tokenId) });
+          await submitPlayerAction(action, { ...concealmentPayload, fortitudeTotal: Number(fortitude.total ?? 0), fortitudeNatural: Number(fortitude.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0) });
+        }
+      } catch (error) { ui.notifications.error(error.message ?? "The Drinking Contest checks could not be rolled."); }
       return;
     }
     if (action === "tg-player-arm-wrestling-roll") {
@@ -828,7 +848,7 @@ async function gmAction(action, playerId, root) {
   else if (action === "tg-bounder-second") { const shooter = playerById(current, current.shooterId); next = bounderSecondRoll(current, diceResult(actor(shooter.actorId), null, 20)); }
   else if (action === "tg-bounder-next") next = nextBounderGame(current);
   else if (action === "tg-century-draw") next = centuryDraw(current);
-  else if (action === "tg-drink-ready") { next = setDrinkingReady(current, playerId, true); if (next.phase === "drinking-resolve") next = await resolveDrinks(next); }
+  else if (action === "tg-drink-ready") { const readyActor = actor(playerId); next = { ...current, drinkingCheats: { ...(current.drinkingCheats ?? {}), [playerId]: { cheated: readyActor?.type === "npc" && root.querySelector(`[data-drink-cheat="${playerId}"]`)?.checked === true, concealment: root.querySelector(`[data-drink-method="${playerId}"]`)?.value === "deception" ? "deception" : "performance" } } }; next = setDrinkingReady(next, playerId, true); if (next.phase === "drinking-resolve") next = await resolveDrinks(next); }
   else if (action === "tg-arm-wrestling-ready") next = setArmWrestlingReady(current, playerId, true);
   else if (action === "tg-arm-wrestling-resolve") next = await resolveArmWrestling(current);
   else if (action === "tg-slapping-resolve") next = await resolveSlapping(current);
@@ -908,11 +928,17 @@ async function resolveSlapping(current) {
   return resolveSlappingRound(next, [{ playerId: striker.id, total: strike.total, natural: strike.natural, degree: strikeDegree }, { playerId: receiver.id, total: receive.total, natural: receive.natural, degree: receiveDegree }]);
 }
 
+function submittedRoll(total, natural) {
+  return { total: Number(total), dice: [{ faces: 20, results: [{ result: Number(natural) }] }] };
+}
 async function resolveDrinks(current) {
   const contestants = current.players.filter((entry) => qualified(current, entry));
   const effectiveDC = Number(current.fortitudeDC ?? 0) + Math.max(0, Number(current.round ?? 1) - 1);
-  const attempts = await Promise.all(contestants.map(async (contestant) => {
+  const rolls = { ...(current.drinkingRolls ?? {}) };
+  for (const contestant of contestants) {
+    if (rolls[contestant.id]) continue;
     const entryActor = actor(contestant.actorId);
+    if (entryActor?.type === "character") continue;
     const cheatRequest = current.drinkingCheats?.[contestant.id];
     const cheat = cheatRequest === true || cheatRequest?.cheated === true;
     const concealment = cheatRequest?.concealment === "deception" ? "deception" : "performance";
@@ -920,23 +946,23 @@ async function resolveDrinks(current) {
       cheat ? rollConcealmentCheck(entryActor, concealment, "Drinking Contest cheating", contestant.name, contestant.tokenId) : rollStatisticBlind(entryActor, "performance", { label: "Drinking Contest Performance", displayName: contestant.name, tokenId: contestant.tokenId }),
       cheat ? Promise.resolve({ total: null, roll: null }) : rollStatisticBlind(entryActor, "fortitude", { dc: effectiveDC, label: `Drinking Contest Fortitude (DC ${effectiveDC})`, displayName: contestant.name, tokenId: contestant.tokenId }),
     ]);
-    return { contestant, cheat, concealment, performance, fortitude };
-  }));
-  await Promise.all(attempts.filter((attempt) => attempt.cheat).map((attempt) => detectCheating(current, attempt.contestant, attempt.performance.roll, "the drinking contest")));
-  const resolutions = attempts.map(({ contestant, cheat, concealment, performance, fortitude }) => ({
-    playerId: contestant.id,
-    performanceTotal: performance.total,
-    fortitudeTotal: fortitude.total,
-    fortitudeDegree: cheat ? "success" : degreeFromRoll(fortitude.roll, effectiveDC),
-    cheated: cheat,
-    concealment,
-  }));
-  const next = resolveDrinkingRound(current, resolutions);
-  await Promise.all(next.players.map((contestant) => applyDrinkingStage(actor(contestant.actorId), contestant.stage)));
-  next.drinkingCheats = {};
-  return next;
+    rolls[contestant.id] = { performanceTotal: performance.total, performanceNatural: Number(performance.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0), concealmentRoll: performance.roll, fortitudeTotal: fortitude.total, fortitudeNatural: Number(fortitude.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0), fortitudeRoll: fortitude.roll, cheated: cheat, concealment, source: "gm-npc" };
+  }
+  const waiting = contestants.filter((entry) => !rolls[entry.id]);
+  const next = { ...current, drinkingRolls: rolls };
+  if (waiting.length) {
+    next.log = [...(current.log ?? []), `Drinking round ${current.round} is waiting for owner checks from: ${waiting.map((entry) => entry.name).join(", ")}.`];
+    return next;
+  }
+  const attempts = contestants.map((contestant) => ({ contestant, result: rolls[contestant.id] }));
+  await Promise.all(attempts.filter(({ result }) => result.cheated).map(({ contestant, result }) => detectCheating(current, contestant, result.concealmentRoll, "the drinking contest")));
+  const resolutions = attempts.map(({ contestant, result }) => ({ playerId: contestant.id, performanceTotal: result.performanceTotal, fortitudeTotal: result.fortitudeTotal, fortitudeDegree: result.cheated ? "success" : degreeFromRoll(result.fortitudeRoll ?? submittedRoll(result.fortitudeTotal, result.fortitudeNatural), effectiveDC), cheated: result.cheated === true, concealment: result.concealment }));
+  const resolved = resolveDrinkingRound(current, resolutions);
+  await Promise.all(resolved.players.map((contestant) => applyDrinkingStage(actor(contestant.actorId), contestant.stage)));
+  resolved.drinkingCheats = {};
+  resolved.drinkingRolls = {};
+  return resolved;
 }
-
 async function settleCompetitiveBets(current) {
   if (!competitiveGame(current) || !current.result || !current.betting || current.betting.settled) return current;
   const winnerId = current.result.winnerId ?? null;
@@ -1015,6 +1041,19 @@ async function processPlayerAction(entryActor, request, userId) {
       if (!Number.isFinite(total) || !Number.isInteger(natural) || natural < 1 || natural > 20) throw new Error("The submitted Slapping result was invalid.");
       next = { ...current, slappingRolls: { ...(current.slappingRolls ?? {}), [entrant.id]: { role: expectedRole, total, natural, source: "owner" } } };
       if (next.players.filter((entry) => qualified(next, entry)).every((entry) => next.slappingRolls?.[entry.id])) next = await resolveSlapping(next);
+    }
+    else if (request.action === "tg-player-drink-roll") {
+      if (current.game !== TAVERN_GAME_IDS.DRINKING || current.phase !== "drinking-resolve") throw new Error("The Drinking Contest is not waiting for checks.");
+      if (entryActor.type !== "character") throw new Error("NPC Drinking Contest checks are rolled automatically by the GM.");
+      if (current.drinkingRolls?.[entrant.id]) throw new Error("This contestant has already submitted Drinking Contest checks.");
+      const cheat = current.drinkingCheats?.[entrant.id]?.cheated === true;
+      const performanceTotal = Number(payload.performanceTotal);
+      const performanceNatural = Number(payload.performanceNatural);
+      const fortitudeTotal = cheat ? null : Number(payload.fortitudeTotal);
+      const fortitudeNatural = cheat ? null : Number(payload.fortitudeNatural);
+      if (!Number.isFinite(performanceTotal) || !Number.isInteger(performanceNatural) || performanceNatural < 1 || performanceNatural > 20 || (!cheat && (!Number.isFinite(fortitudeTotal) || !Number.isInteger(fortitudeNatural) || fortitudeNatural < 1 || fortitudeNatural > 20))) throw new Error("The submitted Drinking Contest results were invalid.");
+      next = { ...current, drinkingRolls: { ...(current.drinkingRolls ?? {}), [entrant.id]: { performanceTotal, performanceNatural, fortitudeTotal, fortitudeNatural, concealmentRoll: submittedRoll(performanceTotal, performanceNatural), fortitudeRoll: cheat ? null : submittedRoll(fortitudeTotal, fortitudeNatural), cheated: cheat, concealment: current.drinkingCheats?.[entrant.id]?.concealment ?? "performance", source: "owner" } } };
+      if (next.players.filter((entry) => qualified(next, entry)).every((entry) => next.drinkingRolls?.[entry.id])) next = await resolveDrinks(next);
     }
     else if (request.action === "tg-player-arm-wrestling-roll") {
       if (current.game !== TAVERN_GAME_IDS.ARM_WRESTLING || current.phase !== "arm-wrestling-resolve") throw new Error("Arm Wrestling is not waiting for Athletics checks.");
