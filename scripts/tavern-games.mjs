@@ -83,18 +83,11 @@ function competitiveRating(entryActor, game) {
 function suggestedCompetitivePrize(current) {
   const levels = current.players.map((entry) => actorLevel(actor(entry.actorId)));
   const averageLevel = levels.reduce((sum, value) => sum + value, 0) / Math.max(1, levels.length);
-  const relevantStats = current.players.map((entry) => {
-    const entryActor = actor(entry.actorId);
-    const athletics = statisticModifier(entryActor, "athletics");
-    const fortitude = statisticModifier(entryActor, "fortitude");
-    return current.game === TAVERN_GAME_IDS.SLAPPING ? (athletics + fortitude) / 2 : current.game === TAVERN_GAME_IDS.DRINKING ? fortitude : athletics;
-  });
-  const averageRelevantStat = relevantStats.reduce((sum, value) => sum + value, 0) / Math.max(1, relevantStats.length);
-  // Silver is the everyday unit: 1 sp for unskilled daily work, 5 sp for skilled work.
-  // Each level adds 5 sp of reputation, while positive relevant skill adds a modest premium.
-  const purseSp = 1 + Math.round(averageLevel * 5) + Math.max(0, Math.round(averageRelevantStat));
+  // Silver is the everyday unit: 1 sp baseline plus 5 sp per average participant level.
+  // The purse is intentionally level-based only; combat statistics affect betting odds, not the prize.
+  const purseSp = 1 + Math.round(averageLevel * 5);
   const boutMultiplier = current.game === TAVERN_GAME_IDS.SLAPPING && current.boutType === "title" ? 2 : 1;
-  return Math.max(10, Math.max(purseSp + 1, Math.round(purseSp * 2.5)) * boutMultiplier * 10);
+  return Math.max(10, Math.max(purseSp + 1, Math.round(purseSp * 2)) * boutMultiplier * 10);
 }
 function competitiveOdds(current, modifiers = current.betting?.oddsModifiers ?? {}) {
   const ratings = current.players.map((entry) => ({ entry, rating: competitiveRating(actor(entry.actorId), current.game) + Number(modifiers[entry.id] ?? 0) * 2 }));
