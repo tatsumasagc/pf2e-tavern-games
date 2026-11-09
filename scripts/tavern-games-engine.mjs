@@ -66,6 +66,8 @@ function validParticipants(participants, { minimum = 2, maximum = 20 } = {}) {
     id: player.id,
     actorId: player.actorId ?? player.id,
     name: player.name,
+    tokenId: player.tokenId ?? null,
+    tokenName: player.tokenName ?? null,
     seat: index + 1,
     disqualified: false,
   }));

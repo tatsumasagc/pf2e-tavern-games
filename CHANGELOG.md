@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.6.0 — 9 November 2026
+NPC participant output now uses the selected placed token name instead of the underlying actor name. PC output continues to use actor names.
+
 ## 2.5.1 — 9 November 2026
 Betting settlement now whispers each bettor their win, refund, or loss in ChatMessage, with the automatic-currency-transfer status when applicable.
 
