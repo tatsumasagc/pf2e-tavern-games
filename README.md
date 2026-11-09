@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.6.0 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, GM disqualification controls, and token-name output for NPCs.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.6.1 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, GM disqualification controls, and token-name output for NPCs.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.6.0 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.6.1 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -56,7 +56,7 @@ A GM can open the library from the dice control in the Token Controls, from the 
 
 Arm Wrestling, Slapping, and Drinking Contest support a shared betting board. A player opens the PF2e Tavern Games panel from an owned PC actor; participants may wager as well as spectators. The module rates competitors from actor level and relevant statistics, shows fixed odds, and allows one wager per actor. The first wager locks the odds, but additional players may continue to bet until the contest ends. Participants may bet on any eligible competitor, including themselves.
 
-The GM may apply a -5 to +5 odds nudge before betting begins. Use this for narrative factors such as recent wins, a reputation boost, or a character exaggerating their ability. The setup dialog calculates a suggested winner purse in silver: it starts from the 1 sp unskilled / 5 sp skilled daily-wage baseline, adds level and relevant-statistic premiums, and increases the previous value by 250% (350% of the previous value), with at least a 1 sp increase. The GM may edit the purse. Winning bets pay their locked fixed odds, draws refund all wagers, and the winner purse is separate from the betting pool. When a contest ends, the winner and purse amount are announced in chat. Each bettor also receives a private ChatMessage whisper stating their payout, refund, or loss; the whisper notes when automatic currency transfer was used. Automatic currency transfers are optional.
+The GM may apply a -5 to +5 odds nudge before betting begins. Use this for narrative factors such as recent wins, a reputation boost, or a character exaggerating their ability. The setup dialog calculates a suggested winner purse in silver: it starts from the 1 sp unskilled / 5 sp skilled daily-wage baseline, adds level and relevant-statistic premiums, and sets the suggested purse to 250% of the previous value (a 150% increase), with at least a 1 sp increase. The GM may edit the purse. Winning bets pay their locked fixed odds, draws refund all wagers, and the winner purse is separate from the betting pool. When a contest ends, the winner and purse amount are announced in chat. Each bettor also receives a private ChatMessage whisper stating their payout, refund, or loss; the whisper notes when automatic currency transfer was used. Automatic currency transfers are optional.
 
 ## Slapping
 Slapping is a two-competitor, Power Slap-inspired game. The GM chooses a standard three-round bout or a title five-round bout. A coin toss determines the opening striker. Each round alternates the striker and receiver. The striker has 60 seconds to deliver an open-handed slap below the eye and above the chin; the receiver has 60 seconds to recover before returning to position.

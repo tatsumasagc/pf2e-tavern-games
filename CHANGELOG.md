@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.6.1 — 9 November 2026
+Corrected the suggested winner-purse multiplier to 250% of the previous value, equivalent to a 150% increase, with the existing minimum increase preserved.
+
 ## 2.6.0 — 9 November 2026
 NPC participant output now uses the selected placed token name instead of the underlying actor name. PC output continues to use actor names.
 

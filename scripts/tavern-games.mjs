@@ -94,7 +94,7 @@ function suggestedCompetitivePrize(current) {
   // Each level adds 5 sp of reputation, while positive relevant skill adds a modest premium.
   const purseSp = 1 + Math.round(averageLevel * 5) + Math.max(0, Math.round(averageRelevantStat));
   const boutMultiplier = current.game === TAVERN_GAME_IDS.SLAPPING && current.boutType === "title" ? 2 : 1;
-  return Math.max(10, Math.max(purseSp + 1, Math.round(purseSp * 3.5)) * boutMultiplier * 10);
+  return Math.max(10, Math.max(purseSp + 1, Math.round(purseSp * 2.5)) * boutMultiplier * 10);
 }
 function competitiveOdds(current, modifiers = current.betting?.oddsModifiers ?? {}) {
   const ratings = current.players.map((entry) => ({ entry, rating: competitiveRating(actor(entry.actorId), current.game) + Number(modifiers[entry.id] ?? 0) * 2 }));
