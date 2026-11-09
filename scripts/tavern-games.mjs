@@ -139,6 +139,13 @@ function tokenForActor(actorId) {
     ?? (canvas?.tokens?.placeables ?? []).find((token) => token.actor?.id === actorId)
     ?? null;
 }
+function rollSpeakerOptions(entryActor, displayName = null, tokenId = null) {
+  const token = tokenId ? canvas?.tokens?.get(tokenId) : tokenForActor(entryActor?.id);
+  return {
+    ...(token?.document ? { token: token.document } : {}),
+    ...(displayName ? { speaker: { alias: displayName } } : {}),
+  };
+}
 function participantOptions({ includeDummy = true, selectedId = null } = {}) {
   const { partyMembers, otherActors } = gameActorGroups();
   const buildOptions = (entries) => entries.map((entry) => `<option value="${escapeHTML(entry.id)}" ${entry.id === selectedId ? "selected" : ""}>${escapeHTML(entry.name)}</option>`).join("");
@@ -354,10 +361,10 @@ async function announceResult(current) {
   await ChatMessage.create({ content: `<section class="tg-result"><h3>${escapeHTML(TAVERN_GAME_NAMES[current.game])} result</h3><ul>${lines}</ul></section>`, flags: { [MODULE_ID]: { resultAnnouncement: current.announcedResult } } });
 }
 
-async function rollStatisticBlind(entryActor, statistic, { dc = null, label = "Tavern game check", action = null, slug = null, extraRollOptions = [] } = {}) {
+async function rollStatisticBlind(entryActor, statistic, { dc = null, label = "Tavern game check", action = null, slug = null, extraRollOptions = [], displayName = null, tokenId = null } = {}) {
   const target = statistic === "fortitude" ? entryActor?.saves?.fortitude : entryActor?.skills?.[statistic];
   if (!target?.check?.roll) throw new Error(`${entryActor?.name ?? "Actor"} does not have a ${statistic} statistic to roll.`);
-  const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", dc: dc === null ? undefined : { value: dc }, ...(action ? { action } : {}), ...(slug ? { slug } : {}), extraRollOptions: [`tavern-game:${statistic}`, ...extraRollOptions], label });
+  const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", dc: dc === null ? undefined : { value: dc }, ...(action ? { action } : {}), ...(slug ? { slug } : {}), extraRollOptions: [`tavern-game:${statistic}`, ...extraRollOptions], label, ...rollSpeakerOptions(entryActor, displayName, tokenId) });
   return { total: Number(roll?.total ?? 0), roll };
 }
 
@@ -375,10 +382,12 @@ function dealerHandSelectors(prefix, cards, count) {
   return `<div class="tg-dealer-hand-fields"><p>Choose the ${count} card${count === 1 ? "" : "s"} needed to complete the Dealer’s hand.</p>${Array.from({ length: count }, (_entry, index) => `<label>Hand card ${index + 1}<select data-dealer-hand="${escapeHTML(prefix)}-${index}">${options}</select></label>`).join("")}</div>`;
 }
 
-async function rollConcealmentCheck(entryActor, method, label) {
+async function rollConcealmentCheck(entryActor, method, label, displayName = null, tokenId = null) {
   const deception = method === "deception";
   return rollStatisticBlind(entryActor, deception ? "deception" : "performance", {
     label: `${deception ? "Create a Diversion" : "Performance"} — ${label}`,
+    displayName,
+    tokenId,
     ...(deception ? { action: "create-a-diversion", slug: "create-a-diversion", extraRollOptions: ["action:create-a-diversion", "trait:action:create-a-diversion"] } : { extraRollOptions: ["action:performance"] }),
   });
 }
@@ -498,7 +507,7 @@ function renderGameHeader(current) {
 }
 
 function renderPlayers(current, { gm = false } = {}) {
-  return `<section class="tg-players"><h3>Participants</h3>${current.players.map((entry) => `<article class="tg-player ${entry.disqualified || entry.out || entry.folded ? "inactive" : ""}"><div><strong>${escapeHTML(entry.name)}</strong><span>Seat ${entry.seat}${current.game === TAVERN_GAME_IDS.GOLEM && entry.seat === current.amuletSeat ? " · Amulet" : ""}${entry.id === current.dealerId ? " · Dealer" : ""}${entry.id === current.shooterId ? " · Shooter" : ""}</span></div><div>${entry.disqualified ? "Disqualified" : entry.out ? "Lost" : entry.folded ? "Folded" : current.game === TAVERN_GAME_IDS.DRINKING ? `${drinkStage(entry.stage).name} (Stage ${entry.stage})${entry.ready ? " · Ready" : ""}` : "Eligible"}${gm && !entry.disqualified ? `<button type="button" data-action="tg-disqualify" data-player="${entry.id}" class="danger tiny">Disqualify</button>` : ""}</div></article>`).join("")}</section>`;
+  return `<section class="tg-players"><h3>Participants</h3>${current.players.map((entry) => `<article class="tg-player ${entry.disqualified || entry.out || entry.folded ? "inactive" : ""}"><div><strong>${escapeHTML(entry.name)}</strong><span class="tg-seat">Seat ${entry.seat}${current.game === TAVERN_GAME_IDS.GOLEM && entry.seat === current.amuletSeat ? " · Amulet" : ""}${entry.id === current.dealerId ? " · Dealer" : ""}${entry.id === current.shooterId ? " · Shooter" : ""}</span></div><div>${entry.disqualified ? "Disqualified" : entry.out ? "Lost" : entry.folded ? "Folded" : current.game === TAVERN_GAME_IDS.DRINKING ? `${drinkStage(entry.stage).name} (Stage ${entry.stage})${entry.ready ? " · Ready" : ""}` : "Eligible"}${gm && !entry.disqualified ? `<button type="button" data-action="tg-disqualify" data-player="${entry.id}" class="danger tiny">Disqualify</button>` : ""}</div></article>`).join("")}</section>`;
 }
 
 function renderGolemGM(current) {
@@ -557,7 +566,7 @@ function renderSlappingGM(current) {
 }
 function renderDrinkingGM(current) {
   if (current.phase === "drinking-ready") return `<section class="tg-controls"><h3>Round ${current.round} readiness</h3><p>Each eligible participant presses Ready in their player panel. The GM may ready a participant if needed.</p>${current.players.filter((entry) => qualified(current, entry) && !entry.ready).map((entry) => `<button data-action="tg-drink-ready" data-player="${entry.id}">Ready ${escapeHTML(entry.name)}</button>`).join(" ")}</section>`;
-  if (current.phase === "drinking-resolve") return `<section class="tg-controls"><h3>Resolving drinks</h3><p>Every qualified contestant is ready. Blind Performance and Fortitude checks are resolving now against Fortitude DC <strong>${current.fortitudeDC}</strong>.</p><button data-action="tg-drink-resolve" class="tiny">Retry resolution if a check error interrupted the round</button></section>`;
+  if (current.phase === "drinking-resolve") return `<section class="tg-controls"><h3>Resolving drinks</h3><p>Every qualified contestant is ready. Blind Performance and Fortitude checks are resolving now against Fortitude DC <strong>${Number(current.fortitudeDC ?? 0) + Math.max(0, Number(current.round ?? 1) - 1)}</strong> (base ${current.fortitudeDC}).</p><button data-action="tg-drink-resolve" class="tiny">Retry resolution if a check error interrupted the round</button></section>`;
   const winner = current.players.find((entry) => qualified(current, entry));
   return `<section class="tg-controls"><h3>Contest complete</h3><p>${winner ? `${escapeHTML(winner.name)} wins the drinking contest.` : "No participant remained standing."}</p><button data-action="tg-drink-clear-effects">Clear module drinking effects</button></section>`;
 }
@@ -664,7 +673,7 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
         const statistic = view?.player?.role === "receiver" ? "fortitude" : "athletics";
         const target = statistic === "fortitude" ? entryActor?.saves?.fortitude : entryActor?.skills?.athletics;
         if (!target?.check?.roll) throw new Error(`${entryActor?.name ?? "This actor"} does not have the required ${statistic} statistic to roll.`);
-        const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", extraRollOptions: [`tavern-game:${statistic}`], label: `Slapping ${statistic}` });
+        const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", extraRollOptions: [`tavern-game:${statistic}`], label: `Slapping ${statistic}`, ...rollSpeakerOptions(entryActor, view?.player?.name, view?.player?.tokenId) });
         const natural = Number(roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
         await submitPlayerAction(action, { role: view?.player?.role, total: Number(roll?.total ?? 0), natural });
       } catch (error) {
@@ -677,7 +686,7 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
       try {
         const target = entryActor?.skills?.athletics;
         if (!target?.check?.roll) throw new Error(`${entryActor?.name ?? "This actor"} does not have an Athletics statistic to roll.`);
-        const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", extraRollOptions: ["tavern-game:athletics"], label: "Arm Wrestling Athletics" });
+        const roll = await target.check.roll({ event: null, skipDialog: true, messageMode: "blindroll", extraRollOptions: ["tavern-game:athletics"], label: "Arm Wrestling Athletics", ...rollSpeakerOptions(entryActor, view?.player?.name, view?.player?.tokenId) });
         const natural = Number(roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0);
         await submitPlayerAction(action, { total: Number(roll?.total ?? 0), natural });
       } catch (error) {
@@ -833,7 +842,7 @@ async function gmAction(action, playerId, root) {
 async function markedCardCheck(current, cheater, cheating, concealment = "performance") {
   if (!cheating) return null;
   const entryActor = actor(cheater.actorId);
-  const check = await rollConcealmentCheck(entryActor, concealment, "Golem cheating");
+  const check = await rollConcealmentCheck(entryActor, concealment, "Golem cheating", cheater.name, cheater.tokenId);
   await detectCheating(current, cheater, check.roll, "Golem");
   return check;
 }
@@ -861,7 +870,7 @@ async function resolveArmWrestling(current) {
     if (rolls[wrestler.id]) continue;
     const entryActor = actor(wrestler.actorId);
     if (entryActor?.type === "character") continue;
-    const check = await rollStatisticBlind(entryActor, "athletics", { label: "Arm Wrestling Athletics" });
+    const check = await rollStatisticBlind(entryActor, "athletics", { label: "Arm Wrestling Athletics", displayName: wrestler.name, tokenId: wrestler.tokenId });
     rolls[wrestler.id] = { total: check.total, natural: Number(check.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0), source: "gm-npc" };
   }
   const waiting = wrestlers.filter((wrestler) => !rolls[wrestler.id]);
@@ -884,7 +893,7 @@ async function resolveSlapping(current) {
     if (rolls[entry.id]) continue;
     const entryActor = actor(entry.actorId);
     if (entryActor?.type === "character") continue;
-    const check = await rollStatisticBlind(entryActor, statistic, { label: `Slapping ${role}` });
+    const check = await rollStatisticBlind(entryActor, statistic, { label: `Slapping ${role}`, displayName: entry.name, tokenId: entry.tokenId });
     rolls[entry.id] = { role, total: check.total, natural: Number(check.roll?.dice?.find((die) => die.faces === 20)?.results?.[0]?.result ?? 0), source: "gm-npc" };
   }
   const pending = [striker, receiver].filter((entry) => !rolls[entry.id]);
@@ -901,14 +910,15 @@ async function resolveSlapping(current) {
 
 async function resolveDrinks(current) {
   const contestants = current.players.filter((entry) => qualified(current, entry));
+  const effectiveDC = Number(current.fortitudeDC ?? 0) + Math.max(0, Number(current.round ?? 1) - 1);
   const attempts = await Promise.all(contestants.map(async (contestant) => {
     const entryActor = actor(contestant.actorId);
     const cheatRequest = current.drinkingCheats?.[contestant.id];
     const cheat = cheatRequest === true || cheatRequest?.cheated === true;
     const concealment = cheatRequest?.concealment === "deception" ? "deception" : "performance";
     const [performance, fortitude] = await Promise.all([
-      cheat ? rollConcealmentCheck(entryActor, concealment, "Drinking Contest cheating") : rollStatisticBlind(entryActor, "performance", { label: "Drinking Contest Performance" }),
-      cheat ? Promise.resolve({ total: null, roll: null }) : rollStatisticBlind(entryActor, "fortitude", { dc: current.fortitudeDC, label: "Drinking Contest Fortitude" }),
+      cheat ? rollConcealmentCheck(entryActor, concealment, "Drinking Contest cheating", contestant.name, contestant.tokenId) : rollStatisticBlind(entryActor, "performance", { label: "Drinking Contest Performance", displayName: contestant.name, tokenId: contestant.tokenId }),
+      cheat ? Promise.resolve({ total: null, roll: null }) : rollStatisticBlind(entryActor, "fortitude", { dc: effectiveDC, label: `Drinking Contest Fortitude (DC ${effectiveDC})`, displayName: contestant.name, tokenId: contestant.tokenId }),
     ]);
     return { contestant, cheat, concealment, performance, fortitude };
   }));
@@ -917,7 +927,7 @@ async function resolveDrinks(current) {
     playerId: contestant.id,
     performanceTotal: performance.total,
     fortitudeTotal: fortitude.total,
-    fortitudeDegree: cheat ? "success" : degreeFromRoll(fortitude.roll, current.fortitudeDC),
+    fortitudeDegree: cheat ? "success" : degreeFromRoll(fortitude.roll, effectiveDC),
     cheated: cheat,
     concealment,
   }));

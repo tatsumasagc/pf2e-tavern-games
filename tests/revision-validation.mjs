@@ -21,11 +21,11 @@ const golemAssetNames = readdirSync(golemCardDirectory);
 const golemCards = golemAssetNames.filter((name) => name.endsWith(".png"));
 const golemPlayableCards = golemCards.filter((name) => name !== "golem_card_back.png");
 
-assert.equal(manifest.version, "2.6.3", "The release version should be 2.6.3");
+assert.equal(manifest.version, "2.6.4", "The release version should be 2.6.4");
 assert.equal(manifest.id, "pf2e-tavern-games", "The Foundry package ID should be pf2e-tavern-games.");
 assert.equal(manifest.url, "https://github.com/tatsumasagc/pf2e-tavern-games", "The manifest should reference the renamed GitHub repository.");
 assert.match(manifest.manifest, /tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json$/, "The manifest URL should use the renamed repository.");
-assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.6\.3\/pf2e-tavern-games-v2\.6\.3\.zip$/, "The download URL should use the renamed repository and release asset.");
+assert.match(manifest.download, /tatsumasagc\/pf2e-tavern-games\/releases\/download\/v2\.6\.4\/pf2e-tavern-games-v2\.6\.4\.zip$/, "The download URL should use the renamed repository and release asset.");
 assert.equal(manifest.title, "PF2e Tavern Games", "The visible module title should be PF2e Tavern Games.");
 assert.match(readmeSource, /### Recommended: install from the manifest URL/, "The README should include a dedicated Foundry manifest installation section.");
 assert.match(readmeSource, /https:\/\/github\.com\/tatsumasagc\/pf2e-tavern-games\/releases\/latest\/download\/module\.json/, "The README should publish the canonical Foundry manifest URL.");
@@ -82,6 +82,9 @@ assert.match(tavernSource, /rollStatisticBlind\(entryActor, "athletics"/, "Arm W
 assert.match(tavernSource, /tg-disqualify/, "The GM table should expose a disqualification control.");
 assert.match(tavernSource, /function participantLimits\(gameId\)/, "Added games should define count limits before participant selection.");
 assert.match(tavernSource, /TAVERN_GAME_IDS\.DRINKING\]\.includes\(gameId\).*minimum: 2, maximum: 2/s, "Drinking Contest should be limited to exactly two contestants.");
+assert.match(tavernSource, /class=\"tg-seat\"/, "Participant seat labels should use the spaced seat class.");
+assert.match(tavernSource, /function rollSpeakerOptions/, "Roll chat messages should use token-aware speakers.");
+assert.match(tavernSource, /effectiveDC = Number\(current\.fortitudeDC/, "Drinking Contest DC should increase with the round number.");
 assert.match(readmeSource, /Drinking Contest.*2 contestants.*spectators/i, "README should document two contestants plus spectators.");
 assert.match(tavernSource, /controlledTokenActorIds|canvas\?\.tokens\?\.controlled/, "Added-game participants should support controlled token actor selection.");
 assert.match(tavernSource, /Number of participants/, "Added-game setup should ask for a participant count first.");
@@ -271,7 +274,7 @@ assert.match(moduleGuide.pages[0].text.content, /removes those linked conditions
 
 assert.match(journalSources.find((entry) => entry.name === "Arm Wrestling — Rules Reference").pages[0].text.content, /first wrestler to reach 5 grip points/i, "Arm Wrestling rules should document the win condition.");
 assert.match(journalSources.find((entry) => entry.name === "Slapping — Rules Reference").pages[0].text.content, /standard.*three rounds|title.*five rounds/i, "Slapping rules should document bout lengths.");
-console.log("PF2e Tavern Games 2.6.3 revision validation passed.");
+console.log("PF2e Tavern Games 2.6.4 revision validation passed.");
 assert.match(cssSource, /\.tg-hand > div \{\s+align-items: flex-start;/, "Golem player hands should align cards without allowing image overflow to collapse the hand row");
 assert.match(cssSource, /\.tg-card \{\s+box-sizing: border-box;\s+flex: 0 0 75px;\s+height: auto !important;/, "Golem cards should reserve intrinsic space before player controls");
 assert.match(cssSource, /\.tg-card img \{\s+display: block;\s+height: auto !important;\s+aspect-ratio: 2 \/ 3;/, "Golem card images should stay inside their card boxes");

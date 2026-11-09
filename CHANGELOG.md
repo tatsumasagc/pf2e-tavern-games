@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.6.4 — 9 November 2026
+Fixed missing spacing before participant seat labels, updated roll chat speakers to use selected token names, and increased the Drinking Contest Fortitude DC by round number minus one.
+
 ## 2.6.3 — 9 November 2026
 Drinking Contest setup now allows exactly two contestants. Additional players can spectate and place bets without becoming contestants.
 

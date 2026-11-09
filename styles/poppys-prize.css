@@ -885,6 +885,10 @@ button.pp-card:hover:not(:disabled),
   margin: 0.2rem 0 0;
   color: #e5e8dc;
 }
+.pf2e-tavern-games .tg-player .tg-seat {
+  display: inline-block;
+  margin-left: 0.35rem;
+}
 
 .pf2e-tavern-games .tg-header-actions,
 .pf2e-tavern-games .tg-controls,
