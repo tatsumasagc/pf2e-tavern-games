@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.5.1 — 9 November 2026
+Betting settlement now whispers each bettor their win, refund, or loss in ChatMessage, with the automatic-currency-transfer status when applicable.
+
 ## 2.5.0 — 9 November 2026
 Added betting to Drinking Contest and allowed Arm Wrestling and Slapping participants to wager. Increased the suggested winner purses by 250% over the previous values, with at least a 1 sp increase, and added chat announcements identifying the winner and purse amount.
 

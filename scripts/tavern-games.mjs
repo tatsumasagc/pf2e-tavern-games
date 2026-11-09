@@ -934,12 +934,17 @@ async function settleCompetitiveBets(current) {
   const winnerId = current.result.winnerId ?? null;
   const payouts = (current.betting.bets ?? []).map((bet) => {
     const amountCp = winnerId === null ? bet.amountCp : bet.playerId === winnerId ? Math.round(bet.amountCp * Number(bet.odds ?? 1)) : 0;
-    return { ...bet, payoutCp: amountCp, message: winnerId === null ? `Draw: your ${formatCopper(bet.amountCp)} wager was refunded.` : amountCp ? `Your ${formatCopper(bet.amountCp)} wager paid ${formatCopper(amountCp)} at ${formatOdds(bet.odds)}.` : "Your wager did not win." };
+    return { ...bet, payoutCp: amountCp, message: winnerId === null ? `Draw: your ${formatCopper(bet.amountCp)} wager was refunded.` : amountCp ? `Your ${formatCopper(bet.amountCp)} wager paid ${formatCopper(amountCp)} at ${formatOdds(bet.odds)}.` : `Your ${formatCopper(bet.amountCp)} wager did not win.` };
   });
   if (current.betting.autoCurrency) {
     for (const payout of payouts.filter((entry) => entry.payoutCp > 0)) await actor(payout.actorId)?.inventory?.addCurrency?.(copperToCoins(payout.payoutCp));
     const winner = winnerId ? playerById(current, winnerId) : null;
     if (winner && current.betting.prizeCp > 0) await actor(winner.actorId)?.inventory?.addCurrency?.(copperToCoins(current.betting.prizeCp));
+  }
+  for (const payout of payouts) {
+    const recipient = payout.userId ? game.users.get(payout.userId) : null;
+    if (!recipient) continue;
+    await ChatMessage.create({ whisper: [recipient.id], content: `<p><strong>${escapeHTML(TAVERN_GAME_NAMES[current.game])} betting result</strong></p><p>${escapeHTML(payout.message)}</p>${current.betting.autoCurrency && payout.payoutCp > 0 ? "<p>The payout was transferred automatically to your actor.</p>" : ""}`, flags: { [MODULE_ID]: { bettingPayout: true, game: current.game, gameNumber: current.gameNumber } } });
   }
   return { ...current, betting: { ...current.betting, settled: true, payouts, prizePaid: Boolean(winnerId && current.betting.prizeCp > 0) } };
 }
