@@ -596,21 +596,30 @@ export function resolveArmWrestlingRound(state, resolutions) {
   const secondResult = resultByPlayer.get(second.id);
   const firstAdjustment = armWrestlingAdjustment(firstResult.degree);
   const secondAdjustment = armWrestlingAdjustment(secondResult.degree);
-  first.grip = Math.min(next.target, Math.max(0, first.grip + firstAdjustment.self + secondAdjustment.opponent));
-  second.grip = Math.min(next.target, Math.max(0, second.grip + secondAdjustment.self + firstAdjustment.opponent));
+  const firstBefore = first.grip;
+  const secondBefore = second.grip;
+  const firstRawChange = firstAdjustment.self + secondAdjustment.opponent;
+  const secondRawChange = secondAdjustment.self + firstAdjustment.opponent;
+  first.grip = Math.min(next.target, Math.max(0, first.grip + firstRawChange));
+  second.grip = Math.min(next.target, Math.max(0, second.grip + secondRawChange));
   first.ready = false;
   second.ready = false;
-  first.result = { total: firstResult.total ?? null, degree: firstResult.degree, grip: first.grip };
-  second.result = { total: secondResult.total ?? null, degree: secondResult.degree, grip: second.grip };
+  first.result = { total: firstResult.total ?? null, degree: firstResult.degree, grip: first.grip, gripBefore: firstBefore, gripChange: first.grip - firstBefore };
+  second.result = { total: secondResult.total ?? null, degree: secondResult.degree, grip: second.grip, gripBefore: secondBefore, gripChange: second.grip - secondBefore };
   const winner = [first, second].find((entry) => entry.grip >= next.target);
-  next.result = { winnerId: winner?.id ?? null, winnerName: winner?.name ?? null, round: next.round, wrestlers: active.map((entry) => ({ playerId: entry.id, name: entry.name, grip: entry.grip, degree: entry.result.degree })) };
+  next.result = { winnerId: winner?.id ?? null, winnerName: winner?.name ?? null, round: next.round, wrestlers: active.map((entry) => ({ playerId: entry.id, name: entry.name, total: entry.result.total, gripBefore: entry.result.gripBefore, gripChange: entry.result.gripChange, grip: entry.grip, degree: entry.result.degree })) };
+  const degreeLabel = (degree) => ({ criticalSuccess: "Critical Success", success: "Success", failure: "Failure", criticalFailure: "Critical Failure" })[degree] ?? degree;
+  const signed = (value) => value >= 0 ? `+${value}` : String(value);
+  const scoreLine = `${first.name}: ${firstBefore} ${signed(first.grip - firstBefore)} → ${first.grip}; ${second.name}: ${secondBefore} ${signed(second.grip - secondBefore)} → ${second.grip}`;
+  next.log.push(`Arm Wrestling round ${next.round}: ${first.name} rolled ${firstResult.total ?? "—"} (${degreeLabel(firstResult.degree)}), ${second.name} rolled ${secondResult.total ?? "—"} (${degreeLabel(secondResult.degree)}).`);
+  next.log.push(`Grip changes: ${scoreLine} / ${first.name} ${degreeLabel(firstResult.degree)} contributed ${firstRawChange} point(s), ${second.name} ${degreeLabel(secondResult.degree)} contributed ${secondRawChange} point(s).`);
   if (winner) {
     next.phase = "arm-wrestling-complete";
-    next.log.push(`${winner.name} wins Arm Wrestling with ${winner.grip} grip points.`);
+    next.log.push(`${winner.name} wins Arm Wrestling in round ${next.round} with ${winner.grip}/${next.target} grip points; ${winner.name} pins ${winner.id === first.id ? second.name : first.name}.`);
   } else {
     next.phase = "arm-wrestling-ready";
     next.round += 1;
-    next.log.push(`Arm Wrestling round ${next.round - 1} resolved: ${first.name} ${first.grip}, ${second.name} ${second.grip} grip points.`);
+    next.log.push(`Round complete. Running grip score: ${first.name} ${first.grip}/${next.target}, ${second.name} ${second.grip}/${next.target}. Both wrestlers must Ready for round ${next.round}.`);
   }
   return next;
 }

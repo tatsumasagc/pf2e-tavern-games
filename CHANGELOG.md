@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.2.1 — 9 November 2026
+Expanded the Arm Wrestling table log. Each resolved round now records both Athletics totals, opposed degrees, raw and applied grip changes, the running grip score, and the final pin/winner details.
+
 ## 2.2.0 — 9 November 2026
 Added Arm Wrestling as a two-participant player-facing tavern game. Each round requires both wrestlers to Ready, then the GM resolves blind opposed Athletics checks. Critical successes award 2 grip points, successes award 1, failures award none, and critical failures award 2 points to the opponent; the first wrestler to 3 grip points wins. Added setup, private player controls, GM resolution, disqualification support, automated engine coverage, README guidance, and a Journal rules reference.
 
