@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.4.2 — 9 November 2026
+Removed the unused dealer/deck-owner selector from Slapping setup. Slapping now requests only the two competitors, bout type, and purse settings.
+
 ## 2.4.1 — 9 November 2026
 Adjusted the Arm Wrestling and Slapping suggested winner purses to use silver as the everyday currency. The calculator now anchors its baseline at 1 sp for unskilled work and 5 sp for skilled work, then adds modest level, relevant-statistic, and title-bout premiums.
 
