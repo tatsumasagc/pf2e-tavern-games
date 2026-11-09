@@ -98,19 +98,19 @@ arm = setArmWrestlingReady(arm, "a");
 assert.equal(arm.phase, "arm-wrestling-ready");
 arm = setArmWrestlingReady(arm, "b");
 assert.equal(arm.phase, "arm-wrestling-resolve");
-arm.players.find((entry) => entry.id === "a").grip = 8;
+arm.players.find((entry) => entry.id === "a").grip = 3;
 arm = resolveArmWrestlingRound(arm, [
   { playerId: "a", total: 25, degree: "criticalSuccess" },
   { playerId: "b", total: 15, degree: "criticalFailure" },
 ]);
-assert.equal(arm.players.find((entry) => entry.id === "a").grip, 10);
+assert.equal(arm.players.find((entry) => entry.id === "a").grip, 5);
 assert.equal(arm.players.find((entry) => entry.id === "b").grip, 0);
 assert.equal(arm.phase, "arm-wrestling-complete");
 assert.equal(arm.result.winnerId, "a");
-assert.deepEqual(arm.result.wrestlers.find((entry) => entry.playerId === "a"), { playerId: "a", name: "Aster", total: 25, gripBefore: 8, gripChange: 2, grip: 10, degree: "criticalSuccess" });
+assert.deepEqual(arm.result.wrestlers.find((entry) => entry.playerId === "a"), { playerId: "a", name: "Aster", total: 25, gripBefore: 3, gripChange: 2, grip: 5, degree: "criticalSuccess" });
 assert.match(arm.log.at(-3), /Aster rolled 25 \(Critical Success\)/);
-assert.match(arm.log.at(-2), /Grip changes: Aster: 8 \+2 → 10; Beryl: 0 \+0 → 0/);
-assert.match(arm.log.at(-1), /Aster wins Arm Wrestling in round 1 with 10\/10 grip points; Aster pins Beryl/);
+assert.match(arm.log.at(-2), /Grip changes: Aster: 3 \+2 → 5; Beryl: 0 \+0 → 0/);
+assert.match(arm.log.at(-1), /Aster wins Arm Wrestling in round 1 with 5\/5 grip points; Aster pins Beryl/);
 
 // Slapping: coin toss, alternating striker/receiver roles, judge points, and judges' decision.
 let slapping = createSlappingGame({ participants: participants.slice(0, 2), boutType: "standard", rng: () => 0 });

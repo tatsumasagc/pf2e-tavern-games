@@ -18,7 +18,7 @@ export const TAVERN_GAME_NAMES = Object.freeze({
   [TAVERN_GAME_IDS.SLAPPING]: "Slapping",
 });
 
-export const ARM_WRESTLING_TARGET = 10;
+export const ARM_WRESTLING_TARGET = 5;
 
 export const DRINKING_STAGES = Object.freeze([
   { stage: 0, name: "Clear-Headed", duration: null, conditions: [], effect: "No drinking-contest effect." },

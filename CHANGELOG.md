@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.4.4 — 9 November 2026
+Changed Arm Wrestling from first to 10 grip points to first to 5 grip points, making matches shorter while retaining the same opposed Athletics and grip-change rules.
+
 ## 2.4.3 — 9 November 2026
 Participant selectors now prefill from controlled canvas tokens in Poppy’s Prize and the other tavern games. The controlled token actors remain editable before the table starts.
 

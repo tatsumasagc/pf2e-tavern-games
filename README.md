@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.4.3 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.4.4 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -65,7 +65,7 @@ The striker rolls Athletics for slap effectiveness and the receiver rolls Fortit
 ## Arm Wrestling
 Arm Wrestling is a two-person contest resolved in repeated rounds. Both wrestlers press **Ready** in their private player panels; the GM then resolves one blind Athletics check for each wrestler at the same time. Compare the two totals for that round. A difference of 10 or more is a critical success for the higher result and a critical failure for the lower result; any smaller positive difference is a success for the higher result and a failure for the lower result; equal totals are a failure for both. Natural 20s and natural 1s adjust the result by one degree where applicable.
 
-A critical success gains 2 grip points, a success gains 1, a failure gains none, and a critical failure gives the opponent 2 grip points. Grip points never go below 0. The first wrestler to reach 10 grip points wins and pins the opponent. The GM may disqualify either wrestler at any time.
+A critical success gains 2 grip points, a success gains 1, a failure gains none, and a critical failure gives the opponent 2 grip points. Grip points never go below 0. The first wrestler to reach 5 grip points wins and pins the opponent. The GM may disqualify either wrestler at any time.
 
 ## Drinking Contest effect lifecycle
 
