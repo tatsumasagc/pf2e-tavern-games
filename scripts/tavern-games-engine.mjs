@@ -6,6 +6,7 @@ export const TAVERN_GAME_IDS = Object.freeze({
   CENTURY: "century",
   DRINKING: "drinking",
   ARM_WRESTLING: "arm-wrestling",
+  SLAPPING: "slapping",
 });
 
 export const TAVERN_GAME_NAMES = Object.freeze({
@@ -14,6 +15,7 @@ export const TAVERN_GAME_NAMES = Object.freeze({
   [TAVERN_GAME_IDS.CENTURY]: "Century",
   [TAVERN_GAME_IDS.DRINKING]: "Drinking Contest",
   [TAVERN_GAME_IDS.ARM_WRESTLING]: "Arm Wrestling",
+  [TAVERN_GAME_IDS.SLAPPING]: "Slapping",
 });
 
 export const ARM_WRESTLING_TARGET = 10;
@@ -621,6 +623,95 @@ export function resolveArmWrestlingRound(state, resolutions) {
     next.phase = "arm-wrestling-ready";
     next.round += 1;
     next.log.push(`Round complete. Running grip score: ${first.name} ${first.grip}/${next.target}, ${second.name} ${second.grip}/${next.target}. Both wrestlers must Ready for round ${next.round}.`);
+  }
+  return next;
+}
+
+export const SLAPPING_ROUNDS = Object.freeze({ standard: 3, title: 5 });
+
+export function createSlappingGame({ participants, boutType = "standard", rng = Math.random } = {}) {
+  const players = validParticipants(participants, { minimum: 2, maximum: 2 });
+  assert(Object.hasOwn(SLAPPING_ROUNDS, boutType), "Choose a standard or title Slapping bout.");
+  const firstIndex = Math.floor(rng() * players.length);
+  const striker = players[firstIndex];
+  const receiver = players[1 - firstIndex];
+  const roundLimit = SLAPPING_ROUNDS[boutType];
+  return {
+    version: 1,
+    game: TAVERN_GAME_IDS.SLAPPING,
+    gameNumber: 1,
+    round: 1,
+    roundLimit,
+    boutType,
+    extraRound: false,
+    phase: "slapping-round",
+    players: players.map((entry) => ({ ...entry, score: 0, role: entry.id === striker.id ? "striker" : "receiver", result: null })),
+    strikerId: striker.id,
+    receiverId: receiver.id,
+    slappingRolls: {},
+    result: null,
+    log: [`Slapping ${boutType} bout: ${roundLimit} rounds. The coin toss gives ${striker.name} the opening slap; ${receiver.name} receives first.`],
+  };
+}
+
+export function slappingJudgePoints(strikeDegree, receiveDegree) {
+  const effectiveness = { criticalSuccess: 3, success: 2, failure: 0, criticalFailure: 0 }[strikeDegree];
+  const reaction = { criticalSuccess: -1, success: 0, failure: 1, criticalFailure: 2 }[receiveDegree];
+  assert(effectiveness !== undefined && reaction !== undefined, "Slapping results must use the four canonical degrees.");
+  return Math.max(0, effectiveness + reaction);
+}
+
+export function resolveSlappingRound(state, resolutions) {
+  assert(state?.game === TAVERN_GAME_IDS.SLAPPING && state.phase === "slapping-round", "Slapping is not ready to resolve.");
+  const next = clone(state);
+  const striker = qualified(next, next.strikerId);
+  const receiver = qualified(next, next.receiverId);
+  const strike = resolutions?.find((entry) => entry.playerId === striker.id);
+  const receive = resolutions?.find((entry) => entry.playerId === receiver.id);
+  assert(strike && receive, "Supply both the striker and receiver results.");
+  const knockout = strike.degree === "criticalSuccess" && receive.degree === "criticalFailure";
+  const points = slappingJudgePoints(strike.degree, receive.degree);
+  striker.score += points;
+  striker.result = { role: "striker", total: strike.total ?? null, degree: strike.degree, points, round: next.round };
+  receiver.result = { role: "receiver", total: receive.total ?? null, degree: receive.degree, points, round: next.round, recovered: receive.degree !== "criticalFailure" };
+  next.slappingRolls = {};
+  next.result = { round: next.round, strikerId: striker.id, receiverId: receiver.id, strikerDegree: strike.degree, receiverDegree: receive.degree, points, knockout, scores: next.players.map((entry) => ({ playerId: entry.id, name: entry.name, score: entry.score })) };
+  next.log.push(`Slapping round ${next.round}: ${striker.name} scored ${strike.total ?? "—"} (${strike.degree}); ${receiver.name} recovered with ${receive.total ?? "—"} (${receive.degree}).`);
+  next.log.push(`${striker.name} earned ${points} judge point(s) from slap effectiveness and ${receiver.name}'s reaction/recovery. Scores: ${next.players.map((entry) => `${entry.name} ${entry.score}`).join(", ")}.`);
+  if (knockout) {
+    next.phase = "slapping-complete";
+    next.result = { ...next.result, winnerId: striker.id, winnerName: striker.name, finish: "knockout" };
+    next.log.push(`${striker.name} wins by knockout in round ${next.round}; ${receiver.name} could not remain still and recover from the critical slap.`);
+    return next;
+  }
+  if (next.round >= next.roundLimit) {
+    const [first, second] = next.players;
+    if (first.score !== second.score) {
+      const winner = first.score > second.score ? first : second;
+      next.phase = "slapping-complete";
+      next.result = { ...next.result, winnerId: winner.id, winnerName: winner.name, finish: "judges-decision" };
+      next.log.push(`${winner.name} wins by judges' decision ${winner.score}-${winner.id === first.id ? second.score : first.score} after ${next.round} rounds.`);
+    } else if (!next.extraRound) {
+      next.extraRound = true;
+      next.roundLimit += 1;
+      next.round += 1;
+      next.strikerId = receiver.id;
+      next.receiverId = striker.id;
+      next.players.forEach((entry) => { entry.role = entry.id === next.strikerId ? "striker" : "receiver"; entry.result = null; });
+      next.phase = "slapping-round";
+      next.log.push(`The bout is tied after the scheduled rounds. An extra round will decide the result; ${receiver.name} strikes next.`);
+    } else {
+      next.phase = "slapping-complete";
+      next.result = { ...next.result, winnerId: null, winnerName: null, finish: "draw" };
+      next.log.push(`The extra round also ended in a tie at ${first.score}-${second.score}. The official result is a draw.`);
+    }
+  } else {
+    next.round += 1;
+    next.strikerId = receiver.id;
+    next.receiverId = striker.id;
+    next.players.forEach((entry) => { entry.role = entry.id === next.strikerId ? "striker" : "receiver"; });
+    next.phase = "slapping-round";
+    next.log.push(`${receiver.name} recovers and becomes the striker for round ${next.round}; ${striker.name} receives.`);
   }
   return next;
 }

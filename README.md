@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.2.3 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.3.0 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -50,6 +50,12 @@ A GM can open the library from the dice control in the Token Controls, from the 
 | **Century** | 2+ | Players select 2–10 numbers from 1–100; the Dealer draws twenty unique two-d10 results and applies the official payout table. |
 | **Drinking Contest** | 2+ | Every contestant presses Ready each round; blind Performance and Fortitude rolls drive a six-stage condition track. |
 | **Arm Wrestling** | 2 | Opposed blind Athletics checks award grip points; first to ten pins the opponent. When a wrestler is a PC, the module requests the Athletics roll from an active actor owner and sends the result privately to the GM; NPC wrestlers are rolled automatically. |
+| **Slapping** | 2 | Power Slap-inspired standard or title bouts with a coin toss, alternating strikes, owner-requested PC checks, automatic NPC checks, judge points, knockouts, and extra-round decisions. |
+
+## Slapping
+Slapping is a two-competitor, Power Slap-inspired game. The GM chooses a standard three-round bout or a title five-round bout. A coin toss determines the opening striker. Each round alternates the striker and receiver. The striker has 60 seconds to deliver an open-handed slap below the eye and above the chin; the receiver has 60 seconds to recover before returning to position.
+
+The striker rolls Athletics for slap effectiveness and the receiver rolls Fortitude for reaction and recovery. PC actors receive private roll requests from the module and send their results to the GM; NPC actors are rolled automatically by the GM. Judge points combine slap effectiveness with the receiver’s reaction and recovery. A critical slap against a critical recovery failure causes a knockout. If the scheduled rounds end without a knockout, the higher score wins by judges’ decision. A tie adds one extra round; a second tie is an official draw.
 
 ## Arm Wrestling
 Arm Wrestling is a two-person contest resolved in repeated rounds. Both wrestlers press **Ready** in their private player panels; the GM then resolves one blind Athletics check for each wrestler at the same time. Compare the two totals for that round. A difference of 10 or more is a critical success for the higher result and a critical failure for the lower result; any smaller positive difference is a success for the higher result and a failure for the lower result; equal totals are a failure for both. Natural 20s and natural 1s adjust the result by one degree where applicable.
@@ -108,7 +114,7 @@ Starting another contest or closing a drinking table removes only the conditions
 
 ## Compendiums
 
-The **PF2e Tavern Games** compendium folder includes the **PF2e Tavern Games Macros** pack and a player-readable **PF2e Tavern Games Journals** pack. The pack contains seven distinct entries: a rules reference for Poppy’s Prize, Golem, Bounder, Century, the Drinking Contest, and Arm Wrestling, plus a module-use guide. Each carries creator and source acknowledgement where applicable.
+The **PF2e Tavern Games** compendium folder includes the **PF2e Tavern Games Macros** pack and a player-readable **PF2e Tavern Games Journals** pack. The pack contains eight distinct entries: a rules reference for Poppy’s Prize, Golem, Bounder, Century, the Drinking Contest, Arm Wrestling, and Slapping, plus a module-use guide. Each carries creator and source acknowledgement where applicable.
 
 ## Sources and content boundary
 

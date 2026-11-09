@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.3.0 — 9 November 2026
+Added Slapping, a two-person Power Slap-inspired game with standard three-round and title five-round bouts, coin-toss opening order, alternating 60-second strike/recovery roles, judge scoring, knockout resolution, extra-round tie handling, and official draws. PC checks are requested from actor owners; NPC checks are rolled automatically by the GM. Added a Slapping rules Journal reference and automated engine/release validation.
+
 ## 2.2.3 — 9 November 2026
 Arm Wrestling now requests Athletics rolls from active owners for PC wrestlers instead of rolling them automatically. NPC wrestlers continue to be rolled automatically by the GM. The GM table shows submitted and waiting wrestlers, and the detailed round log remains authoritative.
 
