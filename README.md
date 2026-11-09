@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.3.0 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.4.0 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -51,6 +51,11 @@ A GM can open the library from the dice control in the Token Controls, from the 
 | **Drinking Contest** | 2+ | Every contestant presses Ready each round; blind Performance and Fortitude rolls drive a six-stage condition track. |
 | **Arm Wrestling** | 2 | Opposed blind Athletics checks award grip points; first to ten pins the opponent. When a wrestler is a PC, the module requests the Athletics roll from an active actor owner and sends the result privately to the GM; NPC wrestlers are rolled automatically. |
 | **Slapping** | 2 | Power Slap-inspired standard or title bouts with a coin toss, alternating strikes, owner-requested PC checks, automatic NPC checks, judge points, knockouts, and extra-round decisions. |
+
+## Spectator betting and winner prizes
+Arm Wrestling and Slapping support a shared spectator betting board. A player opens the PF2e Tavern Games panel from an owned PC actor that is not a participant. The module rates each competitor from actor level and relevant statistics, shows fixed odds, and allows one wager per spectator actor. The first wager locks the odds, but additional spectators may continue to bet until the bout ends. Participants cannot wager on their own bout.
+
+The GM may apply a -5 to +5 odds nudge to either competitor before betting begins. Use this for narrative factors such as recent wins, a reputation boost, or a character exaggerating their ability. The setup dialog also calculates a suggested winner purse from actor level, statistics, and bout length; the GM may edit the purse. Winning bets pay their locked fixed odds, draws refund all wagers, and the winner purse is separate from the betting pool. Automatic currency transfers are optional.
 
 ## Slapping
 Slapping is a two-competitor, Power Slap-inspired game. The GM chooses a standard three-round bout or a title five-round bout. A coin toss determines the opening striker. Each round alternates the striker and receiver. The striker has 60 seconds to deliver an open-handed slap below the eye and above the chin; the receiver has 60 seconds to recover before returning to position.

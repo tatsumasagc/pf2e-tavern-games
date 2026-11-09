@@ -65,6 +65,51 @@ function actor(id) {
   return id ? game.actors.get(id) ?? null : null;
 }
 
+function competitiveGame(current) {
+  return [TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(current?.game);
+}
+function actorLevel(entryActor) {
+  return Number(entryActor?.system?.details?.level?.value ?? entryActor?.level ?? 0);
+}
+function statisticModifier(entryActor, statistic) {
+  const value = statistic === "fortitude" ? entryActor?.saves?.fortitude?.modifier : entryActor?.skills?.athletics?.mod ?? entryActor?.skills?.athletics?.modifier ?? entryActor?.system?.skills?.athletics?.value;
+  return Number(value ?? 0);
+}
+function competitiveRating(entryActor, game) {
+  const athletics = statisticModifier(entryActor, "athletics");
+  const fortitude = statisticModifier(entryActor, "fortitude");
+  return actorLevel(entryActor) * 2 + (game === TAVERN_GAME_IDS.SLAPPING ? athletics + fortitude : athletics);
+}
+function suggestedCompetitivePrize(current) {
+  const levels = current.players.map((entry) => actorLevel(actor(entry.actorId)));
+  const averageLevel = levels.reduce((sum, value) => sum + value, 0) / Math.max(1, levels.length);
+  const rounds = current.roundLimit ?? 1;
+  const boutMultiplier = current.game === TAVERN_GAME_IDS.SLAPPING && current.boutType === "title" ? 2 : 1;
+  return Math.max(500, Math.round((1000 + averageLevel * 500 + rounds * 250) * boutMultiplier));
+}
+function competitiveOdds(current, modifiers = current.betting?.oddsModifiers ?? {}) {
+  const ratings = current.players.map((entry) => ({ entry, rating: competitiveRating(actor(entry.actorId), current.game) + Number(modifiers[entry.id] ?? 0) * 2 }));
+  return Object.fromEntries(ratings.map(({ entry, rating }) => {
+    const opponent = ratings.find((other) => other.entry.id !== entry.id)?.rating ?? rating;
+    const value = Math.max(1.1, Math.min(5, 1.5 + (opponent - rating) * 0.1));
+    return [entry.id, Math.round(value * 100) / 100];
+  }));
+}
+function initCompetitiveBetting(current, { prizeCp = null, autoCurrency = false } = {}) {
+  const suggestedPrizeCp = suggestedCompetitivePrize(current);
+  return { odds: competitiveOdds(current, {}), oddsModifiers: {}, locked: false, bets: [], settled: false, prizeCp: Number.isInteger(prizeCp) && prizeCp > 0 ? prizeCp : suggestedPrizeCp, suggestedPrizeCp, autoCurrency: autoCurrency === true, payouts: [], prizePaid: false };
+}
+function spectatorActorForCurrent() {
+  const target = playerApp?.spectator && playerApp.actorId ? actor(playerApp.actorId) : null;
+  return target?.isOwner ? target : null;
+}
+function competitiveSpectatorView(current, entryActor) {
+  if (!current || !competitiveGame(current) || !entryActor) return null;
+  const board = current?.players && current?.betting ? (current.betting.odds ? publicGameBoard(current) : current) : current;
+  return { version: 1, spectator: true, actorId: entryActor.id, board, player: { id: entryActor.id, name: entryActor.name, level: actorLevel(entryActor), athletics: statisticModifier(entryActor, "athletics"), fortitude: statisticModifier(entryActor, "fortitude") }, choices: { canBet: current.phase !== `${current.game}-complete` } };
+}
+function formatOdds(value) { return `${Number(value ?? 0).toFixed(2)}×`; }
+
 function state() {
   return game.settings.get(MODULE_ID, STATE_KEY);
 }
@@ -116,6 +161,8 @@ function activeOwnerIds(entryActor) {
 }
 
 function currentPlayerActor() {
+  const spectator = spectatorActorForCurrent();
+  if (spectator) return spectator;
   const shown = playerApp?.actorId ? actor(playerApp.actorId) : null;
   if (shown?.isOwner && shown.getFlag(MODULE_ID, VIEW_FLAG)) return shown;
   const defaultActor = game.user?.character;
@@ -224,8 +271,8 @@ function publicGameBoard(current) {
   if (current.game === TAVERN_GAME_IDS.GOLEM) return { ...common, potCp: current.potCp, anteCp: current.anteCp, dealerId: current.dealerId, amuletSeat: current.amuletSeat, betting: current.betting ? { ...current.betting, pending: undefined, roundBets: undefined } : null, discards: current.discards.map(() => ({ facedown: true })) };
   if (current.game === TAVERN_GAME_IDS.BOUNDER) return { ...common, shooterId: current.shooterId, point: current.point, shooterRolls: current.shooterRolls, dealerDice: current.dealerDice, dealerTotal: current.dealerTotal, shooterStakeCp: current.shooterStakeCp, bets: current.bets, result: current.result };
   if (current.game === TAVERN_GAME_IDS.CENTURY) return { ...common, dealerId: current.dealerId, minimumStakeCp: current.minimumStakeCp, drawn: current.phase === "century-complete" ? current.drawn : [], result: current.result };
-  if (current.game === TAVERN_GAME_IDS.ARM_WRESTLING) return { ...common, target: current.target };
-  if (current.game === TAVERN_GAME_IDS.SLAPPING) return { ...common, strikerId: current.strikerId, receiverId: current.receiverId, roundLimit: current.roundLimit, boutType: current.boutType, extraRound: current.extraRound };
+  if (current.game === TAVERN_GAME_IDS.ARM_WRESTLING) return { ...common, target: current.target, betting: current.betting ? { odds: current.betting.odds, locked: current.betting.locked, prizeCp: current.betting.prizeCp, suggestedPrizeCp: current.betting.suggestedPrizeCp, payouts: current.betting.payouts ?? [] } : null };
+  if (current.game === TAVERN_GAME_IDS.SLAPPING) return { ...common, strikerId: current.strikerId, receiverId: current.receiverId, roundLimit: current.roundLimit, boutType: current.boutType, extraRound: current.extraRound, betting: current.betting ? { odds: current.betting.odds, locked: current.betting.locked, prizeCp: current.betting.prizeCp, suggestedPrizeCp: current.betting.suggestedPrizeCp, payouts: current.betting.payouts ?? [] } : null };
   return { ...common, fortitudeDC: current.fortitudeDC };
 }
 
@@ -503,18 +550,31 @@ function renderDrinkingGM(current) {
   return `<section class="tg-controls"><h3>Contest complete</h3><p>${winner ? `${escapeHTML(winner.name)} wins the drinking contest.` : "No participant remained standing."}</p><button data-action="tg-drink-clear-effects">Clear module drinking effects</button></section>`;
 }
 
+function renderCompetitiveBettingGM(current) {
+  if (!competitiveGame(current) || !current.betting) return "";
+  const adjustments = current.players.map((entry) => `<label>${escapeHTML(entry.name)} odds nudge (-5 to +5)<input type="number" min="-5" max="5" step="1" value="${Number(current.betting.oddsModifiers?.[entry.id] ?? 0)}" data-odds-player="${escapeHTML(entry.id)}" ${current.betting.locked ? "disabled" : ""}></label>`).join("");
+  return `<section class="tg-controls tg-betting"><h3>Spectator betting and prize</h3><p>Suggested winner purse: <strong>${escapeHTML(formatCopper(current.betting.suggestedPrizeCp))}</strong> · Current purse: <strong>${escapeHTML(formatCopper(current.betting.prizeCp))}</strong> · ${current.betting.locked ? "Odds locked" : "Odds are adjustable until the first wager"}.</p><p>${current.players.map((entry) => `${escapeHTML(entry.name)} ${formatOdds(current.betting.odds?.[entry.id])}`).join(" · ")}</p>${current.betting.locked ? "" : `<div class="tg-odds-fields">${adjustments}</div><button data-action="tg-update-competitive-odds">Apply odds nudges</button>`}</section>`;
+}
 function renderGMGame(current) {
   const controls = current.game === TAVERN_GAME_IDS.GOLEM ? renderGolemGM(current) : current.game === TAVERN_GAME_IDS.BOUNDER ? renderBounderGM(current) : current.game === TAVERN_GAME_IDS.CENTURY ? renderCenturyGM(current) : current.game === TAVERN_GAME_IDS.DRINKING ? renderDrinkingGM(current) : current.game === TAVERN_GAME_IDS.SLAPPING ? renderSlappingGM(current) : renderArmWrestlingGM(current);
-  return `<div class="tg-table tg-gm-table">${renderGameHeader(current)}<section class="tg-phase"><h3>${escapeHTML(phaseTitle(current))}</h3><p>${escapeHTML(phaseInstructions(current))}</p></section><div class="tg-layout">${renderPlayers(current, { gm: true })}<main>${controls}${renderGolemCardTable(current)}<section class="tg-log"><h3>Table log</h3><ol>${(current.log ?? []).slice(-8).map((entry) => `<li>${escapeHTML(entry)}</li>`).join("")}</ol></section></main></div></div>`;
+  return `<div class="tg-table tg-gm-table">${renderGameHeader(current)}<section class="tg-phase"><h3>${escapeHTML(phaseTitle(current))}</h3><p>${escapeHTML(phaseInstructions(current))}</p></section>${renderCompetitiveBettingGM(current)}<div class="tg-layout">${renderPlayers(current, { gm: true })}<main>${controls}${renderGolemCardTable(current)}<section class="tg-log"><h3>Table log</h3><ol>${(current.log ?? []).slice(-8).map((entry) => `<li>${escapeHTML(entry)}</li>`).join("")}</ol></section></main></div></div>`;
 }
 
 function renderLibrary() {
   return `<div class="tg-library"><header class="tg-banner"><div><h2>PF2e Tavern Games</h2><p>Choose a table to open. Poppy’s Prize keeps its dedicated card-table interface.</p></div></header><section class="tg-game-grid"><article><h3>Poppy’s Prize</h3><p>Four-seat pirate poker with Pirates, Plunder, and marked cards.</p><button data-action="tg-open-poppy">Open Poppy’s Prize</button></article><article><h3>Golem</h3><p>Five-card draw against the central golem hand.</p><button data-action="tg-start" data-game="golem">Start Golem</button></article><article><h3>Bounder</h3><p>Bracket a dealer’s 3d6 total with two d20s.</p><button data-action="tg-start" data-game="bounder">Start Bounder</button></article><article><h3>Century</h3><p>Pick numbers and seek matches among twenty draws.</p><button data-action="tg-start" data-game="century">Start Century</button></article><article><h3>Drinking Contest</h3><p>Ready each round, survive the Fortitude DC, and remain standing.</p><button data-action="tg-start" data-game="drinking">Start Drinking Contest</button></article><article><h3>Arm Wrestling</h3><p>Opposed Athletics checks, grip points, and a first-to-ten pin.</p><button data-action="tg-start" data-game="arm-wrestling">Start Arm Wrestling</button></article><article><h3>Slapping</h3><p>Power Slap-inspired open-hand bouts with strikes, recovery, judge points, knockouts, and decisions.</p><button data-action="tg-start" data-game="slapping">Start Slapping</button></article></section>${gameRulesLink()}</div>`;
 }
 
+function renderSpectatorGame(view) {
+  const { board, player, choices } = view;
+  const competitive = [TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(board.game);
+  const options = board.players.filter((entry) => !entry.disqualified && !entry.out).map((entry) => `<option value="${escapeHTML(entry.id)}">${escapeHTML(entry.name)} — ${formatOdds(board.betting?.odds?.[entry.id])}</option>`).join("");
+  const controls = choices.canBet && board.betting ? `<label>Bet on <select id="tg-spectator-side">${options}</select></label>${coinFields("tg-spectator-bet", 100, "Wager") }<button data-action="tg-spectator-bet">Place fixed-odds bet</button>` : board.betting?.locked ? "<p>Betting is locked or you have already placed a wager.</p>" : "<p>Betting is not currently available.</p>";
+  return `<div class="tg-table tg-player-table"><header class="tg-banner"><h2>${escapeHTML(board.name)} — Spectator betting</h2><p>${escapeHTML(board.phaseTitle)}</p></header><section class="tg-phase"><p>Betting actor: <strong>${escapeHTML(player.name)}</strong> · Level ${player.level} · Athletics ${player.athletics} · Fortitude ${player.fortitude}</p><p>Odds lock when the first wager is placed. A draw refunds all wagers.</p></section><section class="tg-controls"><h3>Betting board</h3><p>${board.players.map((entry) => `${escapeHTML(entry.name)}: ${formatOdds(board.betting?.odds?.[entry.id])}`).join(" · ")}</p>${controls}</section>${board.betting?.payouts?.length ? `<section class="tg-log"><h3>Your result</h3>${board.betting.payouts.filter((payout) => payout.actorId === player.id).map((payout) => `<p>${escapeHTML(payout.message)}</p>`).join("") || "<p>No payout recorded for this actor.</p>"}</section>` : ""}</div>`;
+}
 function renderPlayerGame(view) {
   if (!view) return `<div class="tg-empty"><h2>PF2e Tavern Games</h2><p>You are not assigned to an active tavern game.</p></div>`;
   const { board, player, choices } = view;
+  if (view.spectator) return renderSpectatorGame(view);
   // Players never read the GM-restricted authoritative setting: the public board and actor-owned view are sufficient to render legal controls.
   const current = board;
   const showMarked = view.markedCardVision;
@@ -572,7 +632,7 @@ class TavernGamesApplication extends foundry.applications.api.ApplicationV2 {
 
 class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
   static DEFAULT_OPTIONS = { id: "pf2e-tavern-games-player", classes: ["pf2e-tavern-games", "application", "tg-player"], position: { width: 640, height: 700 }, window: { title: "PF2e Tavern Games — Your Game", icon: "fa-solid fa-dice", resizable: true } };
-  async _renderHTML() { const element = document.createElement("div"); element.innerHTML = renderPlayerGame(currentPlayerActor()?.getFlag(MODULE_ID, VIEW_FLAG)); return element; }
+  async _renderHTML() { const element = document.createElement("div"); const entryActor = currentPlayerActor(); const view = playerApp?.spectator ? competitiveSpectatorView(game.settings.get(MODULE_ID, BOARD_KEY), entryActor) : entryActor?.getFlag(MODULE_ID, VIEW_FLAG); element.innerHTML = renderPlayerGame(view); return element; }
   _replaceHTML(result, content) { content.replaceChildren(result); }
   _onRender(context, options) { super._onRender(context, options); this.element.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", (event) => this.#act(event))); this.element.querySelectorAll(".tg-card.selectable").forEach((card) => card.addEventListener("click", () => card.classList.toggle("selected"))); const marked = this.element.querySelector("#tg-player-golem-marked"); marked?.addEventListener("change", () => this.element.querySelector("#tg-player-golem-marked-options")?.classList.toggle("tg-hidden", !marked.checked)); }
   async #act(event) {
@@ -580,6 +640,7 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
     const action = event.currentTarget.dataset.action;
     const root = this.element;
     const payload = {};
+    if (action === "tg-spectator-bet") { payload.playerId = root.querySelector("#tg-spectator-side")?.value; payload.amountCp = coinsFrom(root, "tg-spectator-bet"); return submitPlayerAction(action, payload); }
     if (action === "tg-player-slapping-roll") {
       const entryActor = currentPlayerActor();
       const view = entryActor?.getFlag(MODULE_ID, VIEW_FLAG);
@@ -630,9 +691,13 @@ function openTavernGames() {
 function openTavernPlayer(entryActor = null) {
   if (isGM()) return openTavernGames();
   const target = entryActor ?? currentPlayerActor();
-  if (!target?.isOwner || !target.getFlag(MODULE_ID, VIEW_FLAG)) return ui.notifications.warn("You are not assigned to an active PF2e Tavern Games table.");
+  if (!target?.isOwner) return ui.notifications.warn("Choose an owned actor to open the PF2e Tavern Games panel.");
+  const current = game.settings.get(MODULE_ID, BOARD_KEY) ?? state();
+  const participantView = target.getFlag(MODULE_ID, VIEW_FLAG);
+  if (!participantView && !competitiveGame(current)) return ui.notifications.warn("You are not assigned to an active tavern game.");
   playerApp ??= new TavernPlayerApplication();
   playerApp.actorId = target.id;
+  playerApp.spectator = !participantView && competitiveGame(current);
   return playerApp.render({ force: true });
 }
 
@@ -657,8 +722,8 @@ function promptTavernParticipantSelection(gameId, count) {
   const dealerLabel = [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING].includes(gameId) ? null : gameId === TAVERN_GAME_IDS.BOUNDER ? "First Shooter" : "Dealer / deck owner";
   const specific = gameId === TAVERN_GAME_IDS.DRINKING ? `<label>Fortitude DC <input name="dc" type="number" min="0" value="15" required></label>` : gameId === TAVERN_GAME_IDS.ARM_WRESTLING ? `<p class="notes">Arm Wrestling uses two participants and opposed Athletics checks; no stake is required.</p>` : gameId === TAVERN_GAME_IDS.SLAPPING ? `<label>Bout type <select name="boutType"><option value="standard">Standard bout — 3 rounds</option><option value="title">Title bout — 5 rounds</option></select></label>` : coinFields("tg-start-stake", 5, gameId === TAVERN_GAME_IDS.CENTURY ? "Minimum stake" : gameId === TAVERN_GAME_IDS.BOUNDER ? "Shooter stake" : "Ante");
   const selectors = Array.from({ length: count }, (_entry, index) => `<label>Character ${index + 1}<select name="participant-${index + 1}" data-participant required>${actorOptions}</select></label>`).join("");
-  const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
-  new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — Set up ${label}` }, content, buttons: [{ action: "start", label: `Start ${label}`, default: true, callback: (_event, button) => { const form = button.form; return { actorIds: [...form.querySelectorAll("[data-participant]")].map((select) => select.value), dealerId: form.elements.dealer?.value ?? null, stakeCp: [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? null : coinsFrom(form, "tg-start-stake"), boutType: form.elements.boutType?.value ?? null, dc: Number(form.elements.dc?.value ?? 15) }; } }], submit: (result) => startTavernGame(gameId, result) }).render({ force: true });
+  const content = `<form class="tg-start"><p>Select each of the ${count} participants. Options are ordered with <strong>- Dummy</strong> first, then Party Members, then other eligible actors alphabetically.</p><div class="tg-participant-selectors">${selectors}</div>${dealerLabel ? `<label>${dealerLabel}<select name="dealer" required>${dealerOptions}</select></label><p class="notes">The selected ${dealerLabel.toLowerCase()} must be one of the chosen participants.</p>` : ""}${specific}${[TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? `${coinFields("tg-prize", 0, "Winner purse (leave 0 for suggested)")}<label class="tg-check"><input name="autoCurrency" type="checkbox"> Automatically transfer spectator wagers and winner purse</label><p class="notes">The suggested purse is calculated from actor level, bout length, and the relevant statistics; you may edit it.</p>` : ""}<p class="notes">Players need Owner permission on their actor to use a private panel.</p></form>`;
+  new foundry.applications.api.DialogV2({ window: { title: `PF2e Tavern Games — Set up ${label}` }, content, buttons: [{ action: "start", label: `Start ${label}`, default: true, callback: (_event, button) => { const form = button.form; return { actorIds: [...form.querySelectorAll("[data-participant]")].map((select) => select.value), dealerId: form.elements.dealer?.value ?? null, stakeCp: [TAVERN_GAME_IDS.DRINKING, TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? null : coinsFrom(form, "tg-start-stake"), boutType: form.elements.boutType?.value ?? null, prizeCp: [TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId) ? coinsFrom(form, "tg-prize") : null, autoCurrency: form.elements.autoCurrency?.checked === true, dc: Number(form.elements.dc?.value ?? 15) }; } }], submit: (result) => startTavernGame(gameId, result) }).render({ force: true });
 }
 
 async function startTavernGame(gameId, result) {
@@ -675,6 +740,7 @@ async function startTavernGame(gameId, result) {
     else if (gameId === TAVERN_GAME_IDS.ARM_WRESTLING) next = createArmWrestlingGame({ participants });
     else if (gameId === TAVERN_GAME_IDS.SLAPPING) next = createSlappingGame({ participants, boutType: result.boutType });
     else next = createDrinkingGame({ participants, fortitudeDC: result.dc });
+    if ([TAVERN_GAME_IDS.ARM_WRESTLING, TAVERN_GAME_IDS.SLAPPING].includes(gameId)) next.betting = initCompetitiveBetting(next, result);
     await saveGame(next);
     openTavernGames();
   });
@@ -709,7 +775,11 @@ async function gmAction(action, playerId, root) {
   const current = state();
   if (!current) return;
   let next = current;
-  if (action === "tg-golem-deal") {
+  if (action === "tg-update-competitive-odds") {
+    if (!competitiveGame(current) || current.betting?.locked) throw new Error("Odds can only be adjusted before the first spectator wager.");
+    const oddsModifiers = Object.fromEntries(current.players.map((entry) => [entry.id, Math.max(-5, Math.min(5, Number(root.querySelector(`[data-odds-player="${entry.id}"]`)?.value ?? 0)))]));
+    next = { ...current, betting: { ...current.betting, oddsModifiers, odds: competitiveOdds(current, oddsModifiers) } };
+  } else if (action === "tg-golem-deal") {
     const dealerActor = actor(current.dealerId);
     const marked = root.querySelector("#tg-golem-marked")?.checked === true && hasMarkedCards(dealerActor);
     const socialCheat = root.querySelector("#tg-golem-social-cheat")?.checked === true;
@@ -738,6 +808,7 @@ async function gmAction(action, playerId, root) {
   else if (action === "tg-drink-resolve") next = await resolveDrinks(current);
   else if (action === "tg-drink-clear-effects") { for (const entrant of current.players) await clearDrinkingEffects(actor(entrant.actorId)); return; }
   if (next?.state) next = next.state;
+  next = await settleCompetitiveBets(next);
   await saveGame(next);
 }
 
@@ -838,6 +909,21 @@ async function resolveDrinks(current) {
   return next;
 }
 
+async function settleCompetitiveBets(current) {
+  if (!competitiveGame(current) || !current.result || !current.betting || current.betting.settled) return current;
+  const winnerId = current.result.winnerId ?? null;
+  const payouts = (current.betting.bets ?? []).map((bet) => {
+    const amountCp = winnerId === null ? bet.amountCp : bet.playerId === winnerId ? Math.round(bet.amountCp * Number(bet.odds ?? 1)) : 0;
+    return { ...bet, payoutCp: amountCp, message: winnerId === null ? `Draw: your ${formatCopper(bet.amountCp)} wager was refunded.` : amountCp ? `Your ${formatCopper(bet.amountCp)} wager paid ${formatCopper(amountCp)} at ${formatOdds(bet.odds)}.` : "Your wager did not win." };
+  });
+  if (current.betting.autoCurrency) {
+    for (const payout of payouts.filter((entry) => entry.payoutCp > 0)) await actor(payout.actorId)?.inventory?.addCurrency?.(copperToCoins(payout.payoutCp));
+    const winner = winnerId ? playerById(current, winnerId) : null;
+    if (winner && current.betting.prizeCp > 0) await actor(winner.actorId)?.inventory?.addCurrency?.(copperToCoins(current.betting.prizeCp));
+  }
+  return { ...current, betting: { ...current.betting, settled: true, payouts, prizePaid: Boolean(winnerId && current.betting.prizeCp > 0) } };
+}
+
 async function submitPlayerAction(action, payload = {}) {
   const entryActor = currentPlayerActor();
   if (!entryActor) return ui.notifications.warn("You are not assigned to an active PF2e Tavern Games table.");
@@ -853,9 +939,24 @@ async function processPlayerAction(entryActor, request, userId) {
   await updateQueue(async () => {
     const current = state();
     const entrant = playerForActor(current, entryActor.id);
+    const payload = request.payload ?? {};
+    if (request.action === "tg-spectator-bet") {
+      if (!current || !competitiveGame(current) || entrant) throw new Error("Participants cannot place spectator wagers.");
+      if (entryActor.type !== "character") throw new Error("Spectator betting requires a PC actor.");
+      if (current.phase === `${current.game}-complete`) throw new Error("Betting is closed.");
+      if (current.betting?.bets?.some((bet) => bet.actorId === entryActor.id)) throw new Error("This actor has already placed a wager.");
+      const target = current.players.find((entry) => entry.id === payload.playerId && qualified(current, entry));
+      const amountCp = Number(payload.amountCp);
+      if (!target || !Number.isSafeInteger(amountCp) || amountCp <= 0) throw new Error("Choose a competitor and a positive wager.");
+      const betting = { ...current.betting, locked: true, bets: [...(current.betting?.bets ?? []), { actorId: entryActor.id, userId: user.id, playerId: target.id, amountCp, odds: current.betting.odds[target.id] }] };
+      if (betting.autoCurrency) await entryActor.inventory.removeCurrency(copperToCoins(amountCp), { byValue: true });
+      await entryActor.unsetFlag(MODULE_ID, REQUEST_FLAG);
+      await entryActor.setFlag(MODULE_ID, STATUS_FLAG, { kind: "accepted", message: `Wager placed on ${target.name}.` });
+      await saveGame({ ...current, betting });
+      return;
+    }
     if (!current || !entrant || !qualified(current, entrant)) return;
     let next = current;
-    const payload = request.payload ?? {};
     if (request.action === "tg-player-golem-deal" && entrant.id === current.dealerId) { const marked = payload.marked === true && hasMarkedCards(entryActor); const socialCheat = payload.socialCheat === true; const cheating = marked || socialCheat; const dealerHandCardIds = socialCheat ? payload.dealerHandCardIds ?? [] : []; if (socialCheat && dealerHandCardIds.length !== Math.max(0, 5 - entrant.hand.length)) throw new Error("Choose every card needed to complete the Dealer’s hand when cheating."); next = dealGolem(current, { markedCardIds: marked ? payload.markedCardIds ?? [] : [], dealerHandCardIds }); if (marked) next.cheatingDealerId = entrant.id; await markedCardCheck(next, entrant, cheating, payload.concealment === "deception" ? "deception" : "performance"); }
     else if (request.action === "tg-player-golem-match" && current.betting?.turnSeat === entrant.seat) next = golemBet(current, entrant.id, current.betting.currentBet ? "match" : "pass").state;
     else if (request.action === "tg-player-golem-fold" && current.betting?.turnSeat === entrant.seat) next = golemBet(current, entrant.id, "fold").state;
@@ -895,7 +996,7 @@ async function processPlayerAction(entryActor, request, userId) {
     else throw new Error("That player action is not legal at the current tavern-game phase.");
     await entryActor.unsetFlag(MODULE_ID, REQUEST_FLAG);
     await entryActor.setFlag(MODULE_ID, STATUS_FLAG, { kind: "accepted", message: "The GM accepted your action." });
-    await saveGame(next.state ?? next);
+    await saveGame(await settleCompetitiveBets(next.state ?? next));
   }).catch(async (error) => {
     await entryActor.setFlag(MODULE_ID, STATUS_FLAG, { kind: "error", message: error.message ?? "The GM could not accept that action." });
   });

@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.4.0 — 9 November 2026
+Added spectator betting and winner prize calculators to Arm Wrestling and Slapping. Spectators can wager with owned PC actors, odds are based on actor level and relevant statistics, GM odds nudges apply before the first wager, odds then lock, winning bets pay fixed odds, draws refund wagers, and the GM can configure a separate winner purse with optional automatic PF2E currency transfers.
+
 ## 2.3.0 — 9 November 2026
 Added Slapping, a two-person Power Slap-inspired game with standard three-round and title five-round bouts, coin-toss opening order, alternating 60-second strike/recovery roles, judge scoring, knockout resolution, extra-round tie handling, and official draws. PC checks are requested from actor owners; NPC checks are rolled automatically by the GM. Added a Slapping rules Journal reference and automated engine/release validation.
 
