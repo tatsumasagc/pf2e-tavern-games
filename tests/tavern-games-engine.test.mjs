@@ -26,6 +26,7 @@ import {
   resolveArmWrestlingRound,
   createSlappingGame,
   resolveSlappingRound,
+  slappingJudgeScores,
 } from "../scripts/tavern-games-engine.mjs";
 import { sortCardsForSelection } from "../scripts/engine.mjs";
 const participants = [
@@ -112,7 +113,7 @@ assert.match(arm.log.at(-3), /Aster rolled 25 \(Critical Success\)/);
 assert.match(arm.log.at(-2), /Grip changes: Aster: 3 \+2 → 5; Beryl: 0 \+0 → 0/);
 assert.match(arm.log.at(-1), /Aster wins Arm Wrestling in round 1 with 5\/5 grip points; Aster pins Beryl/);
 
-// Slapping: coin toss, alternating striker/receiver roles, judge points, and judges' decision.
+// Slapping: coin toss, alternating striker/receiver roles, two-sided 10-point judging, and judges' decision.
 let slapping = createSlappingGame({ participants: participants.slice(0, 2), boutType: "standard", rng: () => 0 });
 assert.equal(slapping.game, TAVERN_GAME_IDS.SLAPPING);
 assert.equal(slapping.roundLimit, 3);
@@ -133,8 +134,10 @@ slapping = resolveSlappingRound(slapping, [
 ]);
 assert.equal(slapping.phase, "slapping-complete");
 assert.equal(slapping.result.finish, "judges-decision");
-assert.equal(slapping.result.winnerId, "a");
+assert.equal(slapping.result.winnerId, "b");
 assert.match(slapping.log.at(-1), /wins by judges' decision/);
+assert.deepEqual(slappingJudgeScores("criticalFailure", "criticalSuccess"), { striker: 8, receiver: 10, margin: 6 });
+assert.deepEqual(slappingJudgeScores("success", "success"), { striker: 10, receiver: 10, margin: 0 });
 
 // Drinking contest: readiness, all three degree adjustments, named stages, loss at Stage 6, and disqualification.
 let drinks = createDrinkingGame({ participants: participants.slice(0, 3), fortitudeDC: 20 });

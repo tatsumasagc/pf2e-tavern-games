@@ -1,6 +1,6 @@
 # PF2e Tavern Games
 
-**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.7.2 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, GM disqualification controls, and token-name output for NPCs.
+**PF2e Tavern Games** is a Foundry VTT module for **Foundry VTT v14.367** and **PF2E v8.4.1**. Version 2.7.3 provides a GM-led game library for **Poppy’s Prize**, **Golem**, **Bounder**, **Century**, a configurable **Drinking Contest**, and **Arm Wrestling**. It supports PC and NPC actors, owner-safe player panels, game-specific cheating, player prompts, GM disqualification controls, and token-name output for NPCs.
 
 > **Creator credit:** Created by Tatsu_Gamer using Manus AI.
 
@@ -32,7 +32,7 @@ Download the latest `pf2e-tavern-games-v2.2.2.zip` release asset and extract it 
 Data/modules/pf2e-tavern-games/module.json
 ```
 
-Enable **PF2e Tavern Games** in the target PF2E world. Version 2.7.2 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
+Enable **PF2e Tavern Games** in the target PF2E world. Version 2.7.3 uses the `pf2e-tavern-games` package ID. Disable the retired `poppys-prize` package after the new package has loaded successfully.
 
 ## Foundry v14 scene controls
 
@@ -61,7 +61,7 @@ The GM may apply a -5 to +5 odds nudge before betting begins. Use this for narra
 ## Slapping
 Slapping is a two-competitor, Power Slap-inspired game. The GM chooses a standard three-round bout or a title five-round bout. A coin toss determines the opening striker. Each round alternates the striker and receiver. The striker has 60 seconds to deliver an open-handed slap below the eye and above the chin; the receiver has 60 seconds to recover before returning to position.
 
-The striker rolls Athletics for slap effectiveness and the receiver rolls Fortitude for reaction and recovery. PC actors receive private roll requests from the module and send their results to the GM; NPC actors are rolled automatically by the GM. Judge points combine slap effectiveness with the receiver’s reaction and recovery. A critical slap against a critical recovery failure causes a knockout. If the scheduled rounds end without a knockout, the higher score wins by judges’ decision. A tie adds one extra round; a second tie is an official draw.
+The striker rolls Athletics for slap effectiveness and the receiver rolls Fortitude for reaction and recovery. PC actors receive private roll requests from the module and send their results to the GM; NPC actors are rolled automatically by the GM. Each exchange uses a two-sided 10-point judging system: the better performance receives 10 points, the other receives 9 points, a clear margin receives 10–8, and an even exchange is 10–10. The score combines slap effectiveness with the receiver’s reaction and recovery. A critical slap against a critical recovery failure causes a knockout. If the scheduled rounds end without a knockout, the higher score wins by judges’ decision. A tie adds one extra round; a second tie is an official draw.
 
 ## Arm Wrestling
 Arm Wrestling is a two-person contest resolved in repeated rounds. Both wrestlers press **Ready** in their private player panels; the GM then resolves one blind Athletics check for each wrestler at the same time. Compare the two totals for that round. A difference of 10 or more is a critical success for the higher result and a critical failure for the lower result; any smaller positive difference is a success for the higher result and a failure for the lower result; equal totals are a failure for both. Natural 20s and natural 1s adjust the result by one degree where applicable.

@@ -656,13 +656,27 @@ export function createSlappingGame({ participants, boutType = "standard", rng = 
   };
 }
 
-export function slappingJudgePoints(strikeDegree, receiveDegree) {
-  const effectiveness = { criticalSuccess: 3, success: 2, failure: 0, criticalFailure: 0 }[strikeDegree];
-  const reaction = { criticalSuccess: -1, success: 0, failure: 1, criticalFailure: 2 }[receiveDegree];
+export function slappingJudgeScores(strikeDegree, receiveDegree) {
+  const effectiveness = { criticalSuccess: 3, success: 2, failure: 1, criticalFailure: 0 }[strikeDegree];
+  const reaction = { criticalSuccess: 3, success: 2, failure: 1, criticalFailure: 0 }[receiveDegree];
   assert(effectiveness !== undefined && reaction !== undefined, "Slapping results must use the four canonical degrees.");
-  return Math.max(0, effectiveness + reaction);
+  // Judge the complete exchange: slap effectiveness plus the receiver's reaction/recovery.
+  // The stronger side receives 10 points; a clear margin receives 10–8, otherwise 10–9.
+  const strikerQuality = effectiveness + (3 - reaction);
+  const receiverQuality = reaction + (3 - effectiveness);
+  const margin = Math.abs(strikerQuality - receiverQuality);
+  if (margin === 0) return { striker: 10, receiver: 10, margin: 0 };
+  const winner = strikerQuality > receiverQuality ? "striker" : "receiver";
+  const loserScore = margin >= 3 ? 8 : 9;
+  return winner === "striker"
+    ? { striker: 10, receiver: loserScore, margin }
+    : { striker: loserScore, receiver: 10, margin };
 }
 
+// Backwards-compatible shorthand for callers that only need the striker's round score.
+export function slappingJudgePoints(strikeDegree, receiveDegree) {
+  return slappingJudgeScores(strikeDegree, receiveDegree).striker;
+}
 export function resolveSlappingRound(state, resolutions) {
   assert(state?.game === TAVERN_GAME_IDS.SLAPPING && state.phase === "slapping-round", "Slapping is not ready to resolve.");
   const next = clone(state);
@@ -672,14 +686,15 @@ export function resolveSlappingRound(state, resolutions) {
   const receive = resolutions?.find((entry) => entry.playerId === receiver.id);
   assert(strike && receive, "Supply both the striker and receiver results.");
   const knockout = strike.degree === "criticalSuccess" && receive.degree === "criticalFailure";
-  const points = slappingJudgePoints(strike.degree, receive.degree);
-  striker.score += points;
-  striker.result = { role: "striker", total: strike.total ?? null, degree: strike.degree, points, round: next.round };
-  receiver.result = { role: "receiver", total: receive.total ?? null, degree: receive.degree, points, round: next.round, recovered: receive.degree !== "criticalFailure" };
+  const judgeScores = slappingJudgeScores(strike.degree, receive.degree);
+  striker.score += judgeScores.striker;
+  receiver.score += judgeScores.receiver;
+  striker.result = { role: "striker", total: strike.total ?? null, degree: strike.degree, points: judgeScores.striker, round: next.round };
+  receiver.result = { role: "receiver", total: receive.total ?? null, degree: receive.degree, points: judgeScores.receiver, round: next.round, recovered: receive.degree !== "criticalFailure" };
   next.slappingRolls = {};
-  next.result = { round: next.round, strikerId: striker.id, receiverId: receiver.id, strikerDegree: strike.degree, receiverDegree: receive.degree, points, knockout, scores: next.players.map((entry) => ({ playerId: entry.id, name: entry.name, score: entry.score })) };
+  next.result = { round: next.round, strikerId: striker.id, receiverId: receiver.id, strikerDegree: strike.degree, receiverDegree: receive.degree, strikerPoints: judgeScores.striker, receiverPoints: judgeScores.receiver, knockout, scores: next.players.map((entry) => ({ playerId: entry.id, name: entry.name, score: entry.score })) };
   next.log.push(`Slapping round ${next.round}: ${striker.name} scored ${strike.total ?? "—"} (${strike.degree}); ${receiver.name} recovered with ${receive.total ?? "—"} (${receive.degree}).`);
-  next.log.push(`${striker.name} earned ${points} judge point(s) from slap effectiveness and ${receiver.name}'s reaction/recovery. Scores: ${next.players.map((entry) => `${entry.name} ${entry.score}`).join(", ")}.`);
+  next.log.push(`Judges scored the exchange ${striker.name} ${judgeScores.striker}-${judgeScores.receiver} ${receiver.name} (10-point system; margin ${judgeScores.margin}). Running scores: ${next.players.map((entry) => `${entry.name} ${entry.score}`).join(", ")}.`);
   if (knockout) {
     next.phase = "slapping-complete";
     next.result = { ...next.result, winnerId: striker.id, winnerName: striker.name, finish: "knockout" };

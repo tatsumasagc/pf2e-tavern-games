@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.7.3 — 10 November 2026
+Corrected Slapping judging to use two-sided 10-point round scores instead of striker-only bonus points, preventing incorrect 0–0 outcomes and making final scores reflect both competitors’ performance.
+
 ## 2.7.2 — 10 November 2026
 Added private settlement whispers for winners and bettors. Messages now state winnings, losses, refunds, and whether currency was automatically added to the actor sheet or requires manual GM award.
 
