@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.7.1 — 10 November 2026
+Fixed missing Slapping result announcements, deferred competitive betting payouts until the match reaches its complete phase, fixed Arm Wrestling PC roll requests, and prevented player-window close actions from being submitted as game actions.
+
 ## 2.7.0 — 9 November 2026
 Drinking Contest now requests Performance and Fortitude rolls from PC owners while NPCs roll automatically. The GM can mark NPC contestants as cheating and select Performance or Deception — Create a Diversion for concealment; cheating automatically succeeds at the Fortitude save.
 

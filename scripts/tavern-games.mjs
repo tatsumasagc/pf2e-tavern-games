@@ -347,6 +347,12 @@ function activeResults(current) {
   if (current?.game === TAVERN_GAME_IDS.GOLEM && current.phase === "golem-complete" && current.result?.winnerId) return [{ playerId: current.result.winnerId, amountCp: current.result.payoutCp, reason: current.result.reason }];
   if (current?.game === TAVERN_GAME_IDS.BOUNDER && current.phase === "bounder-complete") return current.result?.payouts ?? [];
   if (current?.game === TAVERN_GAME_IDS.CENTURY && current.phase === "century-complete") return (current.result ?? []).filter((entry) => entry.payoutCp > 0).map((entry) => ({ playerId: entry.playerId, amountCp: entry.payoutCp, reason: `${entry.matches} matches from ${entry.selected} selected numbers (×${entry.multiplier}).` }));
+  if (current?.game === TAVERN_GAME_IDS.SLAPPING && current.phase === "slapping-complete") {
+    const scores = (current.result?.scores ?? []).map((entry) => `${entry.name} ${entry.score}`).join(", ");
+    return current.result?.winnerId
+      ? [{ playerId: current.result.winnerId, amountCp: current.betting?.prizeCp ?? 0, reason: `wins by ${current.result.finish}; final scores: ${scores}.` }]
+      : [{ playerId: null, amountCp: 0, reason: `Official draw by ${current.result?.finish}; final scores: ${scores}.` }];
+  }
   if (competitiveGame(current) && current.phase === `${current.game}-complete` && current.result?.winnerId && current.betting?.prizeCp > 0) return [{ playerId: current.result.winnerId, amountCp: current.betting.prizeCp, reason: "winner purse" }];
   return [];
 }
@@ -357,7 +363,9 @@ async function announceResult(current) {
   if (!results.length) return;
   current.announcedResult = `${current.game}:${current.gameNumber}:${current.round ?? 0}:${current.phase}`;
   await game.settings.set(MODULE_ID, STATE_KEY, current);
-  const lines = results.map((entry) => `<li><strong>${escapeHTML(playerById(current, entry.playerId)?.name ?? "Unknown")}</strong> wins ${escapeHTML(formatCopper(entry.amountCp))}: ${escapeHTML(entry.reason)}</li>`).join("");
+  const lines = results.map((entry) => entry.playerId === null
+    ? `<li>${escapeHTML(entry.reason)}</li>`
+    : `<li><strong>${escapeHTML(playerById(current, entry.playerId)?.name ?? "Unknown")}</strong>${entry.amountCp > 0 ? ` wins ${escapeHTML(formatCopper(entry.amountCp))}:` : ""} ${escapeHTML(entry.reason)}</li>`).join("");
   await ChatMessage.create({ content: `<section class="tg-result"><h3>${escapeHTML(TAVERN_GAME_NAMES[current.game])} result</h3><ul>${lines}</ul></section>`, flags: { [MODULE_ID]: { resultAnnouncement: current.announcedResult } } });
 }
 
@@ -668,6 +676,7 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
     const root = this.element;
     const payload = {};
     if (action === "tg-spectator-bet") { payload.playerId = root.querySelector("#tg-spectator-side")?.value; payload.amountCp = coinsFrom(root, "tg-spectator-bet"); return submitPlayerAction(action, payload); }
+    if (!action?.startsWith("tg-player-")) return;
     if (action === "tg-player-slapping-roll") {
       const entryActor = currentPlayerActor();
       const view = entryActor?.getFlag(MODULE_ID, VIEW_FLAG);
@@ -703,6 +712,7 @@ class TavernPlayerApplication extends foundry.applications.api.ApplicationV2 {
     }
     if (action === "tg-player-arm-wrestling-roll") {
       const entryActor = currentPlayerActor();
+      const view = entryActor?.getFlag(MODULE_ID, VIEW_FLAG);
       try {
         const target = entryActor?.skills?.athletics;
         if (!target?.check?.roll) throw new Error(`${entryActor?.name ?? "This actor"} does not have an Athletics statistic to roll.`);
@@ -964,7 +974,7 @@ async function resolveDrinks(current) {
   return resolved;
 }
 async function settleCompetitiveBets(current) {
-  if (!competitiveGame(current) || !current.result || !current.betting || current.betting.settled) return current;
+  if (!competitiveGame(current) || current.phase !== `${current.game}-complete` || !current.result || !current.betting || current.betting.settled) return current;
   const winnerId = current.result.winnerId ?? null;
   const payouts = (current.betting.bets ?? []).map((bet) => {
     const amountCp = winnerId === null ? bet.amountCp : bet.playerId === winnerId ? Math.round(bet.amountCp * Number(bet.odds ?? 1)) : 0;
