@@ -976,23 +976,33 @@ async function resolveDrinks(current) {
 async function settleCompetitiveBets(current) {
   if (!competitiveGame(current) || current.phase !== `${current.game}-complete` || !current.result || !current.betting || current.betting.settled) return current;
   const winnerId = current.result.winnerId ?? null;
+  const autoCurrency = current.betting.autoCurrency === true;
+  const transferNote = (amountCp, transferred) => transferred
+    ? `<p><strong>${escapeHTML(formatCopper(amountCp))}</strong> was added automatically to the actor's PF2E currency inventory (the currency fields on the actor sheet).</p>`
+    : "<p>No currency was added automatically. The GM must award this amount manually.</p>";
   const payouts = (current.betting.bets ?? []).map((bet) => {
     const amountCp = winnerId === null ? bet.amountCp : bet.playerId === winnerId ? Math.round(bet.amountCp * Number(bet.odds ?? 1)) : 0;
-    return { ...bet, payoutCp: amountCp, message: winnerId === null ? `Draw: your ${formatCopper(bet.amountCp)} wager was refunded.` : amountCp ? `Your ${formatCopper(bet.amountCp)} wager paid ${formatCopper(amountCp)} at ${formatOdds(bet.odds)}.` : `Your ${formatCopper(bet.amountCp)} wager did not win.` };
+    return { ...bet, payoutCp: amountCp, message: winnerId === null ? `Draw: your ${formatCopper(bet.amountCp)} wager was refunded.` : amountCp ? `Your ${formatCopper(bet.amountCp)} wager won ${formatCopper(amountCp)} at ${formatOdds(bet.odds)}.` : `Your ${formatCopper(bet.amountCp)} wager lost.` };
   });
-  if (current.betting.autoCurrency) {
+  if (autoCurrency) {
     for (const payout of payouts.filter((entry) => entry.payoutCp > 0)) await actor(payout.actorId)?.inventory?.addCurrency?.(copperToCoins(payout.payoutCp));
     const winner = winnerId ? playerById(current, winnerId) : null;
     if (winner && current.betting.prizeCp > 0) await actor(winner.actorId)?.inventory?.addCurrency?.(copperToCoins(current.betting.prizeCp));
   }
   for (const payout of payouts) {
-    const recipient = payout.userId ? game.users.get(payout.userId) : null;
-    if (!recipient) continue;
-    await ChatMessage.create({ whisper: [recipient.id], content: `<p><strong>${escapeHTML(TAVERN_GAME_NAMES[current.game])} betting result</strong></p><p>${escapeHTML(payout.message)}</p>${current.betting.autoCurrency && payout.payoutCp > 0 ? "<p>The payout was transferred automatically to your actor.</p>" : ""}`, flags: { [MODULE_ID]: { bettingPayout: true, game: current.game, gameNumber: current.gameNumber } } });
+    const recipientIds = payout.userId ? [payout.userId] : activeOwnerIds(actor(payout.actorId));
+    if (!recipientIds.length) continue;
+    const transferred = autoCurrency && payout.payoutCp > 0;
+    await ChatMessage.create({ whisper: recipientIds, content: `<p><strong>${escapeHTML(TAVERN_GAME_NAMES[current.game])} betting result</strong></p><p>${escapeHTML(payout.message)}</p>${transferNote(payout.payoutCp, transferred)}`, flags: { [MODULE_ID]: { bettingPayout: true, game: current.game, gameNumber: current.gameNumber } } });
+  }
+  const winner = winnerId ? playerById(current, winnerId) : null;
+  const purseCp = Number(current.betting.prizeCp ?? 0);
+  if (winner && purseCp > 0) {
+    const recipientIds = activeOwnerIds(actor(winner.actorId));
+    if (recipientIds.length) await ChatMessage.create({ whisper: recipientIds, content: `<p><strong>${escapeHTML(TAVERN_GAME_NAMES[current.game])} winner's purse</strong></p><p>You won the ${escapeHTML(formatCopper(purseCp))} winner's purse as ${escapeHTML(winner.name)}.</p>${transferNote(purseCp, autoCurrency)}`, flags: { [MODULE_ID]: { winnerPurse: true, game: current.game, gameNumber: current.gameNumber } } });
   }
   return { ...current, betting: { ...current.betting, settled: true, payouts, prizePaid: Boolean(winnerId && current.betting.prizeCp > 0) } };
 }
-
 async function submitPlayerAction(action, payload = {}) {
   const entryActor = currentPlayerActor();
   if (!entryActor) return ui.notifications.warn("You are not assigned to an active PF2e Tavern Games table.");

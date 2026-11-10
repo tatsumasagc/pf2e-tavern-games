@@ -2,6 +2,9 @@
 
 All notable changes to **PF2e Tavern Games**, including its Poppy’s Prize game, are documented in this file.
 
+## 2.7.2 — 10 November 2026
+Added private settlement whispers for winners and bettors. Messages now state winnings, losses, refunds, and whether currency was automatically added to the actor sheet or requires manual GM award.
+
 ## 2.7.1 — 10 November 2026
 Fixed missing Slapping result announcements, deferred competitive betting payouts until the match reaches its complete phase, fixed Arm Wrestling PC roll requests, and prevented player-window close actions from being submitted as game actions.
 
